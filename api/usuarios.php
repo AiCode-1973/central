@@ -78,8 +78,8 @@ try {
                 break;
             }
 
-            // Modo: alterar senha
-            if (isset($body['senha'])) {
+            // Modo: alterar senha apenas (chamado pelo modal de senha)
+            if (array_keys($body) === ['senha']) {
                 $nova = $body['senha'] ?? '';
                 if (strlen($nova) < 6) {
                     http_response_code(422);
@@ -94,11 +94,13 @@ try {
                 break;
             }
 
-            // Modo: atualizar dados gerais
+            // Modo: atualizar dados gerais (nome, email, perfil — senha opcional)
             $nome   = trim($body['nome']   ?? '');
             $email  = trim($body['email']  ?? '');
             $perfil = $body['perfil'] ?? '';
             $ativo  = isset($body['ativo']) ? (int)(bool)$body['ativo'] : null;
+            $novaSenha = isset($body['senha']) && strlen($body['senha']) >= 6
+                         ? $body['senha'] : null;
 
             if (!$nome || !$email) {
                 http_response_code(422);
@@ -122,10 +124,20 @@ try {
             }
 
             $ativoVal = $ativo ?? 1;
-            $stmt = $conn->prepare(
-                "UPDATE usuarios SET nome = ?, email = ?, perfil = ?, ativo = ? WHERE id = ?"
-            );
-            $stmt->bind_param('sssii', $nome, $email, $perfil, $ativoVal, $id);
+
+            if ($novaSenha !== null) {
+                $hash = password_hash($novaSenha, PASSWORD_DEFAULT);
+                $stmt = $conn->prepare(
+                    "UPDATE usuarios SET nome = ?, email = ?, perfil = ?, ativo = ?, senha = ? WHERE id = ?"
+                );
+                $stmt->bind_param('sssssi', $nome, $email, $perfil, $ativoVal, $hash, $id);
+            } else {
+                $stmt = $conn->prepare(
+                    "UPDATE usuarios SET nome = ?, email = ?, perfil = ?, ativo = ? WHERE id = ?"
+                );
+                $stmt->bind_param('sssii', $nome, $email, $perfil, $ativoVal, $id);
+            }
+
             if (!$stmt->execute()) {
                 if ($conn->errno === 1062) {
                     http_response_code(409);
