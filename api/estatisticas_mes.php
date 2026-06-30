@@ -1,6 +1,8 @@
-<?php
+﻿<?php
 header('Content-Type: application/json; charset=utf-8');
 require_once __DIR__ . '/../config/db.php';
+require_once __DIR__ . '/../config/auth.php';
+$_authUser = requireLogin(true);
 
 $ano = intval($_GET['ano'] ?? 0);
 $mes = intval($_GET['mes'] ?? 0);

@@ -103,5 +103,30 @@ function _criarTabelas(mysqli $conn): void {
         CONSTRAINT fk_pesquisa_semana FOREIGN KEY (semana_id) REFERENCES semanas(id) ON DELETE CASCADE
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
 
+    $conn->query("CREATE TABLE IF NOT EXISTS usuarios (
+        id             INT AUTO_INCREMENT PRIMARY KEY,
+        nome           VARCHAR(100) NOT NULL,
+        email          VARCHAR(150) NOT NULL,
+        senha          VARCHAR(255) NOT NULL,
+        perfil         ENUM('admin','operador','visualizador') NOT NULL DEFAULT 'operador',
+        ativo          TINYINT(1)   DEFAULT 1,
+        ultimo_acesso  DATETIME     DEFAULT NULL,
+        criado_em      TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE KEY uk_usuario_email (email)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+    // Cria admin padrão se não houver nenhum usuário
+    $chk = $conn->query("SELECT COUNT(*) AS c FROM usuarios");
+    if ($chk && $chk->fetch_assoc()['c'] == 0) {
+        $hash  = password_hash('Admin@123', PASSWORD_DEFAULT);
+        $nome  = 'Administrador';
+        $email = 'admin@hospital.com';
+        $stmtAdmin = $conn->prepare(
+            "INSERT INTO usuarios (nome, email, senha, perfil) VALUES (?, ?, ?, 'admin')"
+        );
+        $stmtAdmin->bind_param('sss', $nome, $email, $hash);
+        $stmtAdmin->execute();
+    }
+
     $conn->query("SET FOREIGN_KEY_CHECKS = 1");
 }

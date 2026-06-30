@@ -1,4 +1,8 @@
-﻿<!DOCTYPE html>
+﻿<?php
+require_once __DIR__ . '/config/auth.php';
+$usuarioLogado = requireLogin();
+?>
+<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
@@ -9,6 +13,7 @@
   <link rel="stylesheet" href="assets/css/dashboard.css">
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+  <script>const USUARIO_LOGADO = <?= json_encode($usuarioLogado) ?>;</script>
 </head>
 <body>
 
@@ -41,6 +46,22 @@
     <button class="tab-btn" onclick="showTab('pesquisa',this)">
       <i class="fas fa-star"></i> <span>Pesquisa</span>
     </button>
+    <?php if ($usuarioLogado['perfil'] === 'admin'): ?>
+    <button class="tab-btn" onclick="showTab('usuarios',this)">
+      <i class="fas fa-users"></i> <span>Usuários</span>
+    </button>
+    <?php endif; ?>
+  </div>
+  <!-- Usuário logado + logout -->
+  <div style="display:flex;align-items:center;gap:.6rem;padding-left:1rem;border-left:1px solid rgba(255,255,255,.08);flex-shrink:0;">
+    <span style="font-size:.8rem;color:var(--text-muted);white-space:nowrap;">
+      <i class="fas fa-user-circle"></i>
+      <?= htmlspecialchars($usuarioLogado['nome']) ?>
+      <small style="margin-left:.25rem;opacity:.65;">(<?= $usuarioLogado['perfil'] ?>)</small>
+    </span>
+    <a href="logout.php" class="btn-app dang sm" style="text-decoration:none;">
+      <i class="fas fa-sign-out-alt"></i> Sair
+    </a>
   </div>
 </nav>
 
@@ -321,7 +342,82 @@
     </div>
   </section>
 
-</div><!-- /.main-wrap -->
+  <?php if ($usuarioLogado['perfil'] === 'admin'): ?>
+  <!-- ══════════════════════════════════════════════════════
+       ABA: USUÁRIOS
+  ══════════════════════════════════════════════════════════ -->
+  <section id="tab-usuarios" class="tab-section">
+    <div class="painel">
+      <div class="painel-titulo"><i class="fas fa-users"></i> <span id="usu-form-titulo">Novo Usuário</span></div>
+      <div class="form-inline-row" style="margin-bottom:1.25rem;align-items:flex-end;flex-wrap:wrap;">
+        <div class="form-group" style="flex:1;min-width:180px;">
+          <label>Nome</label>
+          <input type="text" id="usu-nome" placeholder="Nome completo" style="width:100%;">
+        </div>
+        <div class="form-group" style="flex:1;min-width:200px;">
+          <label>E-mail</label>
+          <input type="email" id="usu-email" placeholder="email@hospital.com" style="width:100%;">
+        </div>
+        <div class="form-group">
+          <label>Perfil</label>
+          <select id="usu-perfil">
+            <option value="operador">Operador</option>
+            <option value="visualizador">Visualizador</option>
+            <option value="admin">Administrador</option>
+          </select>
+        </div>
+        <div class="form-group" id="usu-senha-wrap">
+          <label>Senha <span id="usu-senha-hint" style="font-weight:400;color:var(--text-muted);">(obrigatória)</span></label>
+          <input type="password" id="usu-senha" placeholder="Mín. 6 caracteres" style="width:160px;">
+        </div>
+        <div style="display:flex;gap:.4rem;">
+          <button class="btn-app suc" onclick="salvarUsuario()">
+            <i class="fas fa-save"></i> <span id="usu-btn-label">Cadastrar</span>
+          </button>
+          <button class="btn-app" id="usu-btn-cancelar" style="display:none;border-color:var(--text-muted);color:var(--text-muted);" onclick="cancelarEdicaoUsuario()">
+            <i class="fas fa-times"></i> Cancelar
+          </button>
+        </div>
+      </div>
+
+      <div class="table-responsive">
+        <table class="tabela-app">
+          <thead>
+            <tr>
+              <th>Nome</th><th>E-mail</th><th>Perfil</th><th>Status</th>
+              <th>Último Acesso</th><th></th>
+            </tr>
+          </thead>
+          <tbody id="tbody-usuarios">
+            <tr><td colspan="6" style="color:var(--text-muted);">Carregando…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+  <?php endif; ?>
+
+<?php if ($usuarioLogado['perfil'] === 'admin'): ?>
+<!-- ══════════════════════════════════════════════════════
+     MODAL SENHA
+════════════════════════════════════════════════════════ -->
+<div id="modal-senha" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:2000;align-items:center;justify-content:center;">
+  <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:1.75rem 2rem;width:100%;max-width:360px;box-shadow:0 8px 40px rgba(0,0,0,.6);">
+    <div style="font-size:.88rem;font-weight:700;color:var(--neon-cyan);text-transform:uppercase;letter-spacing:.04em;margin-bottom:1.25rem;">
+      <i class="fas fa-key"></i> Alterar Senha
+    </div>
+    <div class="form-group" style="display:flex;flex-direction:column;gap:.3rem;margin-bottom:1rem;">
+      <label style="font-size:.75rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;">Nova Senha</label>
+      <input type="password" id="modal-nova-senha" placeholder="Mínimo 6 caracteres"
+             style="padding:.5rem .75rem;border:1px solid rgba(99,179,237,.25);border-radius:6px;background:var(--bg2);color:var(--text);font-size:.95rem;">
+    </div>
+    <div style="display:flex;gap:.5rem;justify-content:flex-end;">
+      <button class="btn-app sm" style="border-color:var(--text-muted);color:var(--text-muted);" onclick="fecharModalSenha()">Cancelar</button>
+      <button class="btn-app suc sm" onclick="confirmarSenha()"><i class="fas fa-save"></i> Salvar</button>
+    </div>
+  </div>
+</div>
+<?php endif; ?>
 
 <!-- ══ TOAST ════════════════════════════════════════════════ -->
 <div id="toast-container"></div>
@@ -344,6 +440,7 @@ async function api(url, options = {}) {
     ...options,
   });
   const j = await r.json().catch(() => ({}));
+  if (r.status === 401) { window.location.href = 'login.php'; return; }
   if (!r.ok) throw new Error(j.erro || 'Erro na requisição.');
   return j;
 }
@@ -1147,10 +1244,152 @@ async function delSemana(id) {
   } catch (e) { toast(e.message, 'erro'); }
 }
 
+/* ════════════════════════════════════════════════════════
+   USUÁRIOS
+════════════════════════════════════════════════════════ */
+const _PERFIL_LABEL = { admin: 'Administrador', operador: 'Operador', visualizador: 'Visualizador' };
+let _usuariosCache  = [];
+let _usuarioEditId  = null;
+let _senhaAlterarId = null;
+
+async function carregarUsuarios() {
+  try {
+    const users = await api('api/usuarios.php');
+    if (!users) return;
+    _usuariosCache = users;
+    const tb = document.getElementById('tbody-usuarios');
+    if (!tb) return;
+    if (!users.length) {
+      tb.innerHTML = '<tr><td colspan="6" style="color:var(--text-muted);">Nenhum usuário cadastrado.</td></tr>';
+      return;
+    }
+    tb.innerHTML = users.map(u => `
+      <tr>
+        <td>${u.nome}</td>
+        <td style="color:var(--text-muted);">${u.email}</td>
+        <td>${_PERFIL_LABEL[u.perfil] || u.perfil}</td>
+        <td>${+u.ativo ? '<span class="badge-ativo">Ativo</span>' : '<span class="badge-inativo">Inativo</span>'}</td>
+        <td style="color:var(--text-muted);font-size:.82rem;">${u.ultimo_acesso || '—'}</td>
+        <td style="white-space:nowrap;display:flex;gap:.35rem;">
+          <button class="btn-app prim sm" title="Editar" onclick="editarUsuario(${u.id})"><i class="fas fa-edit"></i></button>
+          <button class="btn-app peri sm" title="Alterar senha" onclick="abrirModalSenha(${u.id})"><i class="fas fa-key"></i></button>
+          <button class="btn-app sm" style="border-color:var(--text-muted);color:var(--text-muted);" title="${+u.ativo ? 'Desativar' : 'Ativar'}"
+            onclick="toggleAtivoUsuario(${u.id}, ${+u.ativo ? 0 : 1})">
+            <i class="fas fa-${+u.ativo ? 'ban' : 'check'}"></i>
+          </button>
+          ${u.id != USUARIO_LOGADO.id ? `<button class="btn-del" title="Excluir" onclick="delUsuario(${u.id})"><i class="fas fa-trash"></i></button>` : ''}
+        </td>
+      </tr>`).join('');
+  } catch(e) { toast(e.message, 'erro'); }
+}
+
+function editarUsuario(id) {
+  const u = _usuariosCache.find(x => +x.id === +id);
+  if (!u) return;
+  _usuarioEditId = id;
+  document.getElementById('usu-nome').value  = u.nome;
+  document.getElementById('usu-email').value = u.email;
+  document.getElementById('usu-perfil').value = u.perfil;
+  document.getElementById('usu-senha').value  = '';
+  document.getElementById('usu-form-titulo').textContent  = 'Editar Usuário';
+  document.getElementById('usu-btn-label').textContent    = 'Salvar';
+  document.getElementById('usu-btn-cancelar').style.display = '';
+  document.getElementById('usu-senha-hint').textContent   = '(deixe em branco para não alterar)';
+  document.getElementById('usu-nome').focus();
+}
+
+function cancelarEdicaoUsuario() {
+  _usuarioEditId = null;
+  document.getElementById('usu-nome').value  = '';
+  document.getElementById('usu-email').value = '';
+  document.getElementById('usu-perfil').value = 'operador';
+  document.getElementById('usu-senha').value  = '';
+  document.getElementById('usu-form-titulo').textContent  = 'Novo Usuário';
+  document.getElementById('usu-btn-label').textContent    = 'Cadastrar';
+  document.getElementById('usu-btn-cancelar').style.display = 'none';
+  document.getElementById('usu-senha-hint').textContent   = '(obrigatória)';
+}
+
+async function salvarUsuario() {
+  const nome   = document.getElementById('usu-nome').value.trim();
+  const email  = document.getElementById('usu-email').value.trim();
+  const perfil = document.getElementById('usu-perfil').value;
+  const senha  = document.getElementById('usu-senha').value;
+
+  if (!nome || !email) { toast('Nome e e-mail são obrigatórios.', 'erro'); return; }
+  if (!_usuarioEditId && !senha) { toast('Informe a senha para o novo usuário.', 'erro'); return; }
+
+  try {
+    const body = { nome, email, perfil };
+    if (senha) body.senha = senha;
+
+    if (_usuarioEditId) {
+      await api('api/usuarios.php?id=' + _usuarioEditId, { method: 'PUT', body: JSON.stringify(body) });
+      toast('Usuário atualizado!', 'suc');
+    } else {
+      await api('api/usuarios.php', { method: 'POST', body: JSON.stringify(body) });
+      toast('Usuário criado!', 'suc');
+    }
+    cancelarEdicaoUsuario();
+    await carregarUsuarios();
+  } catch(e) { toast(e.message, 'erro'); }
+}
+
+async function toggleAtivoUsuario(id, novoAtivo) {
+  const u = _usuariosCache.find(x => +x.id === +id);
+  if (!u) return;
+  try {
+    await api('api/usuarios.php?id=' + id, {
+      method: 'PUT',
+      body: JSON.stringify({ nome: u.nome, email: u.email, perfil: u.perfil, ativo: novoAtivo }),
+    });
+    toast(novoAtivo ? 'Usuário ativado.' : 'Usuário desativado.', 'suc');
+    await carregarUsuarios();
+  } catch(e) { toast(e.message, 'erro'); }
+}
+
+async function delUsuario(id) {
+  if (!confirm('Excluir este usuário permanentemente?')) return;
+  try {
+    await api('api/usuarios.php?id=' + id, { method: 'DELETE' });
+    toast('Usuário excluído.', 'suc');
+    await carregarUsuarios();
+  } catch(e) { toast(e.message, 'erro'); }
+}
+
+function abrirModalSenha(id) {
+  _senhaAlterarId = id;
+  document.getElementById('modal-nova-senha').value = '';
+  const m = document.getElementById('modal-senha');
+  m.style.display = 'flex';
+  document.getElementById('modal-nova-senha').focus();
+}
+function fecharModalSenha() {
+  document.getElementById('modal-senha').style.display = 'none';
+  _senhaAlterarId = null;
+}
+async function confirmarSenha() {
+  const nova = document.getElementById('modal-nova-senha').value;
+  if (!nova || nova.length < 6) { toast('Senha deve ter no mínimo 6 caracteres.', 'erro'); return; }
+  try {
+    await api('api/usuarios.php?id=' + _senhaAlterarId, {
+      method: 'PUT',
+      body: JSON.stringify({ senha: nova }),
+    });
+    toast('Senha alterada!', 'suc');
+    fecharModalSenha();
+  } catch(e) { toast(e.message, 'erro'); }
+}
+// Fechar modal clicando fora
+document.getElementById('modal-senha')?.addEventListener('click', e => {
+  if (e.target === e.currentTarget) fecharModalSenha();
+});
+
 /* ── Init ────────────────────────────────────────────────── */
 (async () => {
   await carregarSemanas();
   await carregarMotivos();
+  if (USUARIO_LOGADO.perfil === 'admin') await carregarUsuarios();
 })();
 </script>
 </body>
