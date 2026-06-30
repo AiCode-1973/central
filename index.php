@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Central de Agendamento — Hospital Santo Expedito</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;600;700&display=swap">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
   <link rel="stylesheet" href="assets/css/dashboard.css">
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
@@ -13,7 +14,7 @@
 
 <!-- ══ NAVBAR ══════════════════════════════════════════════ -->
 <nav class="navbar-app">
-  <i class="fas fa-hospital-alt" style="color:#7ec8ff;font-size:1.5rem;"></i>
+  <i class="fas fa-hospital-alt" style="color:var(--neon-cyan);font-size:1.5rem;"></i>
   <div class="brand">
     Hospital Santo Expedito
     <small>Central de Agendamento — Dashboard</small>
@@ -67,8 +68,8 @@
         <i class="fas fa-calendar-alt"></i> Mês
       </button>
       <div id="mes-selector" style="display:none;gap:.5rem;align-items:center;flex-wrap:wrap;">
-        <select id="sel-ano" style="padding:.4rem .65rem;border:1px solid #ccd;border-radius:6px;font-size:.9rem;"></select>
-        <select id="sel-mes" style="padding:.4rem .65rem;border:1px solid #ccd;border-radius:6px;font-size:.9rem;">
+        <select id="sel-ano" style="padding:.4rem .65rem;border:1px solid rgba(0,255,255,.25);border-radius:6px;font-size:.9rem;background:var(--bg2);color:var(--text);"></select>
+        <select id="sel-mes" style="padding:.4rem .65rem;border:1px solid rgba(0,255,255,.25);border-radius:6px;font-size:.9rem;background:var(--bg2);color:var(--text);">
           <option value="1">Janeiro</option><option value="2">Fevereiro</option>
           <option value="3">Março</option><option value="4">Abril</option>
           <option value="5">Maio</option><option value="6">Junho</option>
@@ -183,20 +184,20 @@
       <!-- Linha para adicionar novo motivo -->
       <div class="form-inline-row" style="margin-bottom:1.1rem;align-items:flex-end;">
         <div class="form-group" style="flex:1;min-width:200px;">
-          <label>Motivo <small style="color:#888;font-weight:400;">(selecione ou digite novo)</small></label>
+          <label>Motivo <small style="color:var(--text-muted);font-weight:400;">(selecione ou digite novo)</small></label>
           <input type="text" id="fech-motivo-txt" list="list-motivos"
                  placeholder="Ex: Feriado, Manutenção…"
-                 style="width:100%;padding:.4rem .65rem;border:1px solid #ccd;border-radius:6px;font-size:.9rem;">
+                 style="width:100%;padding:.4rem .65rem;border:1px solid rgba(0,255,255,.25);border-radius:6px;font-size:.9rem;background:var(--bg2);color:var(--text);">
           <datalist id="list-motivos"></datalist>
         </div>
         <div class="form-group">
           <label>Total de dias</label>
           <input type="number" id="fech-total" min="1" max="5" value="1"
-                 style="width:90px;padding:.4rem .65rem;border:1px solid #ccd;border-radius:6px;font-size:.9rem;">
+                 style="width:90px;padding:.4rem .65rem;border:1px solid rgba(0,255,255,.25);border-radius:6px;font-size:.9rem;background:var(--bg2);color:var(--text);">
         </div>
         <div class="form-group" style="flex:1;">
           <label>Observação</label>
-          <input type="text" id="fech-obs" placeholder="Opcional" style="width:100%;padding:.4rem .65rem;border:1px solid #ccd;border-radius:6px;font-size:.9rem;">
+          <input type="text" id="fech-obs" placeholder="Opcional" style="width:100%;padding:.4rem .65rem;border:1px solid rgba(0,255,255,.25);border-radius:6px;font-size:.9rem;background:var(--bg2);color:var(--text);">
         </div>
         <button class="btn-app prim" onclick="salvarFechamento()">
           <i class="fas fa-plus"></i> Adicionar
@@ -210,7 +211,7 @@
             <tr><th>Motivo</th><th style="width:120px;text-align:center;">Total de dias</th><th>Observação</th><th></th></tr>
           </thead>
           <tbody id="tbody-fechamentos">
-            <tr><td colspan="4" style="color:#aaa;">Selecione uma semana.</td></tr>
+            <tr><td colspan="4" style="color:var(--text-muted);">Selecione uma semana.</td></tr>
           </tbody>
         </table>
       </div>
@@ -239,7 +240,7 @@
             <tr><th>#</th><th>Descrição</th><th>Status</th><th></th></tr>
           </thead>
           <tbody id="tbody-motivos">
-            <tr><td colspan="4" style="color:#aaa;">Carregando…</td></tr>
+            <tr><td colspan="4" style="color:var(--text-muted);">Carregando…</td></tr>
           </tbody>
         </table>
       </div>
@@ -259,7 +260,7 @@
         </div>
         <div class="form-group">
           <label>Sexta-feira (fim)</label>
-          <input type="date" id="semana-fim" readonly style="background:#f4f4f4;">
+          <input type="date" id="semana-fim" readonly style="background:rgba(0,255,255,.05);color:var(--text-muted);">
         </div>
         <div class="form-group" style="flex:1;">
           <label>Descrição (opcional)</label>
@@ -276,7 +277,7 @@
             <tr><th>Início</th><th>Fim</th><th>Descrição</th><th></th></tr>
           </thead>
           <tbody id="tbody-semanas">
-            <tr><td colspan="4" style="color:#aaa;">Carregando…</td></tr>
+            <tr><td colspan="4" style="color:var(--text-muted);">Carregando…</td></tr>
           </tbody>
         </table>
       </div>
@@ -416,7 +417,7 @@ async function carregarDashboardMes() {
         datasets: [{
           label: 'Atendidos',
           data:  (d.por_semana || []).map(s => +s.total_atendidos),
-          backgroundColor: '#005599',
+          backgroundColor: 'rgba(0,255,255,.6)',
         }],
       },
       options: {
@@ -425,7 +426,7 @@ async function carregarDashboardMes() {
           legend: { display: false },
           datalabels: {
             anchor: 'end', align: 'end',
-            color: '#003366', font: { weight: 'bold', size: 11 },
+            color: '#00ffff', font: { weight: 'bold', size: 11 },
             formatter: v => v > 0 ? v : '',
           },
         },
@@ -444,7 +445,7 @@ async function carregarDashboardMes() {
         datasets: [{
           label: 'Atendimentos',
           data:  picosOrd.map(p => +p.total),
-          backgroundColor: '#005599',
+          backgroundColor: 'rgba(0,255,136,.6)',
         }],
       },
       options: {
@@ -454,7 +455,7 @@ async function carregarDashboardMes() {
           legend: { display: false },
           datalabels: {
             anchor: 'end', align: 'end',
-            color: '#003366', font: { weight: 'bold', size: 11 },
+            color: '#00ff88', font: { weight: 'bold', size: 11 },
             formatter: v => v > 0 ? v : '',
           },
         },
@@ -465,13 +466,13 @@ async function carregarDashboardMes() {
     // Motivos mês
     const rf = document.getElementById('resumo-fechamentos-mes');
     if (!(d.fechamentos || []).length) {
-      rf.innerHTML = '<span style="color:#aaa;">Nenhum fechamento registrado neste mês.</span>';
+      rf.innerHTML = '<span style="color:var(--text-muted);">Nenhum fechamento registrado neste mês.</span>';
     } else {
       const totalGeral = d.fechamentos.reduce((s, f) => s + +f.total, 0);
       rf.innerHTML =
         '<table style="width:100%;max-width:500px;border-collapse:collapse;font-size:.88rem;">' +
           d.fechamentos.map(f => `
-            <tr style="border-bottom:1px solid #e8eef5;">
+            <tr style="border-bottom:1px solid rgba(255,255,255,.05);">
               <td style="padding:.35rem .4rem;">${f.descricao}</td>
               <td style="padding:.35rem .4rem;text-align:right;font-weight:700;color:var(--neon-cyan);">${f.total}</td>
             </tr>`).join('') +
@@ -502,10 +503,10 @@ async function carregarDashboard(sid) {
       data: {
         labels: dias,
         datasets: [
-          { label: 'Agendados',  data: agend, backgroundColor: '#005599' },
-          { label: 'Atendidos',  data: atend, backgroundColor: '#198754' },
-          { label: 'Cancelados', data: canc,  backgroundColor: '#dc3545' },
-          { label: 'Faltas',     data: falta, backgroundColor: '#ffc107' },
+          { label: 'Agendados',  data: agend, backgroundColor: 'rgba(0,255,255,.7)'  },
+          { label: 'Atendidos',  data: atend, backgroundColor: 'rgba(0,255,136,.7)'  },
+          { label: 'Cancelados', data: canc,  backgroundColor: 'rgba(255,45,120,.7)' },
+          { label: 'Faltas',     data: falta, backgroundColor: 'rgba(255,230,0,.7)'  },
         ],
       },
       options: {
@@ -515,7 +516,7 @@ async function carregarDashboard(sid) {
           datalabels: {
             anchor: 'end',
             align: 'end',
-            color: '#333',
+            color: '#c8d8f0',
             font: { weight: 'bold', size: 11 },
             formatter: v => v > 0 ? v : '',
           },
@@ -526,7 +527,7 @@ async function carregarDashboard(sid) {
 
     // Gráfico pizza — Motivos de Fechamento
     if (chartPizza) chartPizza.destroy();
-    const coresPizza = ['#dc3545','#ffc107','#005599','#198754','#6f42c1','#fd7e14','#20c997','#e83e8c'];
+    const coresPizza = ['#ff2d78','#ffe600','#00ffff','#00ff88','#b94fff','#ff8c00','#00e5d4','#ff69b4'];
     const pizzaWrap = document.getElementById('chart-pizza')?.closest('div[style*="display:flex"]');
     if (!d.fechamentos.length) {
       if (pizzaWrap) pizzaWrap.innerHTML = '<p style="color:var(--text-muted);font-size:.88rem;padding:.5rem 0;">Nenhum fechamento registrado nesta semana.</p>';
@@ -546,7 +547,7 @@ async function carregarDashboard(sid) {
           plugins: {
             legend: { display: false },
             datalabels: {
-              color: '#fff',
+              color: '#0a0a0f',
               font: { weight: 'bold', size: 12 },
               formatter: v => v > 0 ? v : '',
             },
@@ -581,7 +582,7 @@ async function carregarDashboard(sid) {
         datasets: [{
           label: 'Atendimentos',
           data:  picosOrdenados.map(p => +p.total),
-          backgroundColor: '#005599',
+          backgroundColor: 'rgba(185,79,255,.7)',
         }],
       },
       options: {
@@ -592,7 +593,7 @@ async function carregarDashboard(sid) {
           datalabels: {
             anchor: 'end',
             align: 'end',
-            color: '#003366',
+            color: '#b94fff',
             font: { weight: 'bold', size: 12 },
             formatter: v => v > 0 ? v : '',
           },
@@ -604,13 +605,13 @@ async function carregarDashboard(sid) {
     // Resumo fechamentos
     const rf = document.getElementById('resumo-fechamentos');
     if (!d.fechamentos.length) {
-      rf.innerHTML = '<span style="color:#aaa;">Nenhum fechamento registrado nesta semana.</span>';
+      rf.innerHTML = '<span style="color:var(--text-muted);">Nenhum fechamento registrado nesta semana.</span>';
     } else {
       const totalGeral = d.fechamentos.reduce((s, f) => s + +f.total, 0);
       rf.innerHTML =
         '<table style="width:100%;border-collapse:collapse;font-size:.88rem;">' +
           d.fechamentos.map(f => `
-            <tr style="border-bottom:1px solid #e8eef5;">
+            <tr style="border-bottom:1px solid rgba(255,255,255,.05);">
               <td style="padding:.35rem .4rem;">${f.descricao}</td>
               <td style="padding:.35rem .4rem;text-align:right;font-weight:700;color:var(--neon-cyan);">${f.total}</td>
             </tr>`).join('') +
@@ -665,7 +666,7 @@ async function carregarAtendimentos(sid) {
 function renderFormAtendimentos() {
   const c = document.getElementById('form-atendimentos');
   if (!atendimentosEditaveis.length) {
-    c.innerHTML = '<p style="color:#aaa;">Selecione uma semana primeiro.</p>';
+    c.innerHTML = '<p style="color:var(--text-muted);">Selecione uma semana primeiro.</p>';
     return;
   }
   c.innerHTML = `
@@ -686,7 +687,7 @@ function renderFormAtendimentos() {
               <td>
                 <input type="number" min="0" class="at-at" data-i="${i}"
                        value="${r.total_atendidos}"
-                       style="width:100px;padding:.3rem .5rem;border:1px solid #ccd;border-radius:5px;text-align:center;">
+                       style="width:100px;padding:.3rem .5rem;border:1px solid rgba(0,255,255,.25);border-radius:5px;text-align:center;background:var(--bg2);color:var(--text);">
               </td>
             </tr>`).join('')}
         </tbody>
@@ -740,7 +741,7 @@ async function carregarPicosList(sid) {
               <td>
                 <input type="number" min="0" value="${map[h] ?? 0}"
                   id="pico-h-${h.replace(':','')}"
-                  style="width:100px;padding:.3rem .5rem;border:1px solid #ccd;border-radius:5px;text-align:center;">
+                  style="width:100px;padding:.3rem .5rem;border:1px solid rgba(0,255,255,.25);border-radius:5px;text-align:center;background:var(--bg2);color:var(--text);">
               </td>
             </tr>`).join('')}
         </tbody>
@@ -786,7 +787,7 @@ async function carregarFechamentos(sid) {
   const dados = await api('api/fechamentos.php?semana_id=' + sid);
   const tb    = document.getElementById('tbody-fechamentos');
   if (!dados.length) {
-    tb.innerHTML = '<tr><td colspan="4" style="color:#aaa;">Nenhum fechamento registrado nesta semana.</td></tr>';
+    tb.innerHTML = '<tr><td colspan="4" style="color:var(--text-muted);">Nenhum fechamento registrado nesta semana.</td></tr>';
     return;
   }
   tb.innerHTML = dados.map(f => `
@@ -794,7 +795,7 @@ async function carregarFechamentos(sid) {
       <td>${f.motivo}</td>
       <td style="text-align:center;">
         <input type="number" min="1" max="5" value="${f.total}"
-               style="width:70px;padding:.25rem .4rem;border:1px solid #ccd;border-radius:5px;text-align:center;"
+               style="width:70px;padding:.25rem .4rem;border:1px solid rgba(0,255,255,.25);border-radius:5px;text-align:center;background:var(--bg2);color:var(--text);"
                onchange="atualizarTotalFechamento(${f.id}, this.value, '${(f.observacao||'').replace(/'/g,"\\'")}')"
         >
       </td>
@@ -890,7 +891,7 @@ async function carregarMotivos() {
   // Tabela
   const tb = document.getElementById('tbody-motivos');
   if (!dados.length) {
-    tb.innerHTML = '<tr><td colspan="4" style="color:#aaa;">Nenhum motivo cadastrado.</td></tr>';
+    tb.innerHTML = '<tr><td colspan="4" style="color:var(--text-muted);">Nenhum motivo cadastrado.</td></tr>';
     return;
   }
   tb.innerHTML = dados.map(m => `
@@ -978,7 +979,7 @@ async function salvarSemana() {
 function renderTabelaSemanas(semanas) {
   const tb = document.getElementById('tbody-semanas');
   if (!semanas.length) {
-    tb.innerHTML = '<tr><td colspan="4" style="color:#aaa;">Nenhuma semana cadastrada.</td></tr>';
+    tb.innerHTML = '<tr><td colspan="4" style="color:var(--text-muted);">Nenhuma semana cadastrada.</td></tr>';
     return;
   }
   tb.innerHTML = semanas.map(s => `
