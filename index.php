@@ -1661,8 +1661,10 @@ async function salvarPermissoes() {
       method: 'POST',
       body: JSON.stringify({ slug: _permSlug, modulos }),
     });
-    toast('Permissões salvas.', 'suc');
     fecharModalPermissoes();
+    toast('Permissões salvas. Recarregando…', 'suc');
+    // Recarrega a página para que o PHP re-renderize as abas com as novas permissões
+    setTimeout(() => window.location.reload(), 900);
   } catch(e) { toast(e.message, 'erro'); }
 }
 
