@@ -113,7 +113,7 @@
           <div class="chart-wrap"><canvas id="chart-evolucao"></canvas></div>
         </div>
         <div class="painel">
-          <div class="painel-titulo"><i class="fas fa-chart-pie"></i> Distribuição da Semana</div>
+          <div class="painel-titulo"><i class="fas fa-chart-pie"></i> Motivos de Fechamento — Distribuição</div>
           <div class="chart-wrap"><canvas id="chart-pizza"></canvas></div>
         </div>
       </div>
@@ -571,23 +571,36 @@ async function carregarDashboard(sid) {
       },
     });
 
-    // Gráfico pizza
+    // Gráfico pizza — Motivos de Fechamento
     if (chartPizza) chartPizza.destroy();
-    chartPizza = new Chart(document.getElementById('chart-pizza'), {
-      type: 'doughnut',
-      data: {
-        labels: ['Atendidos', 'Cancelados', 'Faltas'],
-        datasets: [{
-          data: [
-            +d.totais.total_atendidos,
-            +d.totais.total_cancelados,
-            +d.totais.total_faltas,
-          ],
-          backgroundColor: ['#198754', '#dc3545', '#ffc107'],
-        }],
-      },
-      options: { responsive: true, plugins: { legend: { position: 'bottom' } } },
-    });
+    const coresPizza = ['#dc3545','#ffc107','#005599','#198754','#6f42c1','#fd7e14','#20c997','#e83e8c'];
+    if (!d.fechamentos.length) {
+      document.getElementById('chart-pizza').parentElement.innerHTML =
+        '<p style="color:#aaa;font-size:.88rem;text-align:center;padding:2rem 0;">Nenhum fechamento registrado nesta semana.</p>';
+    } else {
+      chartPizza = new Chart(document.getElementById('chart-pizza'), {
+        type: 'doughnut',
+        plugins: [ChartDataLabels],
+        data: {
+          labels: d.fechamentos.map(f => f.descricao),
+          datasets: [{
+            data: d.fechamentos.map(f => +f.total),
+            backgroundColor: d.fechamentos.map((_, i) => coresPizza[i % coresPizza.length]),
+          }],
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: { position: 'bottom', labels: { font: { size: 11 } } },
+            datalabels: {
+              color: '#fff',
+              font: { weight: 'bold', size: 12 },
+              formatter: v => v > 0 ? v : '',
+            },
+          },
+        },
+      });
+    }
 
     // Label da semana no título do gráfico de picos
     const semAtual = (window._semanasCache || []).find(s => s.id == sid);
