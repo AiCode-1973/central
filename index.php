@@ -451,10 +451,19 @@ async function carregarDashboard(sid) {
     if (!d.fechamentos.length) {
       rf.innerHTML = '<span style="color:#aaa;">Nenhum fechamento registrado nesta semana.</span>';
     } else {
-      rf.innerHTML = '<ul style="margin:0;padding-left:1.2rem;">' +
-        d.fechamentos.map(f =>
-          `<li><strong>${f.descricao}</strong> — ${f.total} dia(s)</li>`
-        ).join('') + '</ul>';
+      const totalGeral = d.fechamentos.reduce((s, f) => s + +f.total, 0);
+      rf.innerHTML =
+        '<table style="width:100%;border-collapse:collapse;font-size:.88rem;">' +
+          d.fechamentos.map(f => `
+            <tr style="border-bottom:1px solid #e8eef5;">
+              <td style="padding:.35rem .4rem;">${f.descricao}</td>
+              <td style="padding:.35rem .4rem;text-align:right;font-weight:700;color:#003366;">${f.total}</td>
+            </tr>`).join('') +
+          `<tr style="border-top:2px solid #003366;background:#e8f0fe;">
+            <td style="padding:.4rem .4rem;font-weight:700;">Total</td>
+            <td style="padding:.4rem .4rem;text-align:right;font-weight:700;color:#003366;font-size:1rem;">${totalGeral}</td>
+          </tr>` +
+        '</table>';
     }
   } catch (e) { toast(e.message, 'erro'); }
 }
