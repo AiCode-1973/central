@@ -153,8 +153,14 @@
       <div class="painel-titulo"><i class="fas fa-clock"></i> Cadastrar Horários de Pico</div>
       <div class="form-inline-row" style="margin-bottom:1rem;">
         <div class="form-group">
-          <label>Data</label>
-          <input type="date" id="pico-data">
+          <label>Dia da semana</label>
+          <select id="pico-data" style="padding:.4rem .65rem;border:1px solid #ccd;border-radius:6px;font-size:.9rem;">
+            <option value="">— Selecione —</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Hora (HH:MM)</label>
+          <input type="time" id="pico-hora" step="3600">
         </div>
         <div class="form-group">
           <label>Total Atendimentos</label>
@@ -169,7 +175,7 @@
       <div class="table-responsive">
         <table class="tabela-app">
           <thead>
-            <tr><th>Data</th><th>Atendimentos</th><th></th></tr>
+            <tr><th>Dia</th><th>Hora</th><th>Atendimentos</th><th></th></tr>
           </thead>
           <tbody id="tbody-picos-form"></tbody>
         </table>
@@ -184,7 +190,7 @@
       <div class="table-responsive">
         <table class="tabela-app">
           <thead>
-            <tr><th>Data</th><th>Atendimentos</th><th></th></tr>
+            <tr><th>Dia</th><th>Hora</th><th>Atendimentos</th><th></th></tr>
           </thead>
           <tbody id="tbody-picos-list">
             <tr><td colspan="4" style="color:#aaa;">Selecione uma semana.</td></tr>
@@ -362,6 +368,7 @@ async function carregarSemanas() {
   const semanas = await api('api/semanas.php');
   const sel     = document.getElementById('sel-semana');
   sel.innerHTML  = '<option value="">— Selecione uma semana —</option>';
+  window._semanasCache = semanas;
   semanas.forEach(s => {
     const o = document.createElement('option');
     o.value       = s.id;
@@ -378,6 +385,31 @@ function onSemanaChange() {
   carregarAtendimentos(id);
   carregarPicosList(id);
   carregarFechamentos(id);
+  popularDiasPico(id);
+}
+
+function popularDiasPico(sid) {
+  // Busca a semana selecionada e popula o select com Seg-Sex
+  const sel = document.getElementById('sel-semana');
+  const opt = sel.options[sel.selectedIndex];
+  if (!opt || !opt.value) return;
+  // Pega data_inicio do atributo data- ou via API em cache
+  const semanas = window._semanasCache || [];
+  const sem = semanas.find(s => s.id == sid);
+  if (!sem) return;
+  const selDia  = document.getElementById('pico-data');
+  const nomes   = ['Segunda','Terça','Quarta','Quinta','Sexta'];
+  selDia.innerHTML = '<option value="">— Selecione —</option>';
+  const inicio = new Date(sem.data_inicio + 'T12:00:00');
+  for (let i = 0; i < 5; i++) {
+    const d = new Date(inicio);
+    d.setDate(inicio.getDate() + i);
+    const val = d.toISOString().slice(0, 10);
+    const o   = document.createElement('option');
+    o.value       = val;
+    o.textContent = `${nomes[i]} (${fmtData(val)})`;
+    selDia.appendChild(o);
+  }
 }
 
 /* ════════════════════════════════════════════════════════
@@ -440,7 +472,7 @@ async function carregarDashboard(sid) {
     chartPicos = new Chart(document.getElementById('chart-picos'), {
       type: 'bar',
       data: {
-        labels: d.picos.map(p => fmtData(p.data)),
+        labels: d.picos.map(p => `${fmtData(p.data)} ${p.hora||''}`.trim()),
         datasets: [{
           label: 'Atendimentos',
           data:  d.picos.map(p => +p.total),
@@ -607,11 +639,13 @@ let picosForm = [];
 
 function addPico() {
   const data  = document.getElementById('pico-data').value;
+  const hora  = document.getElementById('pico-hora').value;
   const total = parseInt(document.getElementById('pico-total').value) || 0;
-  if (!data) { toast('Preencha a data.', 'erro'); return; }
-  // Evita duplicata no form
-  const idx = picosForm.findIndex(p => p.data === data);
-  if (idx >= 0) { picosForm[idx].total = total; } else { picosForm.push({ data, total }); }
+  if (!data) { toast('Selecione o dia.', 'erro'); return; }
+  if (!hora) { toast('Preencha a hora.', 'erro'); return; }
+  const key = data + '_' + hora;
+  const idx = picosForm.findIndex(p => p.data === data && p.hora === hora);
+  if (idx >= 0) { picosForm[idx].total = total; } else { picosForm.push({ data, hora, total }); }
   renderPicosForm();
 }
 
@@ -621,6 +655,7 @@ function renderPicosForm() {
   tb.innerHTML = picosForm.map((p, i) => `
     <tr>
       <td>${fmtData(p.data)}</td>
+      <td>${p.hora}</td>
       <td>${p.total}</td>
       <td><button class="btn-del" onclick="picosForm.splice(${i},1);renderPicosForm()"><i class="fas fa-trash"></i></button></td>
     </tr>`).join('');
@@ -631,7 +666,7 @@ async function salvarPicos() {
   if (!sid) { toast('Selecione uma semana.', 'erro'); return; }
   if (!picosForm.length) { toast('Adicione ao menos um registro.', 'erro'); return; }
   const items = picosForm.map(p => ({
-    semana_id: sid, data: p.data, total_atendimentos: p.total,
+    semana_id: sid, data: p.data, hora: p.hora, total_atendimentos: p.total,
   }));
   try {
     await api('api/picos.php', { method: 'POST', body: JSON.stringify({ items }) });
@@ -653,6 +688,7 @@ async function carregarPicosList(sid) {
   tb.innerHTML = dados.map(p => `
     <tr>
       <td>${fmtData(p.data)}</td>
+      <td>${p.hora}</td>
       <td>${p.total_atendimentos}</td>
       <td><button class="btn-del" onclick="delPico(${p.id})"><i class="fas fa-trash"></i></button></td>
     </tr>`).join('');
