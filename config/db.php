@@ -40,14 +40,30 @@ function _criarTabelas(mysqli $conn): void {
 
     $conn->query("CREATE TABLE IF NOT EXISTS fechamentos (
         id        INT AUTO_INCREMENT PRIMARY KEY,
-        semana_id INT  NOT NULL,
-        data      DATE NOT NULL,
-        motivo_id INT  NOT NULL,
+        semana_id INT           NOT NULL,
+        motivo_id INT           NOT NULL,
+        total     INT UNSIGNED  NOT NULL DEFAULT 1,
         observacao TEXT,
         criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE KEY uk_fech_semana_motivo (semana_id, motivo_id),
         CONSTRAINT fk_fech_semana FOREIGN KEY (semana_id) REFERENCES semanas(id) ON DELETE CASCADE,
         CONSTRAINT fk_fech_motivo FOREIGN KEY (motivo_id) REFERENCES motivos_fechamento(id) ON DELETE RESTRICT
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+    // Migração: adiciona coluna total se a tabela já existia sem ela
+    $conn->query("ALTER TABLE fechamentos ADD COLUMN IF NOT EXISTS total INT UNSIGNED NOT NULL DEFAULT 1");
+    // Migração: remove coluna data se ainda existir (estrutura antiga)
+    $cols = $conn->query("SHOW COLUMNS FROM fechamentos LIKE 'data'");
+    if ($cols && $cols->num_rows > 0) {
+        // Remove FK e coluna data da estrutura antiga
+        $conn->query("ALTER TABLE fechamentos DROP FOREIGN KEY fk_fech_semana");
+        $conn->query("ALTER TABLE fechamentos DROP FOREIGN KEY fk_fech_motivo");
+        $conn->query("ALTER TABLE fechamentos DROP COLUMN data");
+        $conn->query("ALTER TABLE fechamentos DROP INDEX IF EXISTS uk_fech_semana_motivo");
+        $conn->query("ALTER TABLE fechamentos ADD UNIQUE KEY uk_fech_semana_motivo (semana_id, motivo_id)");
+        $conn->query("ALTER TABLE fechamentos ADD CONSTRAINT fk_fech_semana FOREIGN KEY (semana_id) REFERENCES semanas(id) ON DELETE CASCADE");
+        $conn->query("ALTER TABLE fechamentos ADD CONSTRAINT fk_fech_motivo FOREIGN KEY (motivo_id) REFERENCES motivos_fechamento(id) ON DELETE RESTRICT");
+    }
 
     $conn->query("CREATE TABLE IF NOT EXISTS atendimentos (
         id               INT AUTO_INCREMENT PRIMARY KEY,

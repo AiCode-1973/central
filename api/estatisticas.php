@@ -40,11 +40,11 @@ $picos = $stmtPico->get_result()->fetch_all(MYSQLI_ASSOC);
 
 // Motivos de fechamento
 $stmtFech = $conn->prepare(
-    "SELECT m.descricao, COUNT(*) AS total
+    "SELECT m.descricao, f.total
      FROM fechamentos f
      JOIN motivos_fechamento m ON m.id = f.motivo_id
      WHERE f.semana_id = ?
-     GROUP BY m.id ORDER BY total DESC"
+     ORDER BY f.total DESC"
 );
 $stmtFech->bind_param('i', $semana_id);
 $stmtFech->execute();

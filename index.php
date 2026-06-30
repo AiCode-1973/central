@@ -203,35 +203,39 @@
   ══════════════════════════════════════════════════════════ -->
   <section id="tab-fechamentos" class="tab-section">
     <div class="painel">
-      <div class="painel-titulo"><i class="fas fa-door-closed"></i> Registrar Fechamento</div>
-      <div class="form-inline-row" style="margin-bottom:1rem;">
-        <div class="form-group">
-          <label>Data</label>
-          <input type="date" id="fech-data">
-        </div>
-        <div class="form-group">
+      <div class="painel-titulo"><i class="fas fa-door-closed"></i> Motivos de Fechamento da Semana</div>
+      <p style="font-size:.85rem;color:#666;margin-bottom:1rem;">
+        Informe o motivo e a quantidade total de dias fechados por esse motivo na semana.
+      </p>
+
+      <!-- Linha para adicionar novo motivo -->
+      <div class="form-inline-row" style="margin-bottom:1.1rem;align-items:flex-end;">
+        <div class="form-group" style="flex:1;min-width:200px;">
           <label>Motivo <small style="color:#888;font-weight:400;">(selecione ou digite novo)</small></label>
           <input type="text" id="fech-motivo-txt" list="list-motivos"
-                 placeholder="Digite ou escolha um motivo…"
-                 style="min-width:240px;padding:.4rem .65rem;border:1px solid #ccd;border-radius:6px;font-size:.9rem;">
+                 placeholder="Ex: Feriado, Manutenção…"
+                 style="width:100%;padding:.4rem .65rem;border:1px solid #ccd;border-radius:6px;font-size:.9rem;">
           <datalist id="list-motivos"></datalist>
+        </div>
+        <div class="form-group">
+          <label>Total de dias</label>
+          <input type="number" id="fech-total" min="1" max="5" value="1"
+                 style="width:90px;padding:.4rem .65rem;border:1px solid #ccd;border-radius:6px;font-size:.9rem;">
         </div>
         <div class="form-group" style="flex:1;">
           <label>Observação</label>
-          <input type="text" id="fech-obs" placeholder="Opcional" style="width:100%;">
+          <input type="text" id="fech-obs" placeholder="Opcional" style="width:100%;padding:.4rem .65rem;border:1px solid #ccd;border-radius:6px;font-size:.9rem;">
         </div>
-        <button class="btn-app prim" style="align-self:flex-end;" onclick="salvarFechamento()">
-          <i class="fas fa-plus"></i> Registrar
+        <button class="btn-app prim" onclick="salvarFechamento()">
+          <i class="fas fa-plus"></i> Adicionar
         </button>
       </div>
-    </div>
 
-    <div class="painel" style="margin-top:1.25rem;">
-      <div class="painel-titulo"><i class="fas fa-list"></i> Fechamentos da Semana</div>
+      <!-- Tabela de fechamentos da semana -->
       <div class="table-responsive">
         <table class="tabela-app">
           <thead>
-            <tr><th>Data</th><th>Motivo</th><th>Observação</th><th></th></tr>
+            <tr><th>Motivo</th><th style="width:120px;text-align:center;">Total de dias</th><th>Observação</th><th></th></tr>
           </thead>
           <tbody id="tbody-fechamentos">
             <tr><td colspan="4" style="color:#aaa;">Selecione uma semana.</td></tr>
@@ -676,59 +680,76 @@ async function carregarFechamentos(sid) {
   const dados = await api('api/fechamentos.php?semana_id=' + sid);
   const tb    = document.getElementById('tbody-fechamentos');
   if (!dados.length) {
-    tb.innerHTML = '<tr><td colspan="4" style="color:#aaa;">Nenhum fechamento registrado.</td></tr>';
+    tb.innerHTML = '<tr><td colspan="4" style="color:#aaa;">Nenhum fechamento registrado nesta semana.</td></tr>';
     return;
   }
   tb.innerHTML = dados.map(f => `
     <tr>
-      <td>${fmtData(f.data)}</td>
       <td>${f.motivo}</td>
+      <td style="text-align:center;">
+        <input type="number" min="1" max="5" value="${f.total}"
+               style="width:70px;padding:.25rem .4rem;border:1px solid #ccd;border-radius:5px;text-align:center;"
+               onchange="atualizarTotalFechamento(${f.id}, this.value, '${(f.observacao||'').replace(/'/g,"\\'")}')"
+        >
+      </td>
       <td>${f.observacao || '—'}</td>
       <td><button class="btn-del" onclick="delFechamento(${f.id})"><i class="fas fa-trash"></i></button></td>
     </tr>`).join('');
 }
 
 async function salvarFechamento() {
-  const sid      = semanaAtual();
-  const data     = document.getElementById('fech-data').value;
+  const sid       = semanaAtual();
   const motivoTxt = document.getElementById('fech-motivo-txt').value.trim();
-  const obs      = document.getElementById('fech-obs').value;
+  const total     = parseInt(document.getElementById('fech-total').value) || 1;
+  const obs       = document.getElementById('fech-obs').value.trim();
   if (!sid)       { toast('Selecione uma semana.', 'erro'); return; }
-  if (!data)      { toast('Informe a data.', 'erro'); return; }
   if (!motivoTxt) { toast('Informe o motivo.', 'erro'); return; }
 
   try {
-    // Verifica se o motivo já existe (comparação sem diferenciar maiúsculas)
-    const motivos  = await api('api/motivos.php');
-    let motivo_id  = null;
+    const motivos   = await api('api/motivos.php');
+    let motivo_id   = null;
     const existente = motivos.find(m => m.descricao.trim().toLowerCase() === motivoTxt.toLowerCase());
 
     if (existente) {
       motivo_id = existente.id;
-      // Reativa caso esteja inativo
       if (existente.ativo != 1) {
         await api('api/motivos.php', { method: 'PUT', body: JSON.stringify({ id: motivo_id, ativo: 1 }) });
       }
     } else {
-      // Cria novo motivo automaticamente
       const novo = await api('api/motivos.php', {
         method: 'POST',
         body: JSON.stringify({ descricao: motivoTxt }),
       });
       motivo_id = novo.id;
-      await carregarMotivos(); // atualiza datalist e tabela de motivos
+      await carregarMotivos();
     }
 
     await api('api/fechamentos.php', {
       method: 'POST',
-      body: JSON.stringify({ semana_id: sid, data, motivo_id, observacao: obs }),
+      body: JSON.stringify({ semana_id: sid, motivo_id, total, observacao: obs }),
     });
 
-    toast('Fechamento registrado!', 'suc');
-    document.getElementById('fech-data').value       = '';
+    toast('Fechamento salvo!', 'suc');
     document.getElementById('fech-motivo-txt').value = '';
+    document.getElementById('fech-total').value      = '1';
     document.getElementById('fech-obs').value        = '';
     carregarFechamentos(sid);
+    carregarDashboard(sid);
+  } catch (e) { toast(e.message, 'erro'); }
+}
+
+async function atualizarTotalFechamento(id, total, obs) {
+  const sid = semanaAtual();
+  // Busca o motivo_id do registro atual para re-salvar
+  try {
+    const dados = await api('api/fechamentos.php?semana_id=' + sid);
+    const reg   = dados.find(f => f.id == id);
+    if (!reg) return;
+    await api('api/fechamentos.php', {
+      method: 'POST',
+      body: JSON.stringify({ semana_id: sid, motivo_id: reg.motivo_id, total: parseInt(total), observacao: obs }),
+    });
+    toast('Total atualizado!', 'suc');
     carregarDashboard(sid);
   } catch (e) { toast(e.message, 'erro'); }
 }

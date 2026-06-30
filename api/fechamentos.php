@@ -11,12 +11,12 @@ try {
             $semana_id = intval($_GET['semana_id'] ?? 0);
             if (!$semana_id) { echo json_encode([]); break; }
             $stmt = $conn->prepare(
-                "SELECT f.id, f.data, f.observacao,
+                "SELECT f.id, f.total, f.observacao,
                         m.id AS motivo_id, m.descricao AS motivo
                  FROM fechamentos f
                  JOIN motivos_fechamento m ON m.id = f.motivo_id
                  WHERE f.semana_id = ?
-                 ORDER BY f.data"
+                 ORDER BY m.descricao"
             );
             $stmt->bind_param('i', $semana_id);
             $stmt->execute();
@@ -26,20 +26,22 @@ try {
         case 'POST':
             $body      = json_decode(file_get_contents('php://input'), true);
             $semana_id = intval($body['semana_id'] ?? 0);
-            $data      = trim($body['data']        ?? '');
             $motivo_id = intval($body['motivo_id'] ?? 0);
+            $total     = intval($body['total']     ?? 1);
             $obs       = trim($body['observacao']  ?? '');
-            if (!$semana_id || !$data || !$motivo_id) {
+            if (!$semana_id || !$motivo_id) {
                 http_response_code(422);
-                echo json_encode(['erro' => 'semana_id, data e motivo_id são obrigatórios.']);
+                echo json_encode(['erro' => 'semana_id e motivo_id são obrigatórios.']);
                 break;
             }
             $stmt = $conn->prepare(
-                "INSERT INTO fechamentos (semana_id, data, motivo_id, observacao) VALUES (?, ?, ?, ?)"
+                "INSERT INTO fechamentos (semana_id, motivo_id, total, observacao)
+                 VALUES (?, ?, ?, ?)
+                 ON DUPLICATE KEY UPDATE total = VALUES(total), observacao = VALUES(observacao)"
             );
-            $stmt->bind_param('isis', $semana_id, $data, $motivo_id, $obs);
+            $stmt->bind_param('iiis', $semana_id, $motivo_id, $total, $obs);
             $stmt->execute();
-            echo json_encode(['id' => $conn->insert_id, 'mensagem' => 'Fechamento registrado.']);
+            echo json_encode(['mensagem' => 'Fechamento salvo.']);
             break;
 
         case 'DELETE':
