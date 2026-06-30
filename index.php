@@ -73,6 +73,21 @@ function temPerm(string $m): bool {
       <i class="fas fa-users"></i> <span>Usuários</span>
     </button>
     <?php endif; ?>
+    <?php if (temPerm('autorizacoes')): ?>
+    <button class="tab-btn" onclick="showTab('autorizacoes',this)">
+      <i class="fas fa-file-medical"></i> <span>Autorizações</span>
+    </button>
+    <?php endif; ?>
+    <?php if (temPerm('convenios')): ?>
+    <button class="tab-btn" onclick="showTab('convenios',this)">
+      <i class="fas fa-handshake"></i> <span>Convênios</span>
+    </button>
+    <?php endif; ?>
+    <?php if (temPerm('procedimentos')): ?>
+    <button class="tab-btn" onclick="showTab('procedimentos',this)">
+      <i class="fas fa-stethoscope"></i> <span>Procedimentos</span>
+    </button>
+    <?php endif; ?>
   </div>
   <!-- Usuário logado + logout -->
   <div style="display:flex;align-items:center;gap:.6rem;padding-left:1rem;border-left:1px solid rgba(255,255,255,.08);flex-shrink:0;">
@@ -455,6 +470,152 @@ function temPerm(string $m): bool {
     </div>
   </section>
   <?php endif; ?>
+
+  <!-- ABA: AUTORIZAÇÕES DE EXAMES -->
+  <section id="tab-autorizacoes" class="tab-section" <?php if(!temPerm('autorizacoes')) echo 'style="display:none"'; ?>>
+    <div class="painel">
+      <div class="painel-titulo"><i class="fas fa-file-medical"></i> Autorizações de Exames</div>
+
+      <!-- Formulário de cadastro/edição -->
+      <div id="aut-form-wrap" style="background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:1.25rem;margin-bottom:1.5rem;">
+        <div style="font-size:.8rem;font-weight:700;color:var(--neon-cyan);text-transform:uppercase;letter-spacing:.04em;margin-bottom:1rem;" id="aut-form-titulo">Nova Autorização</div>
+        <div class="form-inline-row">
+          <div class="form-group" style="flex:2;min-width:200px;">
+            <label>Nome do Paciente <span style="color:var(--neon-pink);">*</span></label>
+            <input type="text" id="aut-paciente-nome" placeholder="Nome completo" style="width:100%;">
+          </div>
+          <div class="form-group" style="min-width:150px;">
+            <label>CPF</label>
+            <input type="text" id="aut-cpf" placeholder="000.000.000-00" maxlength="14" style="width:100%;" oninput="mascaraCPF(this)">
+          </div>
+          <div class="form-group" style="min-width:150px;">
+            <label>Telefone</label>
+            <input type="text" id="aut-telefone" placeholder="(00) 00000-0000" maxlength="15" style="width:100%;" oninput="mascaraTelefone(this)">
+          </div>
+        </div>
+        <div class="form-inline-row">
+          <div class="form-group" style="flex:1;min-width:180px;">
+            <label>Convênio <span style="color:var(--neon-pink);">*</span></label>
+            <select id="aut-convenio" style="width:100%;padding:.4rem .65rem;border:1px solid rgba(99,179,237,.25);border-radius:6px;background:var(--bg2);color:var(--text);font-size:.9rem;">
+              <option value="">— Selecione —</option>
+            </select>
+          </div>
+          <div class="form-group" style="flex:1;min-width:180px;">
+            <label>Procedimento (Exame) <span style="color:var(--neon-pink);">*</span></label>
+            <select id="aut-procedimento" style="width:100%;padding:.4rem .65rem;border:1px solid rgba(99,179,237,.25);border-radius:6px;background:var(--bg2);color:var(--text);font-size:.9rem;">
+              <option value="">— Selecione —</option>
+            </select>
+          </div>
+          <div class="form-group" style="min-width:160px;">
+            <label>Data do Agendamento <span style="color:var(--neon-pink);">*</span></label>
+            <input type="date" id="aut-data" style="width:100%;">
+          </div>
+          <div class="form-group" style="min-width:150px;">
+            <label>Status</label>
+            <select id="aut-status" style="width:100%;padding:.4rem .65rem;border:1px solid rgba(99,179,237,.25);border-radius:6px;background:var(--bg2);color:var(--text);font-size:.9rem;">
+              <option value="pendente">Pendente</option>
+              <option value="autorizado">Autorizado</option>
+              <option value="negado">Negado</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-inline-row">
+          <div class="form-group" style="flex:1;">
+            <label>Pedido Médico <small style="color:var(--text-muted);font-weight:400;">(PDF, JPG ou PNG — máx. 10 MB)</small></label>
+            <input type="file" id="aut-arquivo" accept=".pdf,.jpg,.jpeg,.png,.webp"
+              style="width:100%;padding:.35rem .65rem;border:1px solid rgba(99,179,237,.25);border-radius:6px;background:var(--bg2);color:var(--text);font-size:.9rem;">
+            <div id="aut-arquivo-atual" style="display:none;margin-top:.35rem;font-size:.8rem;color:var(--text-muted);"></div>
+          </div>
+          <div class="form-group" style="flex:2;">
+            <label>Observação</label>
+            <input type="text" id="aut-observacao" placeholder="Opcional" style="width:100%;">
+          </div>
+        </div>
+        <div style="display:flex;gap:.4rem;margin-top:.5rem;">
+          <button class="btn-app suc" onclick="salvarAutorizacao()">
+            <i class="fas fa-save"></i> <span id="aut-btn-label">Cadastrar</span>
+          </button>
+          <button class="btn-app sm" id="aut-btn-cancelar" style="display:none;border-color:var(--text-muted);color:var(--text-muted);" onclick="cancelarEdicaoAutorizacao()">
+            <i class="fas fa-times"></i> Cancelar
+          </button>
+        </div>
+      </div>
+
+      <!-- Tabela -->
+      <div class="table-responsive">
+        <table class="tabela-app">
+          <thead>
+            <tr>
+              <th>Paciente</th><th>CPF</th><th>Telefone</th>
+              <th>Convênio</th><th>Procedimento</th><th>Agendamento</th>
+              <th>Status</th><th></th>
+            </tr>
+          </thead>
+          <tbody id="tbody-autorizacoes">
+            <tr><td colspan="8" style="color:var(--text-muted);">Carregando…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ABA: CONVÊNIOS -->
+  <section id="tab-convenios" class="tab-section" <?php if(!temPerm('convenios')) echo 'style="display:none"'; ?>>
+    <div class="painel">
+      <div class="painel-titulo"><i class="fas fa-handshake"></i> Cadastro de Convênios</div>
+      <div class="form-inline-row" style="margin-bottom:1rem;">
+        <div class="form-group" style="flex:1;">
+          <label>Nome do Convênio</label>
+          <input type="text" id="conv-nome" placeholder="Ex: Unimed, Bradesco Saúde…" style="width:100%;">
+        </div>
+        <button class="btn-app prim" style="align-self:flex-end;" onclick="salvarConvenio()">
+          <i class="fas fa-plus"></i> <span id="conv-btn-label">Cadastrar</span>
+        </button>
+        <button class="btn-app sm" id="conv-btn-cancelar" style="display:none;align-self:flex-end;border-color:var(--text-muted);color:var(--text-muted);" onclick="cancelarEdicaoConvenio()">
+          <i class="fas fa-times"></i> Cancelar
+        </button>
+      </div>
+      <div class="table-responsive">
+        <table class="tabela-app">
+          <thead>
+            <tr><th>#</th><th>Nome</th><th>Status</th><th></th></tr>
+          </thead>
+          <tbody id="tbody-convenios">
+            <tr><td colspan="4" style="color:var(--text-muted);">Carregando…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ABA: PROCEDIMENTOS -->
+  <section id="tab-procedimentos" class="tab-section" <?php if(!temPerm('procedimentos')) echo 'style="display:none"'; ?>>
+    <div class="painel">
+      <div class="painel-titulo"><i class="fas fa-stethoscope"></i> Cadastro de Procedimentos (Exames)</div>
+      <div class="form-inline-row" style="margin-bottom:1rem;">
+        <div class="form-group" style="flex:1;">
+          <label>Nome do Procedimento/Exame</label>
+          <input type="text" id="proc-nome" placeholder="Ex: Raio-X Tórax, Ecocardiograma…" style="width:100%;">
+        </div>
+        <button class="btn-app prim" style="align-self:flex-end;" onclick="salvarProcedimento()">
+          <i class="fas fa-plus"></i> <span id="proc-btn-label">Cadastrar</span>
+        </button>
+        <button class="btn-app sm" id="proc-btn-cancelar" style="display:none;align-self:flex-end;border-color:var(--text-muted);color:var(--text-muted);" onclick="cancelarEdicaoProcedimento()">
+          <i class="fas fa-times"></i> Cancelar
+        </button>
+      </div>
+      <div class="table-responsive">
+        <table class="tabela-app">
+          <thead>
+            <tr><th>#</th><th>Nome</th><th>Status</th><th></th></tr>
+          </thead>
+          <tbody id="tbody-procedimentos">
+            <tr><td colspan="4" style="color:var(--text-muted);">Carregando…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
 
 <?php if ($usuarioLogado['perfil'] === 'admin'): ?>
 <!-- ══ MODAL PERMISSÕES ═══════════════════════════════════ -->
@@ -1634,7 +1795,346 @@ document.getElementById('modal-senha')?.addEventListener('click', e => {
     await carregarPerfis();
     await carregarUsuarios();
   }
+  if (PERMISSOES.includes('autorizacoes') || PERMISSOES.includes('convenios') || PERMISSOES.includes('procedimentos')) {
+    await carregarConvenios();
+    await carregarProcedimentos();
+  }
+  if (PERMISSOES.includes('autorizacoes')) {
+    await carregarAutorizacoes();
+  }
 })();
+
+/* ══════════════════════════════════════════════════════════
+   MÓDULO: CONVÊNIOS
+══════════════════════════════════════════════════════════ */
+let _conveniosCache = [];
+let _convenioEditId  = null;
+
+async function carregarConvenios() {
+  try {
+    const lista = await api('api/convenios.php');
+    if (!lista) return;
+    _conveniosCache = lista;
+
+    // Preenche selects de autorizações
+    const selConv = document.getElementById('aut-convenio');
+    if (selConv) {
+      const cur = selConv.value;
+      selConv.innerHTML = '<option value="">— Selecione —</option>' +
+        lista.filter(c => +c.ativo).map(c => `<option value="${c.id}">${c.nome}</option>`).join('');
+      if (cur) selConv.value = cur;
+    }
+
+    const tb = document.getElementById('tbody-convenios');
+    if (!tb) return;
+    if (!lista.length) {
+      tb.innerHTML = '<tr><td colspan="4" style="color:var(--text-muted);">Nenhum convênio cadastrado.</td></tr>';
+      return;
+    }
+    tb.innerHTML = lista.map(c => `
+      <tr>
+        <td>${c.id}</td>
+        <td style="font-weight:600;">${c.nome}</td>
+        <td>${+c.ativo ? '<span class="badge-ativo">Ativo</span>' : '<span class="badge-inativo">Inativo</span>'}</td>
+        <td style="white-space:nowrap;display:flex;gap:.35rem;">
+          <button class="btn-app prim sm" title="Editar" onclick="editarConvenio(${c.id})"><i class="fas fa-edit"></i></button>
+          <button class="btn-app sm" style="border-color:var(--text-muted);color:var(--text-muted);" title="${+c.ativo?'Desativar':'Ativar'}" onclick="toggleAtivoConvenio(${c.id},${+c.ativo?0:1})">
+            <i class="fas fa-${+c.ativo?'ban':'check'}"></i>
+          </button>
+          <button class="btn-del" title="Excluir" onclick="delConvenio(${c.id})"><i class="fas fa-trash"></i></button>
+        </td>
+      </tr>`).join('');
+  } catch(e) { toast(e.message, 'erro'); }
+}
+
+async function salvarConvenio() {
+  const nome = document.getElementById('conv-nome').value.trim();
+  if (!nome) { toast('Informe o nome do convênio.', 'erro'); return; }
+  try {
+    if (_convenioEditId) {
+      await api('api/convenios.php?id=' + _convenioEditId, { method: 'PUT', body: JSON.stringify({ nome }) });
+      toast('Convênio atualizado.', 'suc');
+    } else {
+      await api('api/convenios.php', { method: 'POST', body: JSON.stringify({ nome }) });
+      toast('Convênio criado.', 'suc');
+    }
+    cancelarEdicaoConvenio();
+    await carregarConvenios();
+  } catch(e) { toast(e.message, 'erro'); }
+}
+
+function editarConvenio(id) {
+  const c = _conveniosCache.find(x => +x.id === +id);
+  if (!c) return;
+  _convenioEditId = id;
+  document.getElementById('conv-nome').value = c.nome;
+  document.getElementById('conv-btn-label').textContent = 'Salvar';
+  document.getElementById('conv-btn-cancelar').style.display = '';
+}
+
+function cancelarEdicaoConvenio() {
+  _convenioEditId = null;
+  document.getElementById('conv-nome').value = '';
+  document.getElementById('conv-btn-label').textContent = 'Cadastrar';
+  document.getElementById('conv-btn-cancelar').style.display = 'none';
+}
+
+async function toggleAtivoConvenio(id, novoAtivo) {
+  try {
+    await api('api/convenios.php?id=' + id, { method: 'PUT', body: JSON.stringify({ ativo: novoAtivo }) });
+    await carregarConvenios();
+  } catch(e) { toast(e.message, 'erro'); }
+}
+
+async function delConvenio(id) {
+  if (!confirm('Excluir este convênio?')) return;
+  try {
+    await api('api/convenios.php?id=' + id, { method: 'DELETE' });
+    toast('Convênio excluído.', 'suc');
+    await carregarConvenios();
+  } catch(e) { toast(e.message, 'erro'); }
+}
+
+/* ══════════════════════════════════════════════════════════
+   MÓDULO: PROCEDIMENTOS
+══════════════════════════════════════════════════════════ */
+let _procedimentosCache = [];
+let _procedimentoEditId  = null;
+
+async function carregarProcedimentos() {
+  try {
+    const lista = await api('api/procedimentos.php');
+    if (!lista) return;
+    _procedimentosCache = lista;
+
+    // Preenche selects de autorizações
+    const selProc = document.getElementById('aut-procedimento');
+    if (selProc) {
+      const cur = selProc.value;
+      selProc.innerHTML = '<option value="">— Selecione —</option>' +
+        lista.filter(p => +p.ativo).map(p => `<option value="${p.id}">${p.nome}</option>`).join('');
+      if (cur) selProc.value = cur;
+    }
+
+    const tb = document.getElementById('tbody-procedimentos');
+    if (!tb) return;
+    if (!lista.length) {
+      tb.innerHTML = '<tr><td colspan="4" style="color:var(--text-muted);">Nenhum procedimento cadastrado.</td></tr>';
+      return;
+    }
+    tb.innerHTML = lista.map(p => `
+      <tr>
+        <td>${p.id}</td>
+        <td style="font-weight:600;">${p.nome}</td>
+        <td>${+p.ativo ? '<span class="badge-ativo">Ativo</span>' : '<span class="badge-inativo">Inativo</span>'}</td>
+        <td style="white-space:nowrap;display:flex;gap:.35rem;">
+          <button class="btn-app prim sm" title="Editar" onclick="editarProcedimento(${p.id})"><i class="fas fa-edit"></i></button>
+          <button class="btn-app sm" style="border-color:var(--text-muted);color:var(--text-muted);" title="${+p.ativo?'Desativar':'Ativar'}" onclick="toggleAtivoProcedimento(${p.id},${+p.ativo?0:1})">
+            <i class="fas fa-${+p.ativo?'ban':'check'}"></i>
+          </button>
+          <button class="btn-del" title="Excluir" onclick="delProcedimento(${p.id})"><i class="fas fa-trash"></i></button>
+        </td>
+      </tr>`).join('');
+  } catch(e) { toast(e.message, 'erro'); }
+}
+
+async function salvarProcedimento() {
+  const nome = document.getElementById('proc-nome').value.trim();
+  if (!nome) { toast('Informe o nome do procedimento.', 'erro'); return; }
+  try {
+    if (_procedimentoEditId) {
+      await api('api/procedimentos.php?id=' + _procedimentoEditId, { method: 'PUT', body: JSON.stringify({ nome }) });
+      toast('Procedimento atualizado.', 'suc');
+    } else {
+      await api('api/procedimentos.php', { method: 'POST', body: JSON.stringify({ nome }) });
+      toast('Procedimento criado.', 'suc');
+    }
+    cancelarEdicaoProcedimento();
+    await carregarProcedimentos();
+  } catch(e) { toast(e.message, 'erro'); }
+}
+
+function editarProcedimento(id) {
+  const p = _procedimentosCache.find(x => +x.id === +id);
+  if (!p) return;
+  _procedimentoEditId = id;
+  document.getElementById('proc-nome').value = p.nome;
+  document.getElementById('proc-btn-label').textContent = 'Salvar';
+  document.getElementById('proc-btn-cancelar').style.display = '';
+}
+
+function cancelarEdicaoProcedimento() {
+  _procedimentoEditId = null;
+  document.getElementById('proc-nome').value = '';
+  document.getElementById('proc-btn-label').textContent = 'Cadastrar';
+  document.getElementById('proc-btn-cancelar').style.display = 'none';
+}
+
+async function toggleAtivoProcedimento(id, novoAtivo) {
+  try {
+    await api('api/procedimentos.php?id=' + id, { method: 'PUT', body: JSON.stringify({ ativo: novoAtivo }) });
+    await carregarProcedimentos();
+  } catch(e) { toast(e.message, 'erro'); }
+}
+
+async function delProcedimento(id) {
+  if (!confirm('Excluir este procedimento?')) return;
+  try {
+    await api('api/procedimentos.php?id=' + id, { method: 'DELETE' });
+    toast('Procedimento excluído.', 'suc');
+    await carregarProcedimentos();
+  } catch(e) { toast(e.message, 'erro'); }
+}
+
+/* ══════════════════════════════════════════════════════════
+   MÓDULO: AUTORIZAÇÕES DE EXAMES
+══════════════════════════════════════════════════════════ */
+let _autorizacoesCache = [];
+let _autorizacaoEditId  = null;
+
+const STATUS_BADGE = {
+  pendente:   '<span style="background:rgba(246,224,94,.15);color:#f6e05e;border:1px solid rgba(246,224,94,.3);border-radius:4px;padding:.1rem .45rem;font-size:.75rem;font-weight:700;">Pendente</span>',
+  autorizado: '<span style="background:rgba(104,211,145,.15);color:#68d391;border:1px solid rgba(104,211,145,.3);border-radius:4px;padding:.1rem .45rem;font-size:.75rem;font-weight:700;">Autorizado</span>',
+  negado:     '<span style="background:rgba(246,135,179,.15);color:#f687b3;border:1px solid rgba(246,135,179,.3);border-radius:4px;padding:.1rem .45rem;font-size:.75rem;font-weight:700;">Negado</span>',
+};
+
+async function carregarAutorizacoes() {
+  try {
+    const lista = await api('api/autorizacoes.php');
+    if (!lista) return;
+    _autorizacoesCache = lista;
+    const tb = document.getElementById('tbody-autorizacoes');
+    if (!tb) return;
+    if (!lista.length) {
+      tb.innerHTML = '<tr><td colspan="8" style="color:var(--text-muted);">Nenhuma autorização cadastrada.</td></tr>';
+      return;
+    }
+    tb.innerHTML = lista.map(a => `
+      <tr>
+        <td style="font-weight:600;">${a.paciente_nome}</td>
+        <td style="font-size:.82rem;">${a.paciente_cpf || '—'}</td>
+        <td style="font-size:.82rem;">${a.paciente_telefone || '—'}</td>
+        <td>${a.convenio_nome}</td>
+        <td>${a.procedimento_nome}</td>
+        <td style="font-size:.85rem;">${a.data_agendamento}</td>
+        <td>${STATUS_BADGE[a.status] || a.status}</td>
+        <td style="white-space:nowrap;display:flex;gap:.35rem;">
+          ${a.pedido_arquivo ? `<a href="uploads/pedidos/${encodeURIComponent(a.pedido_arquivo)}" target="_blank" class="btn-app sm" style="border-color:var(--neon-cyan);color:var(--neon-cyan);text-decoration:none;" title="Ver pedido"><i class="fas fa-file-alt"></i></a>` : ''}
+          <button class="btn-app prim sm" title="Editar" onclick="editarAutorizacao(${a.id})"><i class="fas fa-edit"></i></button>
+          <button class="btn-del" title="Excluir" onclick="delAutorizacao(${a.id})"><i class="fas fa-trash"></i></button>
+        </td>
+      </tr>`).join('');
+  } catch(e) { toast(e.message, 'erro'); }
+}
+
+async function salvarAutorizacao() {
+  const nome   = document.getElementById('aut-paciente-nome').value.trim();
+  const cpf    = document.getElementById('aut-cpf').value.trim();
+  const tel    = document.getElementById('aut-telefone').value.trim();
+  const conv   = document.getElementById('aut-convenio').value;
+  const proc   = document.getElementById('aut-procedimento').value;
+  const data   = document.getElementById('aut-data').value;
+  const status = document.getElementById('aut-status').value;
+  const obs    = document.getElementById('aut-observacao').value.trim();
+  const file   = document.getElementById('aut-arquivo').files[0];
+
+  if (!nome || !conv || !proc || !data) {
+    toast('Paciente, convênio, procedimento e data são obrigatórios.', 'erro'); return;
+  }
+
+  const fd = new FormData();
+  fd.append('paciente_nome',     nome);
+  fd.append('paciente_cpf',      cpf);
+  fd.append('paciente_telefone', tel);
+  fd.append('convenio_id',       conv);
+  fd.append('procedimento_id',   proc);
+  fd.append('data_agendamento',  data);
+  fd.append('status',            status);
+  fd.append('observacao',        obs);
+  if (file) fd.append('pedido_arquivo', file);
+
+  try {
+    const url = _autorizacaoEditId
+      ? 'api/autorizacoes.php?id=' + _autorizacaoEditId
+      : 'api/autorizacoes.php';
+    const method = _autorizacaoEditId ? 'PUT' : 'POST';
+    const resp = await fetch(url, { method, body: fd });
+    const json = await resp.json().catch(() => ({}));
+    if (resp.status === 401) { window.location.href = 'login.php'; return; }
+    if (!resp.ok) throw new Error(json.erro || 'Erro ao salvar.');
+    toast(_autorizacaoEditId ? 'Autorização atualizada.' : 'Autorização criada.', 'suc');
+    cancelarEdicaoAutorizacao();
+    await carregarAutorizacoes();
+  } catch(e) { toast(e.message, 'erro'); }
+}
+
+function editarAutorizacao(id) {
+  const a = _autorizacoesCache.find(x => +x.id === +id);
+  if (!a) return;
+  _autorizacaoEditId = id;
+  document.getElementById('aut-paciente-nome').value = a.paciente_nome;
+  document.getElementById('aut-cpf').value           = a.paciente_cpf || '';
+  document.getElementById('aut-telefone').value      = a.paciente_telefone || '';
+  document.getElementById('aut-convenio').value      = a.convenio_id;
+  document.getElementById('aut-procedimento').value  = a.procedimento_id;
+  // data vem como dd/mm/yyyy, converte para yyyy-mm-dd
+  const [dd,mm,yy] = (a.data_agendamento || '').split('/');
+  document.getElementById('aut-data').value     = yy && mm && dd ? `${yy}-${mm}-${dd}` : '';
+  document.getElementById('aut-status').value   = a.status;
+  document.getElementById('aut-observacao').value = a.observacao || '';
+  document.getElementById('aut-form-titulo').textContent = 'Editar Autorização';
+  document.getElementById('aut-btn-label').textContent   = 'Salvar';
+  document.getElementById('aut-btn-cancelar').style.display = '';
+  const wrap = document.getElementById('aut-arquivo-atual');
+  if (a.pedido_arquivo) {
+    wrap.innerHTML = `<i class="fas fa-paperclip"></i> Arquivo atual: <a href="uploads/pedidos/${encodeURIComponent(a.pedido_arquivo)}" target="_blank" style="color:var(--neon-cyan);">${a.pedido_arquivo}</a>`;
+    wrap.style.display = '';
+  } else {
+    wrap.style.display = 'none';
+  }
+  document.getElementById('aut-form-wrap').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function cancelarEdicaoAutorizacao() {
+  _autorizacaoEditId = null;
+  ['aut-paciente-nome','aut-cpf','aut-telefone','aut-observacao'].forEach(id => {
+    const el = document.getElementById(id); if (el) el.value = '';
+  });
+  document.getElementById('aut-convenio').value    = '';
+  document.getElementById('aut-procedimento').value = '';
+  document.getElementById('aut-data').value         = '';
+  document.getElementById('aut-status').value       = 'pendente';
+  document.getElementById('aut-arquivo').value      = '';
+  document.getElementById('aut-arquivo-atual').style.display = 'none';
+  document.getElementById('aut-form-titulo').textContent = 'Nova Autorização';
+  document.getElementById('aut-btn-label').textContent   = 'Cadastrar';
+  document.getElementById('aut-btn-cancelar').style.display = 'none';
+}
+
+async function delAutorizacao(id) {
+  if (!confirm('Excluir esta autorização?')) return;
+  try {
+    await api('api/autorizacoes.php?id=' + id, { method: 'DELETE' });
+    toast('Autorização excluída.', 'suc');
+    await carregarAutorizacoes();
+  } catch(e) { toast(e.message, 'erro'); }
+}
+
+/* ── Máscaras de input ─────────────────────────────────── */
+function mascaraCPF(el) {
+  let v = el.value.replace(/\D/g,'').substring(0,11);
+  v = v.replace(/(\d{3})(\d)/,'$1.$2')
+       .replace(/(\d{3})(\d)/,'$1.$2')
+       .replace(/(\d{3})(\d{1,2})$/,'$1-$2');
+  el.value = v;
+}
+function mascaraTelefone(el) {
+  let v = el.value.replace(/\D/g,'').substring(0,11);
+  if (v.length > 10) v = v.replace(/(\d{2})(\d{5})(\d{4})/,'($1) $2-$3');
+  else if (v.length > 6) v = v.replace(/(\d{2})(\d{4})(\d+)/,'($1) $2-$3');
+  else if (v.length > 2) v = v.replace(/(\d{2})(\d+)/,'($1) $2');
+  el.value = v;
+}
 </script>
 </body>
 </html>

@@ -127,8 +127,8 @@ function _criarTabelas(mysqli $conn): void {
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
 
     // Permissões padrão — admin tem tudo, operador tem tudo exceto usuarios, visualizador só dashboard
-    $todosModulos = ['dashboard','atendimentos','picos','fechamentos','motivos','semanas','pesquisa','usuarios'];
-    $operadorMod  = ['dashboard','atendimentos','picos','fechamentos','motivos','semanas','pesquisa'];
+    $todosModulos = ['dashboard','atendimentos','picos','fechamentos','motivos','semanas','pesquisa','usuarios','autorizacoes','convenios','procedimentos'];
+    $operadorMod  = ['dashboard','atendimentos','picos','fechamentos','motivos','semanas','pesquisa','autorizacoes','convenios','procedimentos'];
     $visualizMod  = ['dashboard'];
 
     $chkPerm = $conn->query("SELECT COUNT(*) AS c FROM perfis_permissoes");
@@ -137,6 +137,13 @@ function _criarTabelas(mysqli $conn): void {
         foreach ($todosModulos as $m) { $insP->bind_param('ss', $s1, $m); $s1='admin';       $insP->execute(); }
         foreach ($operadorMod  as $m) { $insP->bind_param('ss', $s2, $m); $s2='operador';    $insP->execute(); }
         foreach ($visualizMod  as $m) { $insP->bind_param('ss', $s3, $m); $s3='visualizador';$insP->execute(); }
+    } else {
+        // Migração: garante novos módulos para admin (INSERT IGNORE não duplica)
+        $insP2 = $conn->prepare("INSERT IGNORE INTO perfis_permissoes (perfil_slug, modulo) VALUES (?, ?)");
+        foreach (['autorizacoes','convenios','procedimentos'] as $m) {
+            $s = 'admin';    $insP2->bind_param('ss', $s, $m); $insP2->execute();
+            $s = 'operador'; $insP2->bind_param('ss', $s, $m); $insP2->execute();
+        }
     }
 
     $conn->query("CREATE TABLE IF NOT EXISTS usuarios (
@@ -171,6 +178,42 @@ function _criarTabelas(mysqli $conn): void {
         $stmtAdmin->bind_param('sss', $nome, $email, $hash);
         $stmtAdmin->execute();
     }
+
+    // ── Convênios ─────────────────────────────────────────────
+    $conn->query("CREATE TABLE IF NOT EXISTS convenios (
+        id        INT AUTO_INCREMENT PRIMARY KEY,
+        nome      VARCHAR(200) NOT NULL,
+        ativo     TINYINT(1)   DEFAULT 1,
+        criado_em TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE KEY uk_convenio_nome (nome)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+    // ── Procedimentos / Exames ─────────────────────────────────
+    $conn->query("CREATE TABLE IF NOT EXISTS procedimentos (
+        id        INT AUTO_INCREMENT PRIMARY KEY,
+        nome      VARCHAR(200) NOT NULL,
+        ativo     TINYINT(1)   DEFAULT 1,
+        criado_em TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE KEY uk_proc_nome (nome)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+    // ── Autorizações de Exames ─────────────────────────────────
+    $conn->query("CREATE TABLE IF NOT EXISTS autorizacoes (
+        id                 INT AUTO_INCREMENT PRIMARY KEY,
+        convenio_id        INT          NOT NULL,
+        paciente_nome      VARCHAR(200) NOT NULL,
+        paciente_cpf       VARCHAR(14)  DEFAULT NULL,
+        paciente_telefone  VARCHAR(20)  DEFAULT NULL,
+        data_agendamento   DATE         NOT NULL,
+        procedimento_id    INT          NOT NULL,
+        pedido_arquivo     VARCHAR(300) DEFAULT NULL,
+        status             ENUM('pendente','autorizado','negado') NOT NULL DEFAULT 'pendente',
+        observacao         TEXT,
+        criado_em          TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        atualizado_em      TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        KEY fk_aut_conv (convenio_id),
+        KEY fk_aut_proc (procedimento_id)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
 
     $conn->query("SET FOREIGN_KEY_CHECKS = 1");
 }

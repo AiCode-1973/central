@@ -61,7 +61,7 @@ function requirePerfil(array $perfis): array {
  */
 function carregarPermissoes(string $perfil, mysqli $conn): array {
     if ($perfil === 'admin') {
-        return ['dashboard','atendimentos','picos','fechamentos','motivos','semanas','pesquisa','usuarios'];
+        return ['dashboard','atendimentos','picos','fechamentos','motivos','semanas','pesquisa','usuarios','autorizacoes','convenios','procedimentos'];
     }
     $stmt = $conn->prepare(
         "SELECT modulo FROM perfis_permissoes WHERE perfil_slug = ? ORDER BY modulo"
