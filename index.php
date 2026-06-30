@@ -684,23 +684,23 @@ function renderPesquisaChart(wrapId, canvasId, dados, chartRef, setChart) {
 
   // Tabela resumo + canvas
   wrap.innerHTML = `
-    <div style="display:flex;flex-wrap:wrap;gap:1.5rem;align-items:flex-start;">
-      <div style="flex:0 0 280px;">
+    <div style="display:flex;flex-wrap:nowrap;gap:1.25rem;align-items:center;">
+      <div style="flex:0 0 160px;max-width:160px;">
         <canvas id="${canvasId}"></canvas>
       </div>
-      <div style="flex:1;min-width:160px;">
-        <table style="width:100%;border-collapse:collapse;font-size:.88rem;">
+      <div style="flex:1;min-width:0;">
+        <table style="width:100%;border-collapse:collapse;font-size:.87rem;">
           ${SATISFACAO_LABELS.map((lb, i) => `
           <tr style="border-bottom:1px solid rgba(255,255,255,.05);">
-            <td style="padding:.35rem .4rem;">
-              <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${SATISFACAO_CORES[i]};margin-right:.4rem;"></span>${lb}
+            <td style="padding:.3rem .4rem;">
+              <span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:${SATISFACAO_CORES[i]};margin-right:.4rem;flex-shrink:0;"></span>${lb}
             </td>
-            <td style="padding:.35rem .4rem;text-align:right;font-weight:700;">${values[i]}</td>
-            <td style="padding:.35rem .4rem;text-align:right;color:var(--text-muted);font-size:.8rem;">${total ? ((values[i]/total)*100).toFixed(1)+'%' : '0%'}</td>
+            <td style="padding:.3rem .4rem;text-align:right;font-weight:700;">${values[i]}</td>
+            <td style="padding:.3rem .4rem;text-align:right;color:var(--text-muted);font-size:.78rem;">${total ? ((values[i]/total)*100).toFixed(1)+'%' : '0%'}</td>
           </tr>`).join('')}
           <tr style="border-top:1px solid var(--neon-cyan);background:rgba(99,179,237,.05);">
-            <td style="padding:.4rem .4rem;font-weight:700;">Total</td>
-            <td style="padding:.4rem .4rem;text-align:right;font-weight:700;color:var(--neon-cyan);" colspan="2">${total}</td>
+            <td style="padding:.35rem .4rem;font-weight:700;">Total</td>
+            <td style="padding:.35rem .4rem;text-align:right;font-weight:700;color:var(--neon-cyan);" colspan="2">${total}</td>
           </tr>
         </table>
       </div>
