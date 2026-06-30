@@ -486,12 +486,6 @@ async function carregarDashboard(sid) {
   try {
     const d = await api('api/estatisticas.php?semana_id=' + sid);
 
-    // KPIs
-    document.getElementById('kpi-agendados').textContent  = d.totais.total_agendados;
-    document.getElementById('kpi-atendidos').textContent  = d.totais.total_atendidos;
-    document.getElementById('kpi-cancelados').textContent = d.totais.total_cancelados;
-    document.getElementById('kpi-faltas').textContent     = d.totais.total_faltas;
-
     // Gráfico evolução
     const dias   = d.por_dia.map(r => fmtData(r.data));
     const agend  = d.por_dia.map(r => +r.total_agendados);
