@@ -357,6 +357,7 @@ async function carregarDashboard(sid) {
     if (chartEvolucao) chartEvolucao.destroy();
     chartEvolucao = new Chart(document.getElementById('chart-evolucao'), {
       type: 'bar',
+      plugins: [ChartDataLabels],
       data: {
         labels: dias,
         datasets: [
@@ -366,7 +367,20 @@ async function carregarDashboard(sid) {
           { label: 'Faltas',     data: falta, backgroundColor: '#ffc107' },
         ],
       },
-      options: { responsive: true, plugins: { legend: { position: 'bottom' } } },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { display: false },
+          datalabels: {
+            anchor: 'end',
+            align: 'end',
+            color: '#333',
+            font: { weight: 'bold', size: 11 },
+            formatter: v => v > 0 ? v : '',
+          },
+        },
+        layout: { padding: { top: 20 } },
+      },
     });
 
     // Gráfico pizza
