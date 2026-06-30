@@ -20,14 +20,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $stmt->bind_param('s', $email);
         $stmt->execute();
         $user = $stmt->get_result()->fetch_assoc();
-        $conn->close();
+        // NÃO fecha $conn aqui — loginUsuario e update ainda precisam dela
 
         if ($user && $user['ativo'] && password_verify($senha, $user['senha'])) {
-            loginUsuario($user, $conn);
             // Registra último acesso
             $s2 = $conn->prepare("UPDATE usuarios SET ultimo_acesso = NOW() WHERE id = ?");
             $s2->bind_param('i', $user['id']);
             $s2->execute();
+            loginUsuario($user, $conn);
             $conn->close();
             header('Location: index.php');
             exit;
