@@ -1604,13 +1604,16 @@ async function delPerfil(id) {
 
 /* ── Permissões por Perfil ────────────────────────────────── */
 const MODULOS_LABELS = {
-  dashboard:    'Dashboard',
-  atendimentos: 'Atendimentos',
-  picos:        'Horários de Pico',
-  fechamentos:  'Fechamentos',
-  motivos:      'Motivos',
-  semanas:      'Semanas',
-  pesquisa:     'Pesquisa de Satisfação',
+  dashboard:      'Dashboard',
+  atendimentos:   'Atendimentos',
+  picos:          'Horários de Pico',
+  fechamentos:    'Fechamentos',
+  motivos:        'Motivos',
+  semanas:        'Semanas',
+  pesquisa:       'Pesquisa de Satisfação',
+  autorizacoes:   'Autorizações de Exames',
+  convenios:      'Convênios',
+  procedimentos:  'Procedimentos',
 };
 let _permSlug = '';
 
