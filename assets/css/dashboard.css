@@ -30,7 +30,7 @@ body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background
 .navbar-app .nav-tabs-app .tab-btn:hover { color: var(--neon-cyan); border-color: rgba(99,179,237,.4); background: rgba(99,179,237,.07); }
 .navbar-app .nav-tabs-app .tab-btn.active { color: var(--neon-cyan); border-color: var(--neon-cyan); background: rgba(99,179,237,.12); }
 
-.main-wrap { max-width: 1280px; margin: 0 auto; padding: 1.5rem 1.25rem 3rem; }
+.main-wrap { max-width: 1600px; margin: 0 auto; padding: 1.5rem 1.5rem 3rem; }
 
 .semana-selector { background: var(--card); border: 1px solid var(--border); border-radius: var(--raio); box-shadow: var(--sombra); padding: .85rem 1.25rem; display: flex; flex-wrap: wrap; gap: .75rem; align-items: center; margin-bottom: 1.5rem; }
 .semana-selector label { font-weight: 600; color: var(--text-muted); white-space: nowrap; text-transform: uppercase; font-size: .78rem; letter-spacing: .04em; }
