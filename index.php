@@ -102,7 +102,7 @@
         </div>
       </div>
 
-      <div class="charts-grid">
+      <div class="charts-grid" style="grid-template-columns:1fr 1fr 1fr;">
         <div class="painel">
           <div class="painel-titulo"><i class="fas fa-clock"></i> Top 5 Horários de Pico — <span id="pico-semana-label" style="font-weight:400;color:var(--text-muted);font-size:.82rem;">selecione uma semana</span></div>
           <div class="chart-wrap"><canvas id="chart-picos"></canvas></div>
@@ -113,9 +113,6 @@
             Selecione uma semana para visualizar.
           </div>
         </div>
-      </div>
-      <!-- Pesquisa de Satisfação — semana -->
-      <div class="charts-grid" style="grid-template-columns:1fr;">
         <div class="painel">
           <div class="painel-titulo"><i class="fas fa-star"></i> Pesquisa de Satisfação</div>
           <div id="pesquisa-semana-wrap">
@@ -139,13 +136,10 @@
       </div>
 
       <div class="charts-grid">
-        <div class="painel" style="grid-column:1/-1;">
+        <div class="painel">
           <div class="painel-titulo"><i class="fas fa-door-closed"></i> Motivos de Fechamento (mês)</div>
           <div id="resumo-fechamentos-mes" style="font-size:.9rem;color:var(--text);">Busque um mês para visualizar.</div>
         </div>
-      </div>
-
-      <div class="charts-grid" style="grid-template-columns:1fr;">
         <div class="painel">
           <div class="painel-titulo"><i class="fas fa-star"></i> Pesquisa de Satisfação (mês)</div>
           <div id="pesquisa-mes-wrap">

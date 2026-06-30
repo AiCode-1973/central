@@ -47,7 +47,8 @@ body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background
 .kpi-card .kpi-icon { font-size: 1.4rem; opacity: .12; align-self: flex-end; margin-top: -2.5rem; }
 
 .charts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; margin-bottom: 1.5rem; }
-@media (max-width: 768px) { .charts-grid { grid-template-columns: 1fr; } }
+@media (max-width: 900px) { .charts-grid[style*="1fr 1fr 1fr"] { grid-template-columns: 1fr 1fr !important; } }
+@media (max-width: 768px) { .charts-grid { grid-template-columns: 1fr !important; } }
 
 .painel { background: var(--card); border: 1px solid var(--border); border-radius: var(--raio); box-shadow: var(--sombra); padding: 1.25rem; position: relative; overflow: hidden; }
 .painel::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, var(--neon-cyan), transparent 70%); opacity: .5; }
