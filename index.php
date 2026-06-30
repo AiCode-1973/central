@@ -95,7 +95,7 @@
 
     <div class="charts-grid">
       <div class="painel">
-        <div class="painel-titulo"><i class="fas fa-clock"></i> Top 5 Horários de Pico</div>
+        <div class="painel-titulo"><i class="fas fa-clock"></i> Top 5 Horários de Pico — <span id="pico-semana-label" style="font-weight:400;color:#555;font-size:.85rem;">selecione uma semana</span></div>
         <div class="chart-wrap"><canvas id="chart-picos"></canvas></div>
       </div>
       <div class="painel">
@@ -406,12 +406,19 @@ async function carregarDashboard(sid) {
       options: { responsive: true, plugins: { legend: { position: 'bottom' } } },
     });
 
-    // Gráfico picos
+    // Label da semana no título do gráfico de picos
+    const semAtual = (window._semanasCache || []).find(s => s.id == sid);
+    if (semAtual) {
+      document.getElementById('pico-semana-label').textContent =
+        semAtual.descricao || `${fmtData(semAtual.data_inicio)} a ${fmtData(semAtual.data_fim)}`;
+    }
+
+    // Gráfico picos — mostra só a hora no eixo
     if (chartPicos) chartPicos.destroy();
     chartPicos = new Chart(document.getElementById('chart-picos'), {
       type: 'bar',
       data: {
-        labels: d.picos.map(p => `${fmtData(p.data)} ${p.hora||''}`.trim()),
+        labels: d.picos.map(p => p.hora || '—'),
         datasets: [{
           label: 'Atendimentos',
           data:  d.picos.map(p => +p.total),
