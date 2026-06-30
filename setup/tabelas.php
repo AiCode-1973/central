@@ -5,6 +5,9 @@ header('Content-Type: text/html; charset=utf-8');
 
 $conn = getConnection();
 
+// Desativa verificação de FK para garantir criação sem dependências
+$conn->query("SET FOREIGN_KEY_CHECKS = 0");
+
 $tabelas = [
     'semanas' =>
         "CREATE TABLE IF NOT EXISTS semanas (
@@ -66,13 +69,25 @@ $tabelas = [
 
 $resultados = [];
 foreach ($tabelas as $nome => $sql) {
+    // Tenta com utf8mb4; se falhar, tenta com utf8 simples
     if ($conn->query($sql)) {
         $resultados[$nome] = ['status' => 'OK', 'msg' => 'Criada / verificada com sucesso'];
     } else {
-        $resultados[$nome] = ['status' => 'ERRO', 'msg' => $conn->error];
+        $erro1 = $conn->error;
+        $sqlFallback = str_replace(
+            'utf8mb4 COLLATE=utf8mb4_unicode_ci',
+            'utf8 COLLATE=utf8_general_ci',
+            $sql
+        );
+        if ($conn->query($sqlFallback)) {
+            $resultados[$nome] = ['status' => 'OK', 'msg' => 'Criada com charset utf8 (fallback)'];
+        } else {
+            $resultados[$nome] = ['status' => 'ERRO', 'msg' => $erro1];
+        }
     }
 }
 
+$conn->query("SET FOREIGN_KEY_CHECKS = 1");
 $conn->close();
 $tudo_ok = !in_array('ERRO', array_column($resultados, 'status'));
 ?><!DOCTYPE html>
