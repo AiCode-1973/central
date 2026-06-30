@@ -114,7 +114,10 @@
         </div>
         <div class="painel">
           <div class="painel-titulo"><i class="fas fa-chart-pie"></i> Motivos de Fechamento — Distribuição</div>
-          <div class="chart-wrap" style="max-width:260px;margin:0 auto;"><canvas id="chart-pizza"></canvas></div>
+          <div style="display:flex;align-items:center;gap:1rem;">
+            <div style="flex:0 0 200px;max-width:200px;"><canvas id="chart-pizza"></canvas></div>
+            <div id="pizza-legenda" style="flex:1;font-size:.85rem;"></div>
+          </div>
         </div>
       </div>
 
@@ -574,9 +577,9 @@ async function carregarDashboard(sid) {
     // Gráfico pizza — Motivos de Fechamento
     if (chartPizza) chartPizza.destroy();
     const coresPizza = ['#dc3545','#ffc107','#005599','#198754','#6f42c1','#fd7e14','#20c997','#e83e8c'];
+    const pizzaWrap = document.getElementById('chart-pizza')?.closest('div[style*="display:flex"]');
     if (!d.fechamentos.length) {
-      document.getElementById('chart-pizza').parentElement.innerHTML =
-        '<p style="color:#aaa;font-size:.88rem;text-align:center;padding:2rem 0;">Nenhum fechamento registrado nesta semana.</p>';
+      if (pizzaWrap) pizzaWrap.innerHTML = '<p style="color:#aaa;font-size:.88rem;padding:.5rem 0;">Nenhum fechamento registrado nesta semana.</p>';
     } else {
       chartPizza = new Chart(document.getElementById('chart-pizza'), {
         type: 'doughnut',
@@ -591,7 +594,7 @@ async function carregarDashboard(sid) {
         options: {
           responsive: true,
           plugins: {
-            legend: { position: 'bottom', labels: { font: { size: 11 } } },
+            legend: { display: false },
             datalabels: {
               color: '#fff',
               font: { weight: 'bold', size: 12 },
@@ -600,6 +603,13 @@ async function carregarDashboard(sid) {
           },
         },
       });
+      // Legenda manual à direita
+      document.getElementById('pizza-legenda').innerHTML =
+        d.fechamentos.map((f, i) => `
+          <div style="display:flex;align-items:center;gap:.4rem;margin-bottom:.4rem;">
+            <span style="display:inline-block;width:12px;height:12px;border-radius:3px;background:${coresPizza[i % coresPizza.length]};flex-shrink:0;"></span>
+            <span>${f.descricao} <strong>(${f.total})</strong></span>
+          </div>`).join('');
     }
 
     // Label da semana no título do gráfico de picos
