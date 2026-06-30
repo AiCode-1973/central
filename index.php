@@ -58,54 +58,123 @@
   ══════════════════════════════════════════════════════════ -->
   <section id="tab-dashboard" class="tab-section active">
 
-    <!-- KPI Cards -->
-    <div class="kpi-grid">
-      <div class="kpi-card">
-        <span class="kpi-label">Agendados</span>
-        <span class="kpi-valor" id="kpi-agendados">—</span>
-        <i class="fas fa-calendar-plus kpi-icon"></i>
-      </div>
-      <div class="kpi-card verde">
-        <span class="kpi-label">Atendidos</span>
-        <span class="kpi-valor" id="kpi-atendidos">—</span>
-        <i class="fas fa-user-check kpi-icon"></i>
-      </div>
-      <div class="kpi-card verm">
-        <span class="kpi-label">Cancelados</span>
-        <span class="kpi-valor" id="kpi-cancelados">—</span>
-        <i class="fas fa-calendar-times kpi-icon"></i>
-      </div>
-      <div class="kpi-card amar">
-        <span class="kpi-label">Faltas</span>
-        <span class="kpi-valor" id="kpi-faltas">—</span>
-        <i class="fas fa-user-slash kpi-icon"></i>
-      </div>
-    </div>
-
-    <!-- Gráficos -->
-    <div class="charts-grid">
-      <div class="painel">
-        <div class="painel-titulo"><i class="fas fa-chart-bar"></i> Evolução de Atendimentos (diário)</div>
-        <div class="chart-wrap"><canvas id="chart-evolucao"></canvas></div>
-      </div>
-      <div class="painel">
-        <div class="painel-titulo"><i class="fas fa-chart-pie"></i> Distribuição da Semana</div>
-        <div class="chart-wrap"><canvas id="chart-pizza"></canvas></div>
+    <!-- Toggle Semana / Mês -->
+    <div style="display:flex;gap:.5rem;margin-bottom:1.1rem;align-items:center;flex-wrap:wrap;">
+      <button id="btn-view-semana" class="btn-app prim" onclick="setViewMode('semana')">
+        <i class="fas fa-calendar-week"></i> Semana
+      </button>
+      <button id="btn-view-mes" class="btn-app" style="background:#e0e8f5;color:#003366;" onclick="setViewMode('mes')">
+        <i class="fas fa-calendar-alt"></i> Mês
+      </button>
+      <div id="mes-selector" style="display:none;gap:.5rem;align-items:center;flex-wrap:wrap;">
+        <select id="sel-ano" style="padding:.4rem .65rem;border:1px solid #ccd;border-radius:6px;font-size:.9rem;"></select>
+        <select id="sel-mes" style="padding:.4rem .65rem;border:1px solid #ccd;border-radius:6px;font-size:.9rem;">
+          <option value="1">Janeiro</option><option value="2">Fevereiro</option>
+          <option value="3">Março</option><option value="4">Abril</option>
+          <option value="5">Maio</option><option value="6">Junho</option>
+          <option value="7">Julho</option><option value="8">Agosto</option>
+          <option value="9">Setembro</option><option value="10">Outubro</option>
+          <option value="11">Novembro</option><option value="12">Dezembro</option>
+        </select>
+        <button class="btn-app prim" onclick="carregarDashboardMes()">
+          <i class="fas fa-search"></i> Buscar
+        </button>
       </div>
     </div>
 
-    <div class="charts-grid">
-      <div class="painel">
-        <div class="painel-titulo"><i class="fas fa-clock"></i> Top 5 Horários de Pico — <span id="pico-semana-label" style="font-weight:400;color:#555;font-size:.85rem;">selecione uma semana</span></div>
-        <div class="chart-wrap"><canvas id="chart-picos"></canvas></div>
-      </div>
-      <div class="painel">
-        <div class="painel-titulo"><i class="fas fa-door-closed"></i> Motivos de Fechamento</div>
-        <div id="resumo-fechamentos" style="font-size:.9rem;color:#555;">
-          Selecione uma semana para visualizar.
+    <!-- Vista Semanal -->
+    <div id="view-semana">
+      <div class="kpi-grid">
+        <div class="kpi-card">
+          <span class="kpi-label">Agendados</span>
+          <span class="kpi-valor" id="kpi-agendados">—</span>
+          <i class="fas fa-calendar-plus kpi-icon"></i>
+        </div>
+        <div class="kpi-card verde">
+          <span class="kpi-label">Atendidos</span>
+          <span class="kpi-valor" id="kpi-atendidos">—</span>
+          <i class="fas fa-user-check kpi-icon"></i>
+        </div>
+        <div class="kpi-card verm">
+          <span class="kpi-label">Cancelados</span>
+          <span class="kpi-valor" id="kpi-cancelados">—</span>
+          <i class="fas fa-calendar-times kpi-icon"></i>
+        </div>
+        <div class="kpi-card amar">
+          <span class="kpi-label">Faltas</span>
+          <span class="kpi-valor" id="kpi-faltas">—</span>
+          <i class="fas fa-user-slash kpi-icon"></i>
         </div>
       </div>
-    </div>
+
+      <div class="charts-grid">
+        <div class="painel">
+          <div class="painel-titulo"><i class="fas fa-chart-bar"></i> Evolução de Atendimentos (diário)</div>
+          <div class="chart-wrap"><canvas id="chart-evolucao"></canvas></div>
+        </div>
+        <div class="painel">
+          <div class="painel-titulo"><i class="fas fa-chart-pie"></i> Distribuição da Semana</div>
+          <div class="chart-wrap"><canvas id="chart-pizza"></canvas></div>
+        </div>
+      </div>
+
+      <div class="charts-grid">
+        <div class="painel">
+          <div class="painel-titulo"><i class="fas fa-clock"></i> Top 5 Horários de Pico — <span id="pico-semana-label" style="font-weight:400;color:#555;font-size:.85rem;">selecione uma semana</span></div>
+          <div class="chart-wrap"><canvas id="chart-picos"></canvas></div>
+        </div>
+        <div class="painel">
+          <div class="painel-titulo"><i class="fas fa-door-closed"></i> Motivos de Fechamento</div>
+          <div id="resumo-fechamentos" style="font-size:.9rem;color:#555;">
+            Selecione uma semana para visualizar.
+          </div>
+        </div>
+      </div>
+    </div><!-- /#view-semana -->
+
+    <!-- Vista Mensal -->
+    <div id="view-mes" style="display:none;">
+      <div class="kpi-grid">
+        <div class="kpi-card">
+          <span class="kpi-label">Agendados (mês)</span>
+          <span class="kpi-valor" id="mkpi-agendados">—</span>
+          <i class="fas fa-calendar-plus kpi-icon"></i>
+        </div>
+        <div class="kpi-card verde">
+          <span class="kpi-label">Atendidos (mês)</span>
+          <span class="kpi-valor" id="mkpi-atendidos">—</span>
+          <i class="fas fa-user-check kpi-icon"></i>
+        </div>
+        <div class="kpi-card verm">
+          <span class="kpi-label">Cancelados (mês)</span>
+          <span class="kpi-valor" id="mkpi-cancelados">—</span>
+          <i class="fas fa-calendar-times kpi-icon"></i>
+        </div>
+        <div class="kpi-card amar">
+          <span class="kpi-label">Faltas (mês)</span>
+          <span class="kpi-valor" id="mkpi-faltas">—</span>
+          <i class="fas fa-user-slash kpi-icon"></i>
+        </div>
+      </div>
+
+      <div class="charts-grid">
+        <div class="painel">
+          <div class="painel-titulo"><i class="fas fa-chart-bar"></i> Atendimentos por Semana</div>
+          <div class="chart-wrap"><canvas id="chart-mes-semanas"></canvas></div>
+        </div>
+        <div class="painel">
+          <div class="painel-titulo"><i class="fas fa-clock"></i> Top 5 Horários de Pico (mês)</div>
+          <div class="chart-wrap"><canvas id="chart-mes-picos"></canvas></div>
+        </div>
+      </div>
+
+      <div class="charts-grid">
+        <div class="painel" style="grid-column:1/-1;">
+          <div class="painel-titulo"><i class="fas fa-door-closed"></i> Motivos de Fechamento (mês)</div>
+          <div id="resumo-fechamentos-mes" style="font-size:.9rem;color:#555;">Busque um mês para visualizar.</div>
+        </div>
+      </div>
+    </div><!-- /#view-mes -->
 
   </section>
 
@@ -336,6 +405,125 @@ function onSemanaChange() {
    DASHBOARD
 ════════════════════════════════════════════════════════ */
 let chartEvolucao = null, chartPizza = null, chartPicos = null;
+let chartMesSemanas = null, chartMesPicos = null;
+let viewMode = 'semana';
+
+function setViewMode(mode) {
+  viewMode = mode;
+  document.getElementById('view-semana').style.display  = mode === 'semana' ? '' : 'none';
+  document.getElementById('view-mes').style.display     = mode === 'mes'    ? '' : 'none';
+  document.getElementById('mes-selector').style.display = mode === 'mes'    ? 'flex' : 'none';
+  document.getElementById('btn-view-semana').style.background = mode === 'semana' ? '#005599' : '#e0e8f5';
+  document.getElementById('btn-view-semana').style.color      = mode === 'semana' ? '#fff'    : '#003366';
+  document.getElementById('btn-view-mes').style.background    = mode === 'mes'    ? '#005599' : '#e0e8f5';
+  document.getElementById('btn-view-mes').style.color         = mode === 'mes'    ? '#fff'    : '#003366';
+}
+
+// Popula select de anos (ano atual -2 até +1)
+(function() {
+  const sel = document.getElementById('sel-ano');
+  const ano = new Date().getFullYear();
+  for (let y = ano - 2; y <= ano + 1; y++) {
+    const o = document.createElement('option');
+    o.value = y; o.textContent = y;
+    if (y === ano) o.selected = true;
+    sel.appendChild(o);
+  }
+  // Seleciona mês atual
+  document.getElementById('sel-mes').value = new Date().getMonth() + 1;
+})();
+
+async function carregarDashboardMes() {
+  const ano = parseInt(document.getElementById('sel-ano').value);
+  const mes = parseInt(document.getElementById('sel-mes').value);
+  try {
+    const d = await api(`api/estatisticas_mes.php?ano=${ano}&mes=${mes}`);
+
+    document.getElementById('mkpi-agendados').textContent  = d.totais?.total_agendados  || 0;
+    document.getElementById('mkpi-atendidos').textContent  = d.totais?.total_atendidos   || 0;
+    document.getElementById('mkpi-cancelados').textContent = d.totais?.total_cancelados  || 0;
+    document.getElementById('mkpi-faltas').textContent     = d.totais?.total_faltas      || 0;
+
+    // Gráfico por semana
+    const semLabels = (d.por_semana || []).map(s =>
+      s.descricao || `${fmtData(s.data_inicio)} a ${fmtData(s.data_fim)}`
+    );
+    if (chartMesSemanas) chartMesSemanas.destroy();
+    chartMesSemanas = new Chart(document.getElementById('chart-mes-semanas'), {
+      type: 'bar',
+      plugins: [ChartDataLabels],
+      data: {
+        labels: semLabels,
+        datasets: [{
+          label: 'Atendidos',
+          data:  (d.por_semana || []).map(s => +s.total_atendidos),
+          backgroundColor: '#005599',
+        }],
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { display: false },
+          datalabels: {
+            anchor: 'end', align: 'end',
+            color: '#003366', font: { weight: 'bold', size: 11 },
+            formatter: v => v > 0 ? v : '',
+          },
+        },
+        layout: { padding: { top: 20 } },
+      },
+    });
+
+    // Gráfico picos mês
+    const picosOrd = [...(d.picos || [])].sort((a, b) => (a.hora || '').localeCompare(b.hora || ''));
+    if (chartMesPicos) chartMesPicos.destroy();
+    chartMesPicos = new Chart(document.getElementById('chart-mes-picos'), {
+      type: 'bar',
+      plugins: [ChartDataLabels],
+      data: {
+        labels: picosOrd.map(p => p.hora || '—'),
+        datasets: [{
+          label: 'Atendimentos',
+          data:  picosOrd.map(p => +p.total),
+          backgroundColor: '#005599',
+        }],
+      },
+      options: {
+        indexAxis: 'y',
+        responsive: true,
+        plugins: {
+          legend: { display: false },
+          datalabels: {
+            anchor: 'end', align: 'end',
+            color: '#003366', font: { weight: 'bold', size: 11 },
+            formatter: v => v > 0 ? v : '',
+          },
+        },
+        layout: { padding: { right: 30 } },
+      },
+    });
+
+    // Motivos mês
+    const rf = document.getElementById('resumo-fechamentos-mes');
+    if (!(d.fechamentos || []).length) {
+      rf.innerHTML = '<span style="color:#aaa;">Nenhum fechamento registrado neste mês.</span>';
+    } else {
+      const totalGeral = d.fechamentos.reduce((s, f) => s + +f.total, 0);
+      rf.innerHTML =
+        '<table style="width:100%;max-width:500px;border-collapse:collapse;font-size:.88rem;">' +
+          d.fechamentos.map(f => `
+            <tr style="border-bottom:1px solid #e8eef5;">
+              <td style="padding:.35rem .4rem;">${f.descricao}</td>
+              <td style="padding:.35rem .4rem;text-align:right;font-weight:700;color:#003366;">${f.total}</td>
+            </tr>`).join('') +
+          `<tr style="border-top:2px solid #003366;background:#e8f0fe;">
+            <td style="padding:.4rem .4rem;font-weight:700;">Total</td>
+            <td style="padding:.4rem .4rem;text-align:right;font-weight:700;color:#003366;font-size:1rem;">${totalGeral}</td>
+          </tr>` +
+        '</table>';
+    }
+  } catch (e) { toast(e.message, 'erro'); }
+}
 
 async function carregarDashboard(sid) {
   try {
