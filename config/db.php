@@ -90,5 +90,18 @@ function _criarTabelas(mysqli $conn): void {
         CONSTRAINT fk_pico_semana FOREIGN KEY (semana_id) REFERENCES semanas(id) ON DELETE CASCADE
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
 
+    $conn->query("CREATE TABLE IF NOT EXISTS pesquisa_satisfacao (
+        id        INT AUTO_INCREMENT PRIMARY KEY,
+        semana_id INT          NOT NULL,
+        pessimo   INT UNSIGNED DEFAULT 0,
+        ruim      INT UNSIGNED DEFAULT 0,
+        neutro    INT UNSIGNED DEFAULT 0,
+        bom       INT UNSIGNED DEFAULT 0,
+        excelente INT UNSIGNED DEFAULT 0,
+        criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE KEY uk_pesquisa_semana (semana_id),
+        CONSTRAINT fk_pesquisa_semana FOREIGN KEY (semana_id) REFERENCES semanas(id) ON DELETE CASCADE
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
     $conn->query("SET FOREIGN_KEY_CHECKS = 1");
 }

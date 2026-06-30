@@ -77,11 +77,28 @@ $stmtFech->bind_param($types, ...$ids);
 $stmtFech->execute();
 $fechamentos = $stmtFech->get_result()->fetch_all(MYSQLI_ASSOC);
 
+// Pesquisa de satisfação do mês (soma das semanas)
+$stmtPesq = $conn->prepare(
+    "SELECT
+        COALESCE(SUM(pessimo),0)   AS pessimo,
+        COALESCE(SUM(ruim),0)      AS ruim,
+        COALESCE(SUM(neutro),0)    AS neutro,
+        COALESCE(SUM(bom),0)       AS bom,
+        COALESCE(SUM(excelente),0) AS excelente
+     FROM pesquisa_satisfacao WHERE semana_id IN ($placeholders)"
+);
+$stmtPesq->bind_param($types, ...$ids);
+$stmtPesq->execute();
+$pesquisa = $stmtPesq->get_result()->fetch_assoc();
+$totalPesq = array_sum($pesquisa);
+if ($totalPesq == 0) $pesquisa = null;
+
 echo json_encode([
     'totais'      => $totais,
     'por_semana'  => $por_semana,
     'picos'       => $picos,
     'fechamentos' => $fechamentos,
+    'pesquisa'    => $pesquisa,
 ]);
 
 $conn->close();

@@ -38,6 +38,9 @@
     <button class="tab-btn" onclick="showTab('semanas',this)">
       <i class="fas fa-calendar-week"></i> <span>Semanas</span>
     </button>
+    <button class="tab-btn" onclick="showTab('pesquisa',this)">
+      <i class="fas fa-star"></i> <span>Pesquisa</span>
+    </button>
   </div>
 </nav>
 
@@ -111,6 +114,15 @@
           </div>
         </div>
       </div>
+      <!-- Pesquisa de Satisfação — semana -->
+      <div class="charts-grid" style="grid-template-columns:1fr;">
+        <div class="painel">
+          <div class="painel-titulo"><i class="fas fa-star"></i> Pesquisa de Satisfação</div>
+          <div id="pesquisa-semana-wrap">
+            <p style="color:var(--text-muted);font-size:.88rem;">Selecione uma semana para visualizar.</p>
+          </div>
+        </div>
+      </div>
     </div><!-- /#view-semana -->
 
     <!-- Vista Mensal -->
@@ -130,6 +142,15 @@
         <div class="painel" style="grid-column:1/-1;">
           <div class="painel-titulo"><i class="fas fa-door-closed"></i> Motivos de Fechamento (mês)</div>
           <div id="resumo-fechamentos-mes" style="font-size:.9rem;color:var(--text);">Busque um mês para visualizar.</div>
+        </div>
+      </div>
+
+      <div class="charts-grid" style="grid-template-columns:1fr;">
+        <div class="painel">
+          <div class="painel-titulo"><i class="fas fa-star"></i> Pesquisa de Satisfação (mês)</div>
+          <div id="pesquisa-mes-wrap">
+            <p style="color:var(--text-muted);font-size:.88rem;">Busque um mês para visualizar.</p>
+          </div>
         </div>
       </div>
     </div><!-- /#view-mes -->
@@ -284,6 +305,28 @@
     </div>
   </section>
 
+  <!-- ══════════════════════════════════════════════════════
+       ABA: PESQUISA DE SATISFAÇÃO
+  ══════════════════════════════════════════════════════════ -->
+  <section id="tab-pesquisa" class="tab-section">
+    <div class="painel">
+      <div class="painel-titulo"><i class="fas fa-star"></i> Pesquisa de Satisfação da Semana</div>
+      <p style="font-size:.85rem;color:var(--text-muted);margin-bottom:1.25rem;">
+        Informe a quantidade de respostas recebidas para cada nível de satisfação na semana selecionada.
+      </p>
+
+      <div id="pesquisa-form-wrap">
+        <p style="color:var(--text-muted);font-size:.9rem;">Selecione uma semana para registrar a pesquisa.</p>
+      </div>
+
+      <div style="margin-top:1.25rem;">
+        <button class="btn-app suc" onclick="salvarPesquisa()">
+          <i class="fas fa-save"></i> Salvar Pesquisa
+        </button>
+      </div>
+    </div>
+  </section>
+
 </div><!-- /.main-wrap -->
 
 <!-- ══ TOAST ════════════════════════════════════════════════ -->
@@ -356,6 +399,7 @@ function onSemanaChange() {
   carregarAtendimentos(id);
   carregarPicosList(id);
   carregarFechamentos(id);
+  carregarPesquisa(id);
 }
 
 
@@ -364,6 +408,7 @@ function onSemanaChange() {
 ════════════════════════════════════════════════════════ */
 let chartEvolucao = null, chartPizza = null, chartPicos = null;
 let chartMesSemanas = null, chartMesPicos = null;
+let chartPesquisa = null, chartPesquisaMes = null;
 let viewMode = 'semana';
 
 function setViewMode(mode) {
@@ -477,6 +522,9 @@ async function carregarDashboardMes() {
           </tr>` +
         '</table>';
     }
+
+    // Pesquisa de satisfação mês
+    renderPesquisaChart('pesquisa-mes-wrap', 'chart-pesquisa-mes', d.pesquisa, chartPesquisaMes, c => chartPesquisaMes = c);
   } catch (e) { toast(e.message, 'erro'); }
 }
 
@@ -616,6 +664,116 @@ async function carregarDashboard(sid) {
           </tr>` +
         '</table>';
     }
+
+    // Pesquisa de satisfação semana
+    renderPesquisaChart('pesquisa-semana-wrap', 'chart-pesquisa-semana', d.pesquisa, chartPesquisa, c => chartPesquisa = c);
+  } catch (e) { toast(e.message, 'erro'); }
+}
+
+/* ════════════════════════════════════════════════════════
+   PESQUISA DE SATISFAÇÃO
+════════════════════════════════════════════════════════ */
+const SATISFACAO_LABELS = ['Péssimo', 'Ruim', 'Neutro', 'Bom', 'Excelente'];
+const SATISFACAO_KEYS   = ['pessimo', 'ruim', 'neutro', 'bom', 'excelente'];
+const SATISFACAO_CORES  = ['#e53e3e','#ed8936','#ecc94b','#48bb78','#4299e1'];
+
+function renderPesquisaChart(wrapId, canvasId, dados, chartRef, setChart) {
+  const wrap = document.getElementById(wrapId);
+  if (!dados || SATISFACAO_KEYS.every(k => +dados[k] === 0)) {
+    if (chartRef) chartRef.destroy();
+    wrap.innerHTML = '<p style="color:var(--text-muted);font-size:.88rem;">Nenhuma pesquisa registrada.</p>';
+    setChart(null);
+    return;
+  }
+  const total  = SATISFACAO_KEYS.reduce((s, k) => s + +dados[k], 0);
+  const values = SATISFACAO_KEYS.map(k => +dados[k]);
+
+  // Tabela resumo + canvas
+  wrap.innerHTML = `
+    <div style="display:flex;flex-wrap:wrap;gap:1.5rem;align-items:flex-start;">
+      <div style="flex:0 0 280px;">
+        <canvas id="${canvasId}"></canvas>
+      </div>
+      <div style="flex:1;min-width:160px;">
+        <table style="width:100%;border-collapse:collapse;font-size:.88rem;">
+          ${SATISFACAO_LABELS.map((lb, i) => `
+          <tr style="border-bottom:1px solid rgba(255,255,255,.05);">
+            <td style="padding:.35rem .4rem;">
+              <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${SATISFACAO_CORES[i]};margin-right:.4rem;"></span>${lb}
+            </td>
+            <td style="padding:.35rem .4rem;text-align:right;font-weight:700;">${values[i]}</td>
+            <td style="padding:.35rem .4rem;text-align:right;color:var(--text-muted);font-size:.8rem;">${total ? ((values[i]/total)*100).toFixed(1)+'%' : '0%'}</td>
+          </tr>`).join('')}
+          <tr style="border-top:1px solid var(--neon-cyan);background:rgba(99,179,237,.05);">
+            <td style="padding:.4rem .4rem;font-weight:700;">Total</td>
+            <td style="padding:.4rem .4rem;text-align:right;font-weight:700;color:var(--neon-cyan);" colspan="2">${total}</td>
+          </tr>
+        </table>
+      </div>
+    </div>`;
+
+  if (chartRef) chartRef.destroy();
+  const novo = new Chart(document.getElementById(canvasId), {
+    type: 'doughnut',
+    plugins: [ChartDataLabels],
+    data: {
+      labels: SATISFACAO_LABELS,
+      datasets: [{ data: values, backgroundColor: SATISFACAO_CORES, borderWidth: 0 }],
+    },
+    options: {
+      responsive: true,
+      cutout: '60%',
+      plugins: {
+        legend: { display: false },
+        datalabels: {
+          color: '#fff',
+          font: { weight: 'bold', size: 11 },
+          formatter: (v, ctx) => {
+            const t = ctx.dataset.data.reduce((a, b) => a + b, 0);
+            return v > 0 && t > 0 ? ((v/t)*100).toFixed(0)+'%' : '';
+          },
+        },
+      },
+    },
+  });
+  setChart(novo);
+}
+
+async function carregarPesquisa(sid) {
+  if (!sid) return;
+  const wrap = document.getElementById('pesquisa-form-wrap');
+  if (!wrap) return;
+  try {
+    const d = await api('api/pesquisa.php?semana_id=' + sid);
+    const vals = d || {};
+    wrap.innerHTML = `
+      <div style="display:flex;flex-wrap:wrap;gap:1rem;">
+        ${SATISFACAO_LABELS.map((lb, i) => `
+        <div style="display:flex;flex-direction:column;align-items:center;gap:.4rem;">
+          <span style="font-size:.78rem;font-weight:700;color:${SATISFACAO_CORES[i]};text-transform:uppercase;letter-spacing:.04em;">${lb}</span>
+          <input type="number" id="pesq-${SATISFACAO_KEYS[i]}" min="0" value="${+vals[SATISFACAO_KEYS[i]] || 0}"
+            style="width:90px;padding:.5rem;text-align:center;border:2px solid ${SATISFACAO_CORES[i]}40;
+                   border-radius:8px;background:var(--bg2);color:var(--text);font-size:1.1rem;font-weight:700;"
+            onfocus="this.style.borderColor='${SATISFACAO_CORES[i]}';"
+            onblur="this.style.borderColor='${SATISFACAO_CORES[i]}40';">
+        </div>`).join('')}
+      </div>`;
+  } catch (e) {
+    wrap.innerHTML = '<p style="color:var(--text-muted);">Selecione uma semana para registrar a pesquisa.</p>';
+  }
+}
+
+async function salvarPesquisa() {
+  const sid = semanaAtual();
+  if (!sid) { toast('Selecione uma semana primeiro.', 'erro'); return; }
+  const body = { semana_id: sid };
+  SATISFACAO_KEYS.forEach(k => {
+    body[k] = parseInt(document.getElementById('pesq-' + k)?.value || 0);
+  });
+  try {
+    await api('api/pesquisa.php', { method: 'POST', body: JSON.stringify(body) });
+    toast('Pesquisa salva!', 'suc');
+    carregarDashboard(sid);
   } catch (e) { toast(e.message, 'erro'); }
 }
 

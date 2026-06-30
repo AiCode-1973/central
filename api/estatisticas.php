@@ -50,11 +50,21 @@ $stmtFech->bind_param('i', $semana_id);
 $stmtFech->execute();
 $fechamentos = $stmtFech->get_result()->fetch_all(MYSQLI_ASSOC);
 
+// Pesquisa de satisfação da semana
+$stmtPesq = $conn->prepare(
+    "SELECT pessimo, ruim, neutro, bom, excelente
+     FROM pesquisa_satisfacao WHERE semana_id = ? LIMIT 1"
+);
+$stmtPesq->bind_param('i', $semana_id);
+$stmtPesq->execute();
+$pesquisa = $stmtPesq->get_result()->fetch_assoc();
+
 echo json_encode([
     'totais'      => $totais,
     'por_dia'     => $por_dia,
     'picos'       => $picos,
     'fechamentos' => $fechamentos,
+    'pesquisa'    => $pesquisa ?: null,
 ]);
 
 $conn->close();
