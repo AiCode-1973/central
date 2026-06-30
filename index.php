@@ -126,7 +126,7 @@ function temPerm(string $m): bool {
   <!-- ══════════════════════════════════════════════════════
        ABA: DASHBOARD
   ══════════════════════════════════════════════════════════ -->
-  <section id="tab-dashboard" class="tab-section active">
+  <section id="tab-dashboard" class="tab-section" <?php if(!temPerm('dashboard')) echo 'style="display:none"'; ?>>
 
     <!-- Toggle Semana / Mês -->
     <div style="display:flex;gap:.5rem;margin-bottom:1.1rem;align-items:center;flex-wrap:wrap;">
@@ -1803,6 +1803,11 @@ document.getElementById('modal-senha')?.addEventListener('click', e => {
 
 /* ── Init ────────────────────────────────────────────────── */
 (async () => {
+  // Ativa a primeira aba que o usuário tem permissão
+  const _ordemAbas = ['dashboard','atendimentos','picos','fechamentos','motivos','semanas','pesquisa','usuarios','autorizacoes','convenios','procedimentos'];
+  const _primeiraAba = _ordemAbas.find(t => PERMISSOES.includes(t));
+  if (_primeiraAba) showTab(_primeiraAba, null);
+
   await carregarSemanas();
   await carregarMotivos();
   if (USUARIO_LOGADO.perfil === 'admin') {
