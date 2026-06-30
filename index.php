@@ -210,10 +210,11 @@
           <input type="date" id="fech-data">
         </div>
         <div class="form-group">
-          <label>Motivo</label>
-          <select id="fech-motivo" style="min-width:200px;">
-            <option value="">— Selecione —</option>
-          </select>
+          <label>Motivo <small style="color:#888;font-weight:400;">(selecione ou digite novo)</small></label>
+          <input type="text" id="fech-motivo-txt" list="list-motivos"
+                 placeholder="Digite ou escolha um motivo…"
+                 style="min-width:240px;padding:.4rem .65rem;border:1px solid #ccd;border-radius:6px;font-size:.9rem;">
+          <datalist id="list-motivos"></datalist>
         </div>
         <div class="form-group" style="flex:1;">
           <label>Observação</label>
@@ -688,21 +689,45 @@ async function carregarFechamentos(sid) {
 }
 
 async function salvarFechamento() {
-  const sid    = semanaAtual();
-  const data   = document.getElementById('fech-data').value;
-  const motivo = parseInt(document.getElementById('fech-motivo').value);
-  const obs    = document.getElementById('fech-obs').value;
-  if (!sid)    { toast('Selecione uma semana.', 'erro'); return; }
-  if (!data)   { toast('Informe a data.', 'erro'); return; }
-  if (!motivo) { toast('Selecione o motivo.', 'erro'); return; }
+  const sid      = semanaAtual();
+  const data     = document.getElementById('fech-data').value;
+  const motivoTxt = document.getElementById('fech-motivo-txt').value.trim();
+  const obs      = document.getElementById('fech-obs').value;
+  if (!sid)       { toast('Selecione uma semana.', 'erro'); return; }
+  if (!data)      { toast('Informe a data.', 'erro'); return; }
+  if (!motivoTxt) { toast('Informe o motivo.', 'erro'); return; }
+
   try {
+    // Verifica se o motivo já existe (comparação sem diferenciar maiúsculas)
+    const motivos  = await api('api/motivos.php');
+    let motivo_id  = null;
+    const existente = motivos.find(m => m.descricao.trim().toLowerCase() === motivoTxt.toLowerCase());
+
+    if (existente) {
+      motivo_id = existente.id;
+      // Reativa caso esteja inativo
+      if (existente.ativo != 1) {
+        await api('api/motivos.php', { method: 'PUT', body: JSON.stringify({ id: motivo_id, ativo: 1 }) });
+      }
+    } else {
+      // Cria novo motivo automaticamente
+      const novo = await api('api/motivos.php', {
+        method: 'POST',
+        body: JSON.stringify({ descricao: motivoTxt }),
+      });
+      motivo_id = novo.id;
+      await carregarMotivos(); // atualiza datalist e tabela de motivos
+    }
+
     await api('api/fechamentos.php', {
       method: 'POST',
-      body: JSON.stringify({ semana_id: sid, data, motivo_id: motivo, observacao: obs }),
+      body: JSON.stringify({ semana_id: sid, data, motivo_id, observacao: obs }),
     });
+
     toast('Fechamento registrado!', 'suc');
-    document.getElementById('fech-data').value  = '';
-    document.getElementById('fech-obs').value   = '';
+    document.getElementById('fech-data').value       = '';
+    document.getElementById('fech-motivo-txt').value = '';
+    document.getElementById('fech-obs').value        = '';
     carregarFechamentos(sid);
     carregarDashboard(sid);
   } catch (e) { toast(e.message, 'erro'); }
@@ -724,14 +749,16 @@ async function delFechamento(id) {
 async function carregarMotivos() {
   const dados = await api('api/motivos.php');
 
-  // Popula select do fechamento
-  const sel = document.getElementById('fech-motivo');
-  sel.innerHTML = '<option value="">— Selecione —</option>';
-  dados.filter(m => m.ativo == 1).forEach(m => {
-    const o = document.createElement('option');
-    o.value = m.id; o.textContent = m.descricao;
-    sel.appendChild(o);
-  });
+  // Popula datalist do fechamento
+  const dl = document.getElementById('list-motivos');
+  if (dl) {
+    dl.innerHTML = '';
+    dados.filter(m => m.ativo == 1).forEach(m => {
+      const o = document.createElement('option');
+      o.value = m.descricao;
+      dl.appendChild(o);
+    });
+  }
 
   // Tabela
   const tb = document.getElementById('tbody-motivos');
