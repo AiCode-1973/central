@@ -1,7 +1,15 @@
 ﻿<?php
 require_once __DIR__ . '/config/auth.php';
+require_once __DIR__ . '/config/db.php';
 $usuarioLogado = requireLogin();
-$permissoes    = $usuarioLogado['permissoes'] ?? [];
+
+// Recarrega permissões do banco a cada acesso para refletir alterações sem precisar relogar
+$_connPerm = getConnection();
+$permissoes = carregarPermissoes($usuarioLogado['perfil'], $_connPerm);
+$_connPerm->close();
+$_SESSION['usuario']['permissoes'] = $permissoes;
+$usuarioLogado['permissoes']       = $permissoes;
+
 function temPerm(string $m): bool {
     global $permissoes;
     return in_array($m, $permissoes, true);
