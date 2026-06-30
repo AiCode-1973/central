@@ -138,12 +138,13 @@ function _criarTabelas(mysqli $conn): void {
         foreach ($operadorMod  as $m) { $insP->bind_param('ss', $s2, $m); $s2='operador';    $insP->execute(); }
         foreach ($visualizMod  as $m) { $insP->bind_param('ss', $s3, $m); $s3='visualizador';$insP->execute(); }
     } else {
-        // Migração: garante novos módulos para admin (INSERT IGNORE não duplica)
+        // Migração: garante novos módulos apenas para admin
+        // (admin não é gerenciado pela tabela, mas mantemos para consistência)
         $insP2 = $conn->prepare("INSERT IGNORE INTO perfis_permissoes (perfil_slug, modulo) VALUES (?, ?)");
         foreach (['autorizacoes','convenios','procedimentos'] as $m) {
-            $s = 'admin';    $insP2->bind_param('ss', $s, $m); $insP2->execute();
-            $s = 'operador'; $insP2->bind_param('ss', $s, $m); $insP2->execute();
+            $s = 'admin'; $insP2->bind_param('ss', $s, $m); $insP2->execute();
         }
+        // NOTA: NÃO re-inserir para outros perfis — admin pode ter removido via UI
     }
 
     $conn->query("CREATE TABLE IF NOT EXISTS usuarios (
