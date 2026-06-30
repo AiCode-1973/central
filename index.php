@@ -399,11 +399,6 @@ async function carregarDashboardMes() {
   try {
     const d = await api(`api/estatisticas_mes.php?ano=${ano}&mes=${mes}`);
 
-    document.getElementById('mkpi-agendados').textContent  = d.totais?.total_agendados  || 0;
-    document.getElementById('mkpi-atendidos').textContent  = d.totais?.total_atendidos   || 0;
-    document.getElementById('mkpi-cancelados').textContent = d.totais?.total_cancelados  || 0;
-    document.getElementById('mkpi-faltas').textContent     = d.totais?.total_faltas      || 0;
-
     // Gráfico por semana
     const semLabels = (d.por_semana || []).map(s =>
       s.descricao || `${fmtData(s.data_inicio)} a ${fmtData(s.data_fim)}`
