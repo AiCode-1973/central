@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
@@ -63,7 +63,7 @@
       <button id="btn-view-semana" class="btn-app prim" onclick="setViewMode('semana')">
         <i class="fas fa-calendar-week"></i> Semana
       </button>
-      <button id="btn-view-mes" class="btn-app" style="background:#e0e8f5;color:#003366;" onclick="setViewMode('mes')">
+      <button id="btn-view-mes" class="btn-app" style="background:transparent;border:1px solid rgba(0,255,255,.2);color:var(--text-muted);" onclick="setViewMode('mes')">
         <i class="fas fa-calendar-alt"></i> Mês
       </button>
       <div id="mes-selector" style="display:none;gap:.5rem;align-items:center;flex-wrap:wrap;">
@@ -100,12 +100,12 @@
 
       <div class="charts-grid">
         <div class="painel">
-          <div class="painel-titulo"><i class="fas fa-clock"></i> Top 5 Horários de Pico — <span id="pico-semana-label" style="font-weight:400;color:#555;font-size:.85rem;">selecione uma semana</span></div>
+          <div class="painel-titulo"><i class="fas fa-clock"></i> Top 5 Horários de Pico — <span id="pico-semana-label" style="font-weight:400;color:var(--text-muted);font-size:.82rem;">selecione uma semana</span></div>
           <div class="chart-wrap"><canvas id="chart-picos"></canvas></div>
         </div>
         <div class="painel">
           <div class="painel-titulo"><i class="fas fa-door-closed"></i> Motivos de Fechamento</div>
-          <div id="resumo-fechamentos" style="font-size:.9rem;color:#555;">
+          <div id="resumo-fechamentos" style="font-size:.9rem;color:var(--text);">
             Selecione uma semana para visualizar.
           </div>
         </div>
@@ -128,7 +128,7 @@
       <div class="charts-grid">
         <div class="painel" style="grid-column:1/-1;">
           <div class="painel-titulo"><i class="fas fa-door-closed"></i> Motivos de Fechamento (mês)</div>
-          <div id="resumo-fechamentos-mes" style="font-size:.9rem;color:#555;">Busque um mês para visualizar.</div>
+          <div id="resumo-fechamentos-mes" style="font-size:.9rem;color:var(--text);">Busque um mês para visualizar.</div>
         </div>
       </div>
     </div><!-- /#view-mes -->
@@ -142,7 +142,7 @@
     <div class="painel">
       <div class="painel-titulo"><i class="fas fa-calendar-check"></i> Atendimentos da Semana</div>
       <div id="form-atendimentos">
-        <p style="color:#aaa;font-size:.9rem;">Selecione uma semana primeiro.</p>
+        <p style="color:var(--text-muted);font-size:.9rem;">Selecione uma semana primeiro.</p>
       </div>
       <div style="margin-top:1rem;">
         <button class="btn-app suc" onclick="salvarAtendimentos()">
@@ -158,11 +158,11 @@
   <section id="tab-picos" class="tab-section">
     <div class="painel">
       <div class="painel-titulo"><i class="fas fa-clock"></i> Horários de Pico da Semana</div>
-      <p style="font-size:.85rem;color:#666;margin-bottom:1.1rem;">
+      <p style="font-size:.85rem;color:var(--text-muted);margin-bottom:1.1rem;">
         Selecione a semana no topo da página e preencha o total de atendimentos para cada horário.
       </p>
       <div id="picos-grade-wrap">
-        <p style="color:#aaa;font-size:.9rem;">Selecione uma semana para carregar os horários.</p>
+        <p style="color:var(--text-muted);font-size:.9rem;">Selecione uma semana para carregar os horários.</p>
       </div>
       <button class="btn-app suc" style="margin-top:1rem;" onclick="salvarPicos()">
         <i class="fas fa-save"></i> Salvar Horários de Pico
@@ -176,7 +176,7 @@
   <section id="tab-fechamentos" class="tab-section">
     <div class="painel">
       <div class="painel-titulo"><i class="fas fa-door-closed"></i> Motivos de Fechamento da Semana</div>
-      <p style="font-size:.85rem;color:#666;margin-bottom:1rem;">
+      <p style="font-size:.85rem;color:var(--text-muted);margin-bottom:1rem;">
         Informe o motivo e a quantidade total de dias fechados por esse motivo na semana.
       </p>
 
@@ -370,10 +370,12 @@ function setViewMode(mode) {
   document.getElementById('view-semana').style.display  = mode === 'semana' ? '' : 'none';
   document.getElementById('view-mes').style.display     = mode === 'mes'    ? '' : 'none';
   document.getElementById('mes-selector').style.display = mode === 'mes'    ? 'flex' : 'none';
-  document.getElementById('btn-view-semana').style.background = mode === 'semana' ? '#005599' : '#e0e8f5';
-  document.getElementById('btn-view-semana').style.color      = mode === 'semana' ? '#fff'    : '#003366';
-  document.getElementById('btn-view-mes').style.background    = mode === 'mes'    ? '#005599' : '#e0e8f5';
-  document.getElementById('btn-view-mes').style.color         = mode === 'mes'    ? '#fff'    : '#003366';
+  document.getElementById('btn-view-semana').style.background = mode === 'semana' ? 'rgba(0,255,255,.15)' : 'transparent';
+  document.getElementById('btn-view-semana').style.color      = mode === 'semana' ? '#00ffff' : '';
+  document.getElementById('btn-view-semana').style.boxShadow  = mode === 'semana' ? '0 0 10px rgba(0,255,255,.3)' : '';
+  document.getElementById('btn-view-mes').style.background    = mode === 'mes'    ? 'rgba(0,255,255,.15)' : 'transparent';
+  document.getElementById('btn-view-mes').style.color         = mode === 'mes'    ? '#00ffff' : '';
+  document.getElementById('btn-view-mes').style.boxShadow     = mode === 'mes'    ? '0 0 10px rgba(0,255,255,.3)' : '';
 }
 
 // Popula select de anos (ano atual -2 até +1)
@@ -471,11 +473,11 @@ async function carregarDashboardMes() {
           d.fechamentos.map(f => `
             <tr style="border-bottom:1px solid #e8eef5;">
               <td style="padding:.35rem .4rem;">${f.descricao}</td>
-              <td style="padding:.35rem .4rem;text-align:right;font-weight:700;color:#003366;">${f.total}</td>
+              <td style="padding:.35rem .4rem;text-align:right;font-weight:700;color:var(--neon-cyan);">${f.total}</td>
             </tr>`).join('') +
-          `<tr style="border-top:2px solid #003366;background:#e8f0fe;">
+          `<tr style="border-top:1px solid var(--neon-cyan);background:rgba(0,255,255,.05);">
             <td style="padding:.4rem .4rem;font-weight:700;">Total</td>
-            <td style="padding:.4rem .4rem;text-align:right;font-weight:700;color:#003366;font-size:1rem;">${totalGeral}</td>
+            <td style="padding:.4rem .4rem;text-align:right;font-weight:700;color:var(--neon-cyan);font-size:1rem;">${totalGeral}</td>
           </tr>` +
         '</table>';
     }
@@ -527,7 +529,7 @@ async function carregarDashboard(sid) {
     const coresPizza = ['#dc3545','#ffc107','#005599','#198754','#6f42c1','#fd7e14','#20c997','#e83e8c'];
     const pizzaWrap = document.getElementById('chart-pizza')?.closest('div[style*="display:flex"]');
     if (!d.fechamentos.length) {
-      if (pizzaWrap) pizzaWrap.innerHTML = '<p style="color:#aaa;font-size:.88rem;padding:.5rem 0;">Nenhum fechamento registrado nesta semana.</p>';
+      if (pizzaWrap) pizzaWrap.innerHTML = '<p style="color:var(--text-muted);font-size:.88rem;padding:.5rem 0;">Nenhum fechamento registrado nesta semana.</p>';
     } else {
       chartPizza = new Chart(document.getElementById('chart-pizza'), {
         type: 'doughnut',
@@ -610,11 +612,11 @@ async function carregarDashboard(sid) {
           d.fechamentos.map(f => `
             <tr style="border-bottom:1px solid #e8eef5;">
               <td style="padding:.35rem .4rem;">${f.descricao}</td>
-              <td style="padding:.35rem .4rem;text-align:right;font-weight:700;color:#003366;">${f.total}</td>
+              <td style="padding:.35rem .4rem;text-align:right;font-weight:700;color:var(--neon-cyan);">${f.total}</td>
             </tr>`).join('') +
-          `<tr style="border-top:2px solid #003366;background:#e8f0fe;">
+          `<tr style="border-top:1px solid var(--neon-cyan);background:rgba(0,255,255,.05);">
             <td style="padding:.4rem .4rem;font-weight:700;">Total</td>
-            <td style="padding:.4rem .4rem;text-align:right;font-weight:700;color:#003366;font-size:1rem;">${totalGeral}</td>
+            <td style="padding:.4rem .4rem;text-align:right;font-weight:700;color:var(--neon-cyan);font-size:1rem;">${totalGeral}</td>
           </tr>` +
         '</table>';
     }
@@ -1005,3 +1007,4 @@ async function delSemana(id) {
 </script>
 </body>
 </html>
+
