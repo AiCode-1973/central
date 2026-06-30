@@ -361,9 +361,7 @@ $usuarioLogado = requireLogin();
         <div class="form-group">
           <label>Perfil</label>
           <select id="usu-perfil">
-            <option value="operador">Operador</option>
-            <option value="visualizador">Visualizador</option>
-            <option value="admin">Administrador</option>
+            <option value="">Carregando…</option>
           </select>
         </div>
         <div class="form-group" id="usu-senha-wrap">
@@ -390,6 +388,45 @@ $usuarioLogado = requireLogin();
           </thead>
           <tbody id="tbody-usuarios">
             <tr><td colspan="6" style="color:var(--text-muted);">Carregando…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- CRUD Perfis -->
+    <div class="painel" style="margin-top:1.25rem;">
+      <div class="painel-titulo"><i class="fas fa-id-badge"></i> <span id="perf-form-titulo">Novo Perfil</span></div>
+      <div class="form-inline-row" style="margin-bottom:1.25rem;align-items:flex-end;flex-wrap:wrap;">
+        <div class="form-group">
+          <label>Slug <small style="color:var(--text-muted);font-weight:400;">(ex: gerente)</small></label>
+          <input type="text" id="perf-slug" placeholder="so_letras_numeros" style="width:160px;"
+                 oninput="this.value=this.value.toLowerCase().replace(/[^a-z0-9_]/g,'')">
+        </div>
+        <div class="form-group" style="flex:1;min-width:180px;">
+          <label>Label (nome exibido)</label>
+          <input type="text" id="perf-label" placeholder="Ex: Gerente" style="width:100%;">
+        </div>
+        <div class="form-group" style="flex:2;min-width:220px;">
+          <label>Descrição (opcional)</label>
+          <input type="text" id="perf-descricao" placeholder="Descrição do perfil" style="width:100%;">
+        </div>
+        <div style="display:flex;gap:.4rem;">
+          <button class="btn-app suc" onclick="salvarPerfil()">
+            <i class="fas fa-save"></i> <span id="perf-btn-label">Cadastrar</span>
+          </button>
+          <button class="btn-app" id="perf-btn-cancelar" style="display:none;border-color:var(--text-muted);color:var(--text-muted);" onclick="cancelarEdicaoPerfil()">
+            <i class="fas fa-times"></i> Cancelar
+          </button>
+        </div>
+      </div>
+
+      <div class="table-responsive">
+        <table class="tabela-app">
+          <thead>
+            <tr><th>Slug</th><th>Label</th><th>Descrição</th><th>Status</th><th></th></tr>
+          </thead>
+          <tbody id="tbody-perfis">
+            <tr><td colspan="5" style="color:var(--text-muted);">Carregando…</td></tr>
           </tbody>
         </table>
       </div>
@@ -1250,10 +1287,117 @@ async function delSemana(id) {
 /* ════════════════════════════════════════════════════════
    USUÁRIOS
 ════════════════════════════════════════════════════════ */
-const _PERFIL_LABEL = { admin: 'Administrador', operador: 'Operador', visualizador: 'Visualizador' };
-let _usuariosCache  = [];
-let _usuarioEditId  = null;
+let _perfilMap     = {};  // slug -> label
+let _perfisCache   = [];
+let _usuariosCache = [];
+let _usuarioEditId = null;
 let _senhaAlterarId = null;
+let _perfilEditId  = null;
+
+async function carregarPerfis() {
+  try {
+    const perfis = await api('api/perfis.php');
+    if (!perfis) return;
+    _perfisCache = perfis;
+    // Mapa slug -> label
+    _perfilMap = {};
+    perfis.forEach(p => { _perfilMap[p.slug] = p.label; });
+
+    // Atualiza select de usuários
+    const sel = document.getElementById('usu-perfil');
+    if (sel) {
+      const cur = sel.value;
+      sel.innerHTML = perfis.filter(p => +p.ativo).map(p =>
+        `<option value="${p.slug}">${p.label}</option>`
+      ).join('');
+      if (cur) sel.value = cur;
+    }
+
+    // Tabela de perfis
+    const tb = document.getElementById('tbody-perfis');
+    if (!tb) return;
+    if (!perfis.length) {
+      tb.innerHTML = '<tr><td colspan="5" style="color:var(--text-muted);">Nenhum perfil cadastrado.</td></tr>';
+      return;
+    }
+    const padrao = ['admin','operador','visualizador'];
+    tb.innerHTML = perfis.map(p => `
+      <tr>
+        <td><code style="background:rgba(99,179,237,.1);color:var(--neon-cyan);padding:.15rem .45rem;border-radius:4px;font-size:.82rem;">${p.slug}</code></td>
+        <td style="font-weight:600;">${p.label}</td>
+        <td style="color:var(--text-muted);font-size:.85rem;">${p.descricao || '—'}</td>
+        <td>${+p.ativo ? '<span class="badge-ativo">Ativo</span>' : '<span class="badge-inativo">Inativo</span>'}</td>
+        <td style="white-space:nowrap;display:flex;gap:.35rem;">
+          <button class="btn-app prim sm" title="Editar" onclick="editarPerfil(${p.id})"><i class="fas fa-edit"></i></button>
+          ${!padrao.includes(p.slug) ? `
+            <button class="btn-app sm" style="border-color:var(--text-muted);color:var(--text-muted);" title="${+p.ativo ? 'Desativar' : 'Ativar'}" onclick="toggleAtivoPerfil(${p.id},${+p.ativo?0:1})"><i class="fas fa-${+p.ativo?'ban':'check'}"></i></button>
+            <button class="btn-del" title="Excluir" onclick="delPerfil(${p.id})"><i class="fas fa-trash"></i></button>
+          ` : '<span style="color:var(--text-muted);font-size:.75rem;padding:.2rem .4rem;">padrão</span>'}
+        </td>
+      </tr>`).join('');
+  } catch(e) { toast(e.message, 'erro'); }
+}
+
+function editarPerfil(id) {
+  const p = _perfisCache.find(x => +x.id === +id);
+  if (!p) return;
+  _perfilEditId = id;
+  document.getElementById('perf-slug').value      = p.slug;
+  document.getElementById('perf-slug').disabled   = true;
+  document.getElementById('perf-label').value     = p.label;
+  document.getElementById('perf-descricao').value = p.descricao || '';
+  document.getElementById('perf-form-titulo').textContent = 'Editar Perfil';
+  document.getElementById('perf-btn-label').textContent   = 'Salvar';
+  document.getElementById('perf-btn-cancelar').style.display = '';
+  document.getElementById('perf-label').focus();
+}
+
+function cancelarEdicaoPerfil() {
+  _perfilEditId = null;
+  document.getElementById('perf-slug').value      = '';
+  document.getElementById('perf-slug').disabled   = false;
+  document.getElementById('perf-label').value     = '';
+  document.getElementById('perf-descricao').value = '';
+  document.getElementById('perf-form-titulo').textContent = 'Novo Perfil';
+  document.getElementById('perf-btn-label').textContent   = 'Cadastrar';
+  document.getElementById('perf-btn-cancelar').style.display = 'none';
+}
+
+async function salvarPerfil() {
+  const slug      = document.getElementById('perf-slug').value.trim();
+  const label     = document.getElementById('perf-label').value.trim();
+  const descricao = document.getElementById('perf-descricao').value.trim();
+  if (!label) { toast('Label é obrigatório.', 'erro'); return; }
+  if (!_perfilEditId && !slug) { toast('Slug é obrigatório.', 'erro'); return; }
+  try {
+    if (_perfilEditId) {
+      await api('api/perfis.php?id=' + _perfilEditId, { method: 'PUT', body: JSON.stringify({ label, descricao }) });
+      toast('Perfil atualizado!', 'suc');
+    } else {
+      await api('api/perfis.php', { method: 'POST', body: JSON.stringify({ slug, label, descricao }) });
+      toast('Perfil criado!', 'suc');
+    }
+    cancelarEdicaoPerfil();
+    await carregarPerfis();
+  } catch(e) { toast(e.message, 'erro'); }
+}
+
+async function toggleAtivoPerfil(id, novoAtivo) {
+  try {
+    await api('api/perfis.php?id=' + id, { method: 'PUT', body: JSON.stringify({ ativo: novoAtivo }) });
+    toast(novoAtivo ? 'Perfil ativado.' : 'Perfil desativado.', 'suc');
+    await carregarPerfis();
+  } catch(e) { toast(e.message, 'erro'); }
+}
+
+async function delPerfil(id) {
+  if (!confirm('Excluir este perfil?')) return;
+  try {
+    await api('api/perfis.php?id=' + id, { method: 'DELETE' });
+    toast('Perfil excluído.', 'suc');
+    await carregarPerfis();
+  } catch(e) { toast(e.message, 'erro'); }
+}
 
 async function carregarUsuarios() {
   try {
@@ -1270,7 +1414,7 @@ async function carregarUsuarios() {
       <tr>
         <td>${u.nome}</td>
         <td style="color:var(--text-muted);">${u.email}</td>
-        <td>${_PERFIL_LABEL[u.perfil] || u.perfil}</td>
+        <td>${_perfilMap[u.perfil] || u.perfil}</td>
         <td>${+u.ativo ? '<span class="badge-ativo">Ativo</span>' : '<span class="badge-inativo">Inativo</span>'}</td>
         <td style="color:var(--text-muted);font-size:.82rem;">${u.ultimo_acesso || '—'}</td>
         <td style="white-space:nowrap;display:flex;gap:.35rem;">
@@ -1392,7 +1536,10 @@ document.getElementById('modal-senha')?.addEventListener('click', e => {
 (async () => {
   await carregarSemanas();
   await carregarMotivos();
-  if (USUARIO_LOGADO.perfil === 'admin') await carregarUsuarios();
+  if (USUARIO_LOGADO.perfil === 'admin') {
+    await carregarPerfis();
+    await carregarUsuarios();
+  }
 })();
 </script>
 </body>

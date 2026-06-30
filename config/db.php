@@ -103,17 +103,41 @@ function _criarTabelas(mysqli $conn): void {
         CONSTRAINT fk_pesquisa_semana FOREIGN KEY (semana_id) REFERENCES semanas(id) ON DELETE CASCADE
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
 
+    $conn->query("CREATE TABLE IF NOT EXISTS perfis (
+        id        INT AUTO_INCREMENT PRIMARY KEY,
+        slug      VARCHAR(50)  NOT NULL,
+        label     VARCHAR(100) NOT NULL,
+        descricao VARCHAR(255) DEFAULT NULL,
+        ativo     TINYINT(1)   DEFAULT 1,
+        criado_em TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE KEY uk_perfil_slug (slug)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+    // Perfis padrão
+    $conn->query("INSERT IGNORE INTO perfis (slug, label, descricao) VALUES
+        ('admin',        'Administrador', 'Acesso total ao sistema'),
+        ('operador',     'Operador',      'Cadastro e edição de dados'),
+        ('visualizador', 'Visualizador',  'Somente visualização do dashboard')");
+
     $conn->query("CREATE TABLE IF NOT EXISTS usuarios (
         id             INT AUTO_INCREMENT PRIMARY KEY,
         nome           VARCHAR(100) NOT NULL,
         email          VARCHAR(150) NOT NULL,
         senha          VARCHAR(255) NOT NULL,
-        perfil         ENUM('admin','operador','visualizador') NOT NULL DEFAULT 'operador',
+        perfil         VARCHAR(50)  NOT NULL DEFAULT 'operador',
         ativo          TINYINT(1)   DEFAULT 1,
         ultimo_acesso  DATETIME     DEFAULT NULL,
         criado_em      TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
         UNIQUE KEY uk_usuario_email (email)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+    // Migração: ENUM → VARCHAR se ainda for ENUM
+    $colInfo = $conn->query("SHOW COLUMNS FROM usuarios LIKE 'perfil'");
+    if ($colInfo && ($col = $colInfo->fetch_assoc())) {
+        if (stripos($col['Type'], 'enum') !== false) {
+            $conn->query("ALTER TABLE usuarios MODIFY perfil VARCHAR(50) NOT NULL DEFAULT 'operador'");
+        }
+    }
 
     // Cria admin padrão se não houver nenhum usuário
     $chk = $conn->query("SELECT COUNT(*) AS c FROM usuarios");

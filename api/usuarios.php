@@ -40,9 +40,13 @@ try {
                 echo json_encode(['erro' => 'Senha deve ter no mínimo 6 caracteres.']);
                 break;
             }
-            if (!in_array($perfil, ['admin', 'operador', 'visualizador'])) {
+            // Valida perfil contra tabela
+            $chkP = $conn->prepare("SELECT id FROM perfis WHERE slug = ? AND ativo = 1 LIMIT 1");
+            $chkP->bind_param('s', $perfil);
+            $chkP->execute();
+            if (!$chkP->get_result()->fetch_assoc()) {
                 http_response_code(422);
-                echo json_encode(['erro' => 'Perfil inválido.']);
+                echo json_encode(['erro' => 'Perfil inválido ou inativo.']);
                 break;
             }
 
@@ -101,9 +105,13 @@ try {
                 echo json_encode(['erro' => 'Nome e e-mail são obrigatórios.']);
                 break;
             }
-            if (!in_array($perfil, ['admin', 'operador', 'visualizador'])) {
+            // Valida perfil contra tabela
+            $chkP = $conn->prepare("SELECT id FROM perfis WHERE slug = ? AND ativo = 1 LIMIT 1");
+            $chkP->bind_param('s', $perfil);
+            $chkP->execute();
+            if (!$chkP->get_result()->fetch_assoc()) {
                 http_response_code(422);
-                echo json_encode(['erro' => 'Perfil inválido.']);
+                echo json_encode(['erro' => 'Perfil inválido ou inativo.']);
                 break;
             }
 
