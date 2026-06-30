@@ -114,7 +114,7 @@
         </div>
         <div class="painel">
           <div class="painel-titulo"><i class="fas fa-chart-pie"></i> Motivos de Fechamento — Distribuição</div>
-          <div class="chart-wrap"><canvas id="chart-pizza"></canvas></div>
+          <div class="chart-wrap" style="max-width:260px;margin:0 auto;"><canvas id="chart-pizza"></canvas></div>
         </div>
       </div>
 
