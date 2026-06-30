@@ -409,19 +409,21 @@ async function carregarDashboard(sid) {
     // Label da semana no título do gráfico de picos
     const semAtual = (window._semanasCache || []).find(s => s.id == sid);
     if (semAtual) {
-      document.getElementById('pico-semana-label').textContent =
-        semAtual.descricao || `${fmtData(semAtual.data_inicio)} a ${fmtData(semAtual.data_fim)}`;
+      const periodo = `${fmtData(semAtual.data_inicio)} a ${fmtData(semAtual.data_fim)}`;
+      const desc    = semAtual.descricao ? `${semAtual.descricao} (${periodo})` : periodo;
+      document.getElementById('pico-semana-label').textContent = desc;
     }
 
-    // Gráfico picos — mostra só a hora no eixo
+    // Gráfico picos — ordena do menor para o maior
+    const picosOrdenados = [...d.picos].sort((a, b) => +a.total - +b.total);
     if (chartPicos) chartPicos.destroy();
     chartPicos = new Chart(document.getElementById('chart-picos'), {
       type: 'bar',
       data: {
-        labels: d.picos.map(p => p.hora || '—'),
+        labels: picosOrdenados.map(p => p.hora || '—'),
         datasets: [{
           label: 'Atendimentos',
-          data:  d.picos.map(p => +p.total),
+          data:  picosOrdenados.map(p => +p.total),
           backgroundColor: '#005599',
         }],
       },
