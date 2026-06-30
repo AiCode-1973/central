@@ -84,29 +84,6 @@
 
     <!-- Vista Semanal -->
     <div id="view-semana">
-      <div class="kpi-grid">
-        <div class="kpi-card">
-          <span class="kpi-label">Agendados</span>
-          <span class="kpi-valor" id="kpi-agendados">—</span>
-          <i class="fas fa-calendar-plus kpi-icon"></i>
-        </div>
-        <div class="kpi-card verde">
-          <span class="kpi-label">Atendidos</span>
-          <span class="kpi-valor" id="kpi-atendidos">—</span>
-          <i class="fas fa-user-check kpi-icon"></i>
-        </div>
-        <div class="kpi-card verm">
-          <span class="kpi-label">Cancelados</span>
-          <span class="kpi-valor" id="kpi-cancelados">—</span>
-          <i class="fas fa-calendar-times kpi-icon"></i>
-        </div>
-        <div class="kpi-card amar">
-          <span class="kpi-label">Faltas</span>
-          <span class="kpi-valor" id="kpi-faltas">—</span>
-          <i class="fas fa-user-slash kpi-icon"></i>
-        </div>
-      </div>
-
       <div class="charts-grid">
         <div class="painel">
           <div class="painel-titulo"><i class="fas fa-chart-bar"></i> Evolução de Atendimentos (diário)</div>
@@ -137,29 +114,6 @@
 
     <!-- Vista Mensal -->
     <div id="view-mes" style="display:none;">
-      <div class="kpi-grid">
-        <div class="kpi-card">
-          <span class="kpi-label">Agendados (mês)</span>
-          <span class="kpi-valor" id="mkpi-agendados">—</span>
-          <i class="fas fa-calendar-plus kpi-icon"></i>
-        </div>
-        <div class="kpi-card verde">
-          <span class="kpi-label">Atendidos (mês)</span>
-          <span class="kpi-valor" id="mkpi-atendidos">—</span>
-          <i class="fas fa-user-check kpi-icon"></i>
-        </div>
-        <div class="kpi-card verm">
-          <span class="kpi-label">Cancelados (mês)</span>
-          <span class="kpi-valor" id="mkpi-cancelados">—</span>
-          <i class="fas fa-calendar-times kpi-icon"></i>
-        </div>
-        <div class="kpi-card amar">
-          <span class="kpi-label">Faltas (mês)</span>
-          <span class="kpi-valor" id="mkpi-faltas">—</span>
-          <i class="fas fa-user-slash kpi-icon"></i>
-        </div>
-      </div>
-
       <div class="charts-grid">
         <div class="painel">
           <div class="painel-titulo"><i class="fas fa-chart-bar"></i> Atendimentos por Semana</div>
