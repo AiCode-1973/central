@@ -704,9 +704,10 @@ function showTab(name, btn) {
       if (b.getAttribute('onclick').includes("'" + name + "'")) b.classList.add('active');
     });
   }
-  // Oculta seletor de semana na aba de usuários
+  // Oculta seletor de semana nas abas que não precisam dele
+  const _tabsSemSemana = ['usuarios','autorizacoes','convenios','procedimentos'];
   const sel = document.querySelector('.semana-selector');
-  if (sel) sel.style.display = name === 'usuarios' ? 'none' : '';
+  if (sel) sel.style.display = _tabsSemSemana.includes(name) ? 'none' : '';
 }
 
 /* ── Seletor de Semana ───────────────────────────────────── */
