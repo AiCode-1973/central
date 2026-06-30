@@ -56,16 +56,34 @@ function requirePerfil(array $perfis): array {
 }
 
 /**
+ * Carrega permissões de um perfil do banco.
+ * Admin sempre retorna todos os módulos.
+ */
+function carregarPermissoes(string $perfil, mysqli $conn): array {
+    if ($perfil === 'admin') {
+        return ['dashboard','atendimentos','picos','fechamentos','motivos','semanas','pesquisa','usuarios'];
+    }
+    $stmt = $conn->prepare(
+        "SELECT modulo FROM perfis_permissoes WHERE perfil_slug = ? ORDER BY modulo"
+    );
+    $stmt->bind_param('s', $perfil);
+    $stmt->execute();
+    $rows = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+    return array_column($rows, 'modulo');
+}
+
+/**
  * Inicia sessão com os dados do usuário autenticado.
  */
-function loginUsuario(array $u): void {
+function loginUsuario(array $u, mysqli $conn): void {
     _authStartSession();
     session_regenerate_id(true);
     $_SESSION['usuario'] = [
-        'id'     => (int)$u['id'],
-        'nome'   => $u['nome'],
-        'email'  => $u['email'],
-        'perfil' => $u['perfil'],
+        'id'          => (int)$u['id'],
+        'nome'        => $u['nome'],
+        'email'       => $u['email'],
+        'perfil'      => $u['perfil'],
+        'permissoes'  => carregarPermissoes($u['perfil'], $conn),
     ];
 }
 

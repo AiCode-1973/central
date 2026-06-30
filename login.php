@@ -23,13 +23,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $conn->close();
 
         if ($user && $user['ativo'] && password_verify($senha, $user['senha'])) {
-            loginUsuario($user);
+            loginUsuario($user, $conn);
             // Registra último acesso
-            $conn2 = getConnection();
-            $s2 = $conn2->prepare("UPDATE usuarios SET ultimo_acesso = NOW() WHERE id = ?");
+            $s2 = $conn->prepare("UPDATE usuarios SET ultimo_acesso = NOW() WHERE id = ?");
             $s2->bind_param('i', $user['id']);
             $s2->execute();
-            $conn2->close();
+            $conn->close();
             header('Location: index.php');
             exit;
         } elseif ($user && !$user['ativo']) {

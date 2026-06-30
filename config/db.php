@@ -119,6 +119,26 @@ function _criarTabelas(mysqli $conn): void {
         ('operador',     'Operador',      'Cadastro e edição de dados'),
         ('visualizador', 'Visualizador',  'Somente visualização do dashboard')");
 
+    $conn->query("CREATE TABLE IF NOT EXISTS perfis_permissoes (
+        id         INT AUTO_INCREMENT PRIMARY KEY,
+        perfil_slug VARCHAR(50) NOT NULL,
+        modulo     VARCHAR(50) NOT NULL,
+        UNIQUE KEY uk_perm (perfil_slug, modulo)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+    // Permissões padrão — admin tem tudo, operador tem tudo exceto usuarios, visualizador só dashboard
+    $todosModulos = ['dashboard','atendimentos','picos','fechamentos','motivos','semanas','pesquisa','usuarios'];
+    $operadorMod  = ['dashboard','atendimentos','picos','fechamentos','motivos','semanas','pesquisa'];
+    $visualizMod  = ['dashboard'];
+
+    $chkPerm = $conn->query("SELECT COUNT(*) AS c FROM perfis_permissoes");
+    if ($chkPerm && $chkPerm->fetch_assoc()['c'] == 0) {
+        $insP = $conn->prepare("INSERT IGNORE INTO perfis_permissoes (perfil_slug, modulo) VALUES (?, ?)");
+        foreach ($todosModulos as $m) { $insP->bind_param('ss', $s1, $m); $s1='admin';       $insP->execute(); }
+        foreach ($operadorMod  as $m) { $insP->bind_param('ss', $s2, $m); $s2='operador';    $insP->execute(); }
+        foreach ($visualizMod  as $m) { $insP->bind_param('ss', $s3, $m); $s3='visualizador';$insP->execute(); }
+    }
+
     $conn->query("CREATE TABLE IF NOT EXISTS usuarios (
         id             INT AUTO_INCREMENT PRIMARY KEY,
         nome           VARCHAR(100) NOT NULL,

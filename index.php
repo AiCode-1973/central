@@ -1,6 +1,11 @@
 ﻿<?php
 require_once __DIR__ . '/config/auth.php';
 $usuarioLogado = requireLogin();
+$permissoes    = $usuarioLogado['permissoes'] ?? [];
+function temPerm(string $m): bool {
+    global $permissoes;
+    return in_array($m, $permissoes, true);
+}
 ?>
 <!DOCTYPE html>
 <html lang="pt-BR">
@@ -13,7 +18,10 @@ $usuarioLogado = requireLogin();
   <link rel="stylesheet" href="assets/css/dashboard.css">
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
-  <script>const USUARIO_LOGADO = <?= json_encode($usuarioLogado) ?>;</script>
+  <script>
+    const USUARIO_LOGADO = <?= json_encode($usuarioLogado) ?>;
+    const PERMISSOES     = <?= json_encode($permissoes) ?>;
+  </script>
 </head>
 <body>
 
@@ -25,28 +33,42 @@ $usuarioLogado = requireLogin();
     <small>Central de Agendamento — Dashboard</small>
   </div>
   <div class="nav-tabs-app">
+    <?php if (temPerm('dashboard')): ?>
     <button class="tab-btn active" onclick="showTab('dashboard',this)">
       <i class="fas fa-chart-line"></i> <span>Dashboard</span>
     </button>
+    <?php endif; ?>
+    <?php if (temPerm('atendimentos')): ?>
     <button class="tab-btn" onclick="showTab('atendimentos',this)">
       <i class="fas fa-calendar-check"></i> <span>Atendimentos</span>
     </button>
+    <?php endif; ?>
+    <?php if (temPerm('picos')): ?>
     <button class="tab-btn" onclick="showTab('picos',this)">
       <i class="fas fa-clock"></i> <span>Horários de Pico</span>
     </button>
+    <?php endif; ?>
+    <?php if (temPerm('fechamentos')): ?>
     <button class="tab-btn" onclick="showTab('fechamentos',this)">
       <i class="fas fa-door-closed"></i> <span>Fechamentos</span>
     </button>
+    <?php endif; ?>
+    <?php if (temPerm('motivos')): ?>
     <button class="tab-btn" onclick="showTab('motivos',this)">
       <i class="fas fa-tags"></i> <span>Motivos</span>
     </button>
+    <?php endif; ?>
+    <?php if (temPerm('semanas')): ?>
     <button class="tab-btn" onclick="showTab('semanas',this)">
       <i class="fas fa-calendar-week"></i> <span>Semanas</span>
     </button>
+    <?php endif; ?>
+    <?php if (temPerm('pesquisa')): ?>
     <button class="tab-btn" onclick="showTab('pesquisa',this)">
       <i class="fas fa-star"></i> <span>Pesquisa</span>
     </button>
-    <?php if ($usuarioLogado['perfil'] === 'admin'): ?>
+    <?php endif; ?>
+    <?php if (temPerm('usuarios')): ?>
     <button class="tab-btn" onclick="showTab('usuarios',this)">
       <i class="fas fa-users"></i> <span>Usuários</span>
     </button>
@@ -175,7 +197,7 @@ $usuarioLogado = requireLogin();
   <!-- ══════════════════════════════════════════════════════
        ABA: ATENDIMENTOS
   ══════════════════════════════════════════════════════════ -->
-  <section id="tab-atendimentos" class="tab-section">
+  <section id="tab-atendimentos" class="tab-section" <?php if(!temPerm('atendimentos')) echo 'style="display:none"'; ?>>  
     <div class="painel">
       <div class="painel-titulo"><i class="fas fa-calendar-check"></i> Atendimentos da Semana</div>
       <div id="form-atendimentos">
@@ -192,7 +214,7 @@ $usuarioLogado = requireLogin();
   <!-- ══════════════════════════════════════════════════════
        ABA: HORÁRIOS DE PICO
   ══════════════════════════════════════════════════════════ -->
-  <section id="tab-picos" class="tab-section">
+  <section id="tab-picos" class="tab-section" <?php if(!temPerm('picos')) echo 'style="display:none"'; ?>>  
     <div class="painel">
       <div class="painel-titulo"><i class="fas fa-clock"></i> Horários de Pico da Semana</div>
       <p style="font-size:.85rem;color:var(--text-muted);margin-bottom:1.1rem;">
@@ -210,7 +232,7 @@ $usuarioLogado = requireLogin();
   <!-- ══════════════════════════════════════════════════════
        ABA: FECHAMENTOS
   ══════════════════════════════════════════════════════════ -->
-  <section id="tab-fechamentos" class="tab-section">
+  <section id="tab-fechamentos" class="tab-section" <?php if(!temPerm('fechamentos')) echo 'style="display:none"'; ?>>  
     <div class="painel">
       <div class="painel-titulo"><i class="fas fa-door-closed"></i> Motivos de Fechamento da Semana</div>
       <p style="font-size:.85rem;color:var(--text-muted);margin-bottom:1rem;">
@@ -257,7 +279,7 @@ $usuarioLogado = requireLogin();
   <!-- ══════════════════════════════════════════════════════
        ABA: MOTIVOS
   ══════════════════════════════════════════════════════════ -->
-  <section id="tab-motivos" class="tab-section">
+  <section id="tab-motivos" class="tab-section" <?php if(!temPerm('motivos')) echo 'style="display:none"'; ?>>  
     <div class="painel">
       <div class="painel-titulo"><i class="fas fa-tags"></i> Cadastro de Motivos de Fechamento</div>
       <div class="form-inline-row" style="margin-bottom:1rem;">
@@ -286,7 +308,7 @@ $usuarioLogado = requireLogin();
   <!-- ══════════════════════════════════════════════════════
        ABA: SEMANAS
   ══════════════════════════════════════════════════════════ -->
-  <section id="tab-semanas" class="tab-section">
+  <section id="tab-semanas" class="tab-section" <?php if(!temPerm('semanas')) echo 'style="display:none"'; ?>>  
     <div class="painel">
       <div class="painel-titulo"><i class="fas fa-calendar-week"></i> Cadastro de Semanas (Seg–Sex)</div>
       <div class="form-inline-row" style="margin-bottom:1rem;">
@@ -323,7 +345,7 @@ $usuarioLogado = requireLogin();
   <!-- ══════════════════════════════════════════════════════
        ABA: PESQUISA DE SATISFAÇÃO
   ══════════════════════════════════════════════════════════ -->
-  <section id="tab-pesquisa" class="tab-section">
+  <section id="tab-pesquisa" class="tab-section" <?php if(!temPerm('pesquisa')) echo 'style="display:none"'; ?>>  
     <div class="painel">
       <div class="painel-titulo"><i class="fas fa-star"></i> Pesquisa de Satisfação da Semana</div>
       <p style="font-size:.85rem;color:var(--text-muted);margin-bottom:1.25rem;">
@@ -346,7 +368,7 @@ $usuarioLogado = requireLogin();
   <!-- ══════════════════════════════════════════════════════
        ABA: USUÁRIOS
   ══════════════════════════════════════════════════════════ -->
-  <section id="tab-usuarios" class="tab-section">
+  <section id="tab-usuarios" class="tab-section" <?php if(!temPerm('usuarios')) echo 'style="display:none"'; ?>>  
     <div class="painel">
       <div class="painel-titulo"><i class="fas fa-users"></i> <span id="usu-form-titulo">Novo Usuário</span></div>
       <div class="form-inline-row" style="margin-bottom:1.25rem;align-items:flex-end;flex-wrap:wrap;">
@@ -433,6 +455,24 @@ $usuarioLogado = requireLogin();
     </div>
   </section>
   <?php endif; ?>
+
+<?php if ($usuarioLogado['perfil'] === 'admin'): ?>
+<!-- ══ MODAL PERMISSÕES ═══════════════════════════════════ -->
+<div id="modal-permissoes" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:2100;align-items:center;justify-content:center;">
+  <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:1.75rem 2rem;width:100%;max-width:480px;box-shadow:0 8px 40px rgba(0,0,0,.6);">
+    <div style="font-size:.88rem;font-weight:700;color:var(--neon-purple);text-transform:uppercase;letter-spacing:.04em;margin-bottom:1.25rem;display:flex;justify-content:space-between;align-items:center;">
+      <span><i class="fas fa-shield-alt"></i> Permissões — <span id="perm-label-titulo"></span></span>
+      <button onclick="fecharModalPermissoes()" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:1.1rem;"><i class="fas fa-times"></i></button>
+    </div>
+    <p style="font-size:.8rem;color:var(--text-muted);margin-bottom:1rem;">Selecione os módulos que este perfil pode acessar:</p>
+    <div id="perm-checkboxes" style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem .75rem;margin-bottom:1.5rem;"></div>
+    <div style="display:flex;gap:.5rem;justify-content:flex-end;">
+      <button class="btn-app sm" style="border-color:var(--text-muted);color:var(--text-muted);" onclick="fecharModalPermissoes()">Cancelar</button>
+      <button class="btn-app sm" style="border-color:var(--neon-purple);color:var(--neon-purple);" onclick="salvarPermissoes()"><i class="fas fa-save"></i> Salvar</button>
+    </div>
+  </div>
+</div>
+<?php endif; ?>
 
 <?php if ($usuarioLogado['perfil'] === 'admin'): ?>
 <!-- ══════════════════════════════════════════════════════
@@ -1329,6 +1369,7 @@ async function carregarPerfis() {
         <td>${+p.ativo ? '<span class="badge-ativo">Ativo</span>' : '<span class="badge-inativo">Inativo</span>'}</td>
         <td style="white-space:nowrap;display:flex;gap:.35rem;">
           <button class="btn-app prim sm" title="Editar" onclick="editarPerfil(${p.id})"><i class="fas fa-edit"></i></button>
+          ${p.slug !== 'admin' ? `<button class="btn-app sm" style="border-color:var(--neon-purple);color:var(--neon-purple);" title="Permissões" onclick="abrirPermissoes('${p.slug}','${p.label}')"><i class="fas fa-shield-alt"></i></button>` : ''}
           ${!padrao.includes(p.slug) ? `
             <button class="btn-app sm" style="border-color:var(--text-muted);color:var(--text-muted);" title="${+p.ativo ? 'Desativar' : 'Ativar'}" onclick="toggleAtivoPerfil(${p.id},${+p.ativo?0:1})"><i class="fas fa-${+p.ativo?'ban':'check'}"></i></button>
             <button class="btn-del" title="Excluir" onclick="delPerfil(${p.id})"><i class="fas fa-trash"></i></button>
@@ -1396,6 +1437,59 @@ async function delPerfil(id) {
     await api('api/perfis.php?id=' + id, { method: 'DELETE' });
     toast('Perfil excluído.', 'suc');
     await carregarPerfis();
+  } catch(e) { toast(e.message, 'erro'); }
+}
+
+/* ── Permissões por Perfil ────────────────────────────────── */
+const MODULOS_LABELS = {
+  dashboard:    'Dashboard',
+  atendimentos: 'Atendimentos',
+  picos:        'Horários de Pico',
+  fechamentos:  'Fechamentos',
+  motivos:      'Motivos',
+  semanas:      'Semanas',
+  pesquisa:     'Pesquisa de Satisfação',
+};
+let _permSlug = '';
+
+async function abrirPermissoes(slug, label) {
+  _permSlug = slug;
+  document.getElementById('perm-label-titulo').textContent = label;
+  const el = document.getElementById('modal-permissoes');
+  el.style.display = 'flex';
+
+  const box = document.getElementById('perm-checkboxes');
+  box.innerHTML = '<span style="color:var(--text-muted);font-size:.85rem;">Carregando…</span>';
+
+  try {
+    const data = await api('api/permissoes.php?slug=' + encodeURIComponent(slug));
+    const ativos = Array.isArray(data) ? data : [];
+    box.innerHTML = Object.entries(MODULOS_LABELS).map(([mod, lbl]) => `
+      <label style="display:flex;align-items:center;gap:.45rem;cursor:pointer;font-size:.88rem;">
+        <input type="checkbox" value="${mod}" ${ativos.includes(mod) ? 'checked' : ''}
+          style="width:15px;height:15px;accent-color:var(--neon-purple);">
+        ${lbl}
+      </label>`).join('');
+  } catch(e) {
+    box.innerHTML = `<span style="color:var(--neon-pink);">${e.message}</span>`;
+  }
+}
+
+function fecharModalPermissoes() {
+  document.getElementById('modal-permissoes').style.display = 'none';
+  _permSlug = '';
+}
+
+async function salvarPermissoes() {
+  const checks = document.querySelectorAll('#perm-checkboxes input[type=checkbox]:checked');
+  const modulos = Array.from(checks).map(c => c.value);
+  try {
+    await api('api/permissoes.php', {
+      method: 'POST',
+      body: JSON.stringify({ slug: _permSlug, modulos }),
+    });
+    toast('Permissões salvas.', 'suc');
+    fecharModalPermissoes();
   } catch(e) { toast(e.message, 'erro'); }
 }
 
