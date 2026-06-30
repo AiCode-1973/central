@@ -114,10 +114,7 @@
   ══════════════════════════════════════════════════════════ -->
   <section id="tab-atendimentos" class="tab-section">
     <div class="painel">
-      <div class="painel-titulo"><i class="fas fa-calendar-check"></i> Cadastro de Atendimentos</div>
-      <p style="font-size:.85rem;color:#666;margin-bottom:1rem;">
-        Preencha os dados para cada dia da semana selecionada (segunda a sexta).
-      </p>
+      <div class="painel-titulo"><i class="fas fa-calendar-check"></i> Atendimentos da Semana</div>
       <div id="form-atendimentos">
         <p style="color:#aaa;font-size:.9rem;">Selecione uma semana primeiro.</p>
       </div>
@@ -125,23 +122,6 @@
         <button class="btn-app suc" onclick="salvarAtendimentos()">
           <i class="fas fa-save"></i> Salvar Atendimentos
         </button>
-      </div>
-    </div>
-
-    <div class="painel" style="margin-top:1.25rem;">
-      <div class="painel-titulo"><i class="fas fa-list"></i> Registros Salvos</div>
-      <div class="table-responsive">
-        <table class="tabela-app">
-          <thead>
-            <tr>
-              <th>Data</th><th>Agendados</th><th>Atendidos</th>
-              <th>Cancelados</th><th>Faltas</th><th>Observação</th><th></th>
-            </tr>
-          </thead>
-          <tbody id="tbody-atendimentos">
-            <tr><td colspan="7" style="color:#aaa;">Selecione uma semana.</td></tr>
-          </tbody>
-        </table>
       </div>
     </div>
   </section>
@@ -487,35 +467,24 @@ function gerarDiasUteis(inicio) {
 let atendimentosEditaveis = [];
 
 async function carregarAtendimentos(sid) {
-  const sel    = document.getElementById('sel-semana');
-  const opt    = sel.options[sel.selectedIndex];
-  const texto  = opt ? opt.textContent : '';
-  // Tenta extrair a data de início do texto ou busca da API
-  const semanas = await api('api/semanas.php');
+  const semanas = window._semanasCache || await api('api/semanas.php');
   const sem     = semanas.find(s => s.id == sid);
   if (!sem) return;
 
-  const dias   = gerarDiasUteis(sem.data_inicio);
-  const saved  = await api('api/atendimentos.php?semana_id=' + sid);
-
-  // Monta mapa data → registro salvo
-  const map = {};
+  const dias  = gerarDiasUteis(sem.data_inicio);
+  const saved = await api('api/atendimentos.php?semana_id=' + sid);
+  const map   = {};
   saved.forEach(r => { map[r.data] = r; });
 
   atendimentosEditaveis = dias.map((dt, i) => ({
-    id:               map[dt]?.id               || null,
-    semana_id:        sid,
-    data:             dt,
-    total_agendados:  map[dt]?.total_agendados  || 0,
-    total_atendidos:  map[dt]?.total_atendidos  || 0,
-    total_cancelados: map[dt]?.total_cancelados || 0,
-    total_faltas:     map[dt]?.total_faltas     || 0,
-    observacao:       map[dt]?.observacao       || '',
-    diaNome:          DIAS_SEMANA[i],
+    id:              map[dt]?.id             || null,
+    semana_id:       sid,
+    data:            dt,
+    total_atendidos: map[dt]?.total_atendidos || 0,
+    diaNome:         DIAS_SEMANA[i],
   }));
 
   renderFormAtendimentos();
-  renderTabelaAtendimentos();
 }
 
 function renderFormAtendimentos() {
@@ -525,13 +494,13 @@ function renderFormAtendimentos() {
     return;
   }
   c.innerHTML = `
-    <div class="table-responsive">
+    <div class="table-responsive" style="max-width:360px;">
       <table class="tabela-app">
         <thead>
           <tr>
-            <th>Dia</th><th>Data</th>
-            <th>Agendados</th><th>Atendidos</th>
-            <th>Cancelados</th><th>Faltas</th><th>Observação</th>
+            <th>Dia</th>
+            <th>Data</th>
+            <th>Total Atendimentos</th>
           </tr>
         </thead>
         <tbody>
@@ -539,11 +508,11 @@ function renderFormAtendimentos() {
             <tr>
               <td><strong>${r.diaNome}</strong></td>
               <td>${fmtData(r.data)}</td>
-              <td><input type="number" min="0" class="at-ag" data-i="${i}" value="${r.total_agendados}" style="width:70px;padding:.3rem;border:1px solid #ccd;border-radius:5px;"></td>
-              <td><input type="number" min="0" class="at-at" data-i="${i}" value="${r.total_atendidos}" style="width:70px;padding:.3rem;border:1px solid #ccd;border-radius:5px;"></td>
-              <td><input type="number" min="0" class="at-ca" data-i="${i}" value="${r.total_cancelados}" style="width:70px;padding:.3rem;border:1px solid #ccd;border-radius:5px;"></td>
-              <td><input type="number" min="0" class="at-fa" data-i="${i}" value="${r.total_faltas}" style="width:70px;padding:.3rem;border:1px solid #ccd;border-radius:5px;"></td>
-              <td><input type="text" class="at-ob" data-i="${i}" value="${r.observacao}" style="width:140px;padding:.3rem;border:1px solid #ccd;border-radius:5px;" placeholder="Opcional"></td>
+              <td>
+                <input type="number" min="0" class="at-at" data-i="${i}"
+                       value="${r.total_atendidos}"
+                       style="width:100px;padding:.3rem .5rem;border:1px solid #ccd;border-radius:5px;text-align:center;">
+              </td>
             </tr>`).join('')}
         </tbody>
       </table>
@@ -554,15 +523,10 @@ async function salvarAtendimentos() {
   const sid = semanaAtual();
   if (!sid) { toast('Selecione uma semana.', 'erro'); return; }
 
-  // Lê valores dos inputs
   const items = atendimentosEditaveis.map((r, i) => ({
-    semana_id:        sid,
-    data:             r.data,
-    total_agendados:  parseInt(document.querySelector(`.at-ag[data-i="${i}"]`)?.value) || 0,
-    total_atendidos:  parseInt(document.querySelector(`.at-at[data-i="${i}"]`)?.value) || 0,
-    total_cancelados: parseInt(document.querySelector(`.at-ca[data-i="${i}"]`)?.value) || 0,
-    total_faltas:     parseInt(document.querySelector(`.at-fa[data-i="${i}"]`)?.value) || 0,
-    observacao:       document.querySelector(`.at-ob[data-i="${i}"]`)?.value || '',
+    semana_id:       sid,
+    data:            r.data,
+    total_atendidos: parseInt(document.querySelector(`.at-at[data-i="${i}"]`)?.value) || 0,
   }));
 
   try {
@@ -570,34 +534,6 @@ async function salvarAtendimentos() {
     toast('Atendimentos salvos!', 'suc');
     carregarAtendimentos(sid);
     carregarDashboard(sid);
-  } catch (e) { toast(e.message, 'erro'); }
-}
-
-function renderTabelaAtendimentos() {
-  const tb = document.getElementById('tbody-atendimentos');
-  if (!atendimentosEditaveis.length) {
-    tb.innerHTML = '<tr><td colspan="7" style="color:#aaa;">Selecione uma semana.</td></tr>';
-    return;
-  }
-  tb.innerHTML = atendimentosEditaveis.map(r => `
-    <tr>
-      <td>${fmtData(r.data)}</td>
-      <td>${r.total_agendados}</td>
-      <td>${r.total_atendidos}</td>
-      <td>${r.total_cancelados}</td>
-      <td>${r.total_faltas}</td>
-      <td>${r.observacao || '—'}</td>
-      <td>${r.id ? `<button class="btn-del" onclick="delAtendimento(${r.id})"><i class="fas fa-trash"></i></button>` : ''}</td>
-    </tr>`).join('');
-}
-
-async function delAtendimento(id) {
-  if (!confirm('Remover este registro?')) return;
-  try {
-    await api('api/atendimentos.php?id=' + id, { method: 'DELETE' });
-    toast('Removido.', 'suc');
-    carregarAtendimentos(semanaAtual());
-    carregarDashboard(semanaAtual());
   } catch (e) { toast(e.message, 'erro'); }
 }
 
