@@ -415,7 +415,7 @@ async function carregarDashboard(sid) {
     }
 
     // Gráfico picos — ordena do menor para o maior
-    const picosOrdenados = [...d.picos].sort((a, b) => +a.total - +b.total);
+    const picosOrdenados = [...d.picos].sort((a, b) => (a.hora || '').localeCompare(b.hora || ''));
     if (chartPicos) chartPicos.destroy();
     chartPicos = new Chart(document.getElementById('chart-picos'), {
       type: 'bar',
