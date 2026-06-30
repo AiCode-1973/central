@@ -11,10 +11,10 @@ try {
             $semana_id = intval($_GET['semana_id'] ?? 0);
             if (!$semana_id) { echo json_encode([]); break; }
             $stmt = $conn->prepare(
-                "SELECT id, data, hora, total_atendimentos
+                "SELECT id, data, total_atendimentos
                  FROM horarios_pico
                  WHERE semana_id = ?
-                 ORDER BY data, hora"
+                 ORDER BY data"
             );
             $stmt->bind_param('i', $semana_id);
             $stmt->execute();
@@ -26,19 +26,18 @@ try {
             $items = $body['items'] ?? [$body];
             $stmt  = $conn->prepare(
                 "INSERT INTO horarios_pico (semana_id, data, hora, total_atendimentos)
-                 VALUES (?, ?, ?, ?)
+                 VALUES (?, ?, '', ?)
                  ON DUPLICATE KEY UPDATE total_atendimentos = VALUES(total_atendimentos)"
             );
             foreach ($items as $item) {
-                $sid   = intval($item['semana_id']         ?? 0);
-                $dt    = trim($item['data']                ?? '');
-                $hora  = trim($item['hora']                ?? '');
+                $sid   = intval($item['semana_id']          ?? 0);
+                $dt    = trim($item['data']                 ?? '');
                 $total = intval($item['total_atendimentos'] ?? 0);
-                if (!$sid || !$dt || !$hora) continue;
-                $stmt->bind_param('issi', $sid, $dt, $hora, $total);
+                if (!$sid || !$dt) continue;
+                $stmt->bind_param('isi', $sid, $dt, $total);
                 $stmt->execute();
             }
-            echo json_encode(['mensagem' => 'Horários de pico salvos.']);
+            echo json_encode(['mensagem' => 'Picos salvos.']);
             break;
 
         case 'DELETE':

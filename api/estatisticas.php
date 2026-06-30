@@ -28,11 +28,11 @@ $stmtDia->bind_param('i', $semana_id);
 $stmtDia->execute();
 $por_dia = $stmtDia->get_result()->fetch_all(MYSQLI_ASSOC);
 
-// Top 5 horários de pico
+// Top 5 dias de pico
 $stmtPico = $conn->prepare(
-    "SELECT hora, SUM(total_atendimentos) AS total
+    "SELECT data, total_atendimentos AS total
      FROM horarios_pico WHERE semana_id = ?
-     GROUP BY hora ORDER BY total DESC LIMIT 5"
+     ORDER BY total DESC LIMIT 5"
 );
 $stmtPico->bind_param('i', $semana_id);
 $stmtPico->execute();

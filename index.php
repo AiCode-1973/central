@@ -157,10 +157,6 @@
           <input type="date" id="pico-data">
         </div>
         <div class="form-group">
-          <label>Hora (HH:MM)</label>
-          <input type="time" id="pico-hora" step="3600">
-        </div>
-        <div class="form-group">
           <label>Total Atendimentos</label>
           <input type="number" id="pico-total" min="0" style="width:120px;" value="0">
         </div>
@@ -173,7 +169,7 @@
       <div class="table-responsive">
         <table class="tabela-app">
           <thead>
-            <tr><th>Data</th><th>Hora</th><th>Atendimentos</th><th></th></tr>
+            <tr><th>Data</th><th>Atendimentos</th><th></th></tr>
           </thead>
           <tbody id="tbody-picos-form"></tbody>
         </table>
@@ -188,7 +184,7 @@
       <div class="table-responsive">
         <table class="tabela-app">
           <thead>
-            <tr><th>Data</th><th>Hora</th><th>Atendimentos</th><th></th></tr>
+            <tr><th>Data</th><th>Atendimentos</th><th></th></tr>
           </thead>
           <tbody id="tbody-picos-list">
             <tr><td colspan="4" style="color:#aaa;">Selecione uma semana.</td></tr>
@@ -444,7 +440,7 @@ async function carregarDashboard(sid) {
     chartPicos = new Chart(document.getElementById('chart-picos'), {
       type: 'bar',
       data: {
-        labels: d.picos.map(p => p.hora),
+        labels: d.picos.map(p => fmtData(p.data)),
         datasets: [{
           label: 'Atendimentos',
           data:  d.picos.map(p => +p.total),
@@ -611,10 +607,11 @@ let picosForm = [];
 
 function addPico() {
   const data  = document.getElementById('pico-data').value;
-  const hora  = document.getElementById('pico-hora').value;
   const total = parseInt(document.getElementById('pico-total').value) || 0;
-  if (!data || !hora) { toast('Preencha data e hora.', 'erro'); return; }
-  picosForm.push({ data, hora, total });
+  if (!data) { toast('Preencha a data.', 'erro'); return; }
+  // Evita duplicata no form
+  const idx = picosForm.findIndex(p => p.data === data);
+  if (idx >= 0) { picosForm[idx].total = total; } else { picosForm.push({ data, total }); }
   renderPicosForm();
 }
 
@@ -624,7 +621,6 @@ function renderPicosForm() {
   tb.innerHTML = picosForm.map((p, i) => `
     <tr>
       <td>${fmtData(p.data)}</td>
-      <td>${p.hora}</td>
       <td>${p.total}</td>
       <td><button class="btn-del" onclick="picosForm.splice(${i},1);renderPicosForm()"><i class="fas fa-trash"></i></button></td>
     </tr>`).join('');
@@ -633,9 +629,9 @@ function renderPicosForm() {
 async function salvarPicos() {
   const sid = semanaAtual();
   if (!sid) { toast('Selecione uma semana.', 'erro'); return; }
-  if (!picosForm.length) { toast('Adicione ao menos um horário.', 'erro'); return; }
+  if (!picosForm.length) { toast('Adicione ao menos um registro.', 'erro'); return; }
   const items = picosForm.map(p => ({
-    semana_id: sid, data: p.data, hora: p.hora, total_atendimentos: p.total,
+    semana_id: sid, data: p.data, total_atendimentos: p.total,
   }));
   try {
     await api('api/picos.php', { method: 'POST', body: JSON.stringify({ items }) });
@@ -657,7 +653,6 @@ async function carregarPicosList(sid) {
   tb.innerHTML = dados.map(p => `
     <tr>
       <td>${fmtData(p.data)}</td>
-      <td>${p.hora}</td>
       <td>${p.total_atendimentos}</td>
       <td><button class="btn-del" onclick="delPico(${p.id})"><i class="fas fa-trash"></i></button></td>
     </tr>`).join('');
