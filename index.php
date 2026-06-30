@@ -7,6 +7,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
   <link rel="stylesheet" href="assets/css/dashboard.css">
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 </head>
 <body>
 
@@ -419,6 +420,7 @@ async function carregarDashboard(sid) {
     if (chartPicos) chartPicos.destroy();
     chartPicos = new Chart(document.getElementById('chart-picos'), {
       type: 'bar',
+      plugins: [ChartDataLabels],
       data: {
         labels: picosOrdenados.map(p => p.hora || '—'),
         datasets: [{
@@ -430,7 +432,17 @@ async function carregarDashboard(sid) {
       options: {
         indexAxis: 'y',
         responsive: true,
-        plugins: { legend: { display: false } },
+        plugins: {
+          legend: { display: false },
+          datalabels: {
+            anchor: 'end',
+            align: 'end',
+            color: '#003366',
+            font: { weight: 'bold', size: 12 },
+            formatter: v => v > 0 ? v : '',
+          },
+        },
+        layout: { padding: { right: 30 } },
       },
     });
 
