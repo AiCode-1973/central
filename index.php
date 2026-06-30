@@ -466,6 +466,9 @@ function showTab(name, btn) {
       if (b.getAttribute('onclick').includes("'" + name + "'")) b.classList.add('active');
     });
   }
+  // Oculta seletor de semana na aba de usuários
+  const sel = document.querySelector('.semana-selector');
+  if (sel) sel.style.display = name === 'usuarios' ? 'none' : '';
 }
 
 /* ── Seletor de Semana ───────────────────────────────────── */
