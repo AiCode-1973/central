@@ -9,6 +9,10 @@ define('UPLOAD_MAX_MB', 10);
 define('UPLOAD_TIPOS', ['application/pdf','image/jpeg','image/png','image/webp']);
 
 $method = $_SERVER['REQUEST_METHOD'];
+// PHP não popula $_POST/$_FILES em PUT multipart; usamos POST + _method=PUT
+if ($method === 'POST' && ($_POST['_method'] ?? '') === 'PUT') {
+    $method = 'PUT';
+}
 $conn   = getConnection();
 
 /* ── helper: salvar múltiplos arquivos ───────────────────── */
@@ -142,28 +146,15 @@ try {
             $id = intval($_GET['id'] ?? 0);
             if (!$id) { http_response_code(422); echo json_encode(['erro' => 'id obrigatório.']); break; }
 
-            // Suporta JSON (sem arquivo) ou multipart (com arquivo)
-            $contentType = $_SERVER['CONTENT_TYPE'] ?? '';
-            if (str_contains($contentType, 'multipart/form-data')) {
-                $nome   = trim($_POST['paciente_nome']     ?? '');
-                $cpf    = trim($_POST['paciente_cpf']      ?? '');
-                $tel    = trim($_POST['paciente_telefone'] ?? '');
-                $dtAg   = trim($_POST['data_agendamento']  ?? '');
-                $convId = intval($_POST['convenio_id']     ?? 0);
-                $procId = intval($_POST['procedimento_id'] ?? 0);
-                $status = $_POST['status']                 ?? 'pendente';
-                $obs    = trim($_POST['observacao']        ?? '');
-            } else {
-                $body   = json_decode(file_get_contents('php://input'), true) ?? [];
-                $nome   = trim($body['paciente_nome']     ?? '');
-                $cpf    = trim($body['paciente_cpf']      ?? '');
-                $tel    = trim($body['paciente_telefone'] ?? '');
-                $dtAg   = trim($body['data_agendamento']  ?? '');
-                $convId = intval($body['convenio_id']     ?? 0);
-                $procId = intval($body['procedimento_id'] ?? 0);
-                $status = $body['status']                 ?? 'pendente';
-                $obs    = trim($body['observacao']        ?? '');
-            }
+            // Dados sempre vêm via $_POST (enviado como POST + _method=PUT pelo JS)
+            $nome   = trim($_POST['paciente_nome']     ?? '');
+            $cpf    = trim($_POST['paciente_cpf']      ?? '');
+            $tel    = trim($_POST['paciente_telefone'] ?? '');
+            $dtAg   = trim($_POST['data_agendamento']  ?? '');
+            $convId = intval($_POST['convenio_id']     ?? 0);
+            $procId = intval($_POST['procedimento_id'] ?? 0);
+            $status = $_POST['status']                 ?? 'pendente';
+            $obs    = trim($_POST['observacao']        ?? '');
 
             if (!$nome || !$dtAg || !$convId || !$procId) {
                 http_response_code(422);

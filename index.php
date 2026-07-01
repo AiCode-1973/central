@@ -2078,10 +2078,16 @@ async function salvarAutorizacao() {
   for (const f of files) fd.append('pedido_arquivo[]', f);
 
   try {
-    const url = _autorizacaoEditId
-      ? 'api/autorizacoes.php?id=' + _autorizacaoEditId
-      : 'api/autorizacoes.php';
-    const method = _autorizacaoEditId ? 'PUT' : 'POST';
+    let url, method;
+    if (_autorizacaoEditId) {
+      // PHP não popula $_POST/$_FILES em PUT multipart — usa POST + _method=PUT
+      url    = 'api/autorizacoes.php?id=' + _autorizacaoEditId;
+      method = 'POST';
+      fd.append('_method', 'PUT');
+    } else {
+      url    = 'api/autorizacoes.php';
+      method = 'POST';
+    }
     const resp = await fetch(url, { method, body: fd });
     const json = await resp.json().catch(() => ({}));
     if (resp.status === 401) { window.location.href = 'login.php'; return; }
