@@ -523,6 +523,7 @@ function temPerm(string $m): bool {
             <label>Status</label>
             <select id="aut-status" style="width:100%;padding:.4rem .65rem;border:1px solid rgba(99,179,237,.25);border-radius:6px;background:var(--bg2);color:var(--text);font-size:.9rem;">
               <option value="pendente">Pendente</option>
+              <option value="analise">Em Análise</option>
               <option value="autorizado">Autorizado</option>
               <option value="negado">Negado</option>
             </select>
@@ -2038,6 +2039,7 @@ let _autorizacaoEditId  = null;
 
 const STATUS_BADGE = {
   pendente:   '<span style="background:rgba(246,224,94,.15);color:#f6e05e;border:1px solid rgba(246,224,94,.3);border-radius:4px;padding:.1rem .45rem;font-size:.75rem;font-weight:700;">Pendente</span>',
+  analise:    '<span style="background:rgba(183,148,244,.15);color:#b794f4;border:1px solid rgba(183,148,244,.3);border-radius:4px;padding:.1rem .45rem;font-size:.75rem;font-weight:700;">Em Análise</span>',
   autorizado: '<span style="background:rgba(104,211,145,.15);color:#68d391;border:1px solid rgba(104,211,145,.3);border-radius:4px;padding:.1rem .45rem;font-size:.75rem;font-weight:700;">Autorizado</span>',
   negado:     '<span style="background:rgba(246,135,179,.15);color:#f687b3;border:1px solid rgba(246,135,179,.3);border-radius:4px;padding:.1rem .45rem;font-size:.75rem;font-weight:700;">Negado</span>',
 };

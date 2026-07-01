@@ -132,7 +132,7 @@ try {
                 echo json_encode(['erro' => 'Nome do paciente, data, convênio e procedimento são obrigatórios.']);
                 break;
             }
-            if (!in_array($status, ['pendente','autorizado','negado'], true)) $status = 'pendente';
+            if (!in_array($status, ['pendente','analise','autorizado','negado'], true)) $status = 'pendente';
             if (!$_podeAutorizar) $status = 'pendente'; // sem permissão: sempre pendente
 
             $novosArquivos = salvarArquivos();
@@ -172,7 +172,7 @@ try {
                 echo json_encode(['erro' => 'Campos obrigatórios faltando.']);
                 break;
             }
-            if (!in_array($status, ['pendente','autorizado','negado'], true)) $status = 'pendente';
+            if (!in_array($status, ['pendente','analise','autorizado','negado'], true)) $status = 'pendente';
             if (!$_podeAutorizar) $status = 'pendente'; // sem permissão: sempre pendente
 
             // Busca arquivos atuais

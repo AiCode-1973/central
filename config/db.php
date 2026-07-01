@@ -208,7 +208,7 @@ function _criarTabelas(mysqli $conn): void {
         data_agendamento   DATE         NOT NULL,
         procedimento_id    INT          NOT NULL,
         pedido_arquivo     TEXT         DEFAULT NULL,
-        status             ENUM('pendente','autorizado','negado') NOT NULL DEFAULT 'pendente',
+        status             ENUM('pendente','analise','autorizado','negado') NOT NULL DEFAULT 'pendente',
         observacao         TEXT,
         criado_por         INT          DEFAULT NULL,
         criado_em          TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -219,6 +219,8 @@ function _criarTabelas(mysqli $conn): void {
 
     // Migração: pedido_arquivo VARCHAR → TEXT (para suportar múltiplos arquivos em JSON)
     $conn->query("ALTER TABLE autorizacoes MODIFY COLUMN pedido_arquivo TEXT DEFAULT NULL");
+    // Migração: adiciona opção 'analise' ao ENUM de status
+    $conn->query("ALTER TABLE autorizacoes MODIFY COLUMN status ENUM('pendente','analise','autorizado','negado') NOT NULL DEFAULT 'pendente'");
     // Migração: adiciona criado_por se não existir
     $conn->query("ALTER TABLE autorizacoes ADD COLUMN IF NOT EXISTS criado_por INT DEFAULT NULL");
     // Migração: adiciona motivo_negacao se não existir
