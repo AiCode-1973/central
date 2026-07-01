@@ -2056,14 +2056,14 @@ function renderArquivosAtuais() {
     _autArquivosAtuais.map((f, i) =>
       `<span style="display:inline-flex;align-items:center;gap:.2rem;margin-right:.5rem;">` +
       `<a href="uploads/pedidos/${encodeURIComponent(f)}" target="_blank" style="color:var(--neon-cyan);">Arquivo ${i+1}</a>` +
-      `<button type="button" onclick="removerArquivoAtual('${f.replace(/\\/g,'\\\\').replace(/'/g,\"\\'\")}')"
-        style="background:none;border:none;color:var(--neon-pink);cursor:pointer;font-size:1rem;line-height:1;padding:0 .1rem;" title="Remover">&times;</button>` +
+      `<button type="button" onclick="removerArquivoAtual(${i})" ` +
+      `style="background:none;border:none;color:var(--neon-pink);cursor:pointer;font-size:1rem;line-height:1;padding:0 .1rem;" title="Remover">&times;</button>` +
       `</span>`
     ).join('');
 }
 
-function removerArquivoAtual(f) {
-  _autArquivosAtuais = _autArquivosAtuais.filter(x => x !== f);
+function removerArquivoAtual(idx) {
+  _autArquivosAtuais.splice(idx, 1);
   renderArquivosAtuais();
 }
 
