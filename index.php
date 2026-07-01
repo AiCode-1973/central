@@ -543,6 +543,15 @@ function temPerm(string $m): bool {
             <input type="text" id="aut-observacao" placeholder="Opcional" style="width:100%;">
           </div>
         </div>
+        <?php if (temPerm('autorizar_exames')): ?>
+        <div class="form-inline-row" id="aut-wrap-negacao" style="display:none;">
+          <div class="form-group" style="flex:1;">
+            <label style="color:var(--neon-pink);"><i class="fas fa-ban"></i> Motivo da Negação</label>
+            <textarea id="aut-motivo-negacao" rows="2" placeholder="Descreva o motivo pelo qual a autorização foi negada…"
+              style="width:100%;padding:.4rem .65rem;border:1px solid rgba(246,135,179,.4);border-radius:6px;background:var(--bg2);color:var(--text);font-size:.9rem;resize:vertical;"></textarea>
+          </div>
+        </div>
+        <?php endif; ?>
         <div style="display:flex;gap:.4rem;margin-top:.5rem;">
           <button class="btn-app suc" onclick="salvarAutorizacao()">
             <i class="fas fa-save"></i> <span id="aut-btn-label">Cadastrar</span>
@@ -1806,6 +1815,12 @@ document.getElementById('modal-senha')?.addEventListener('click', e => {
   if (e.target === e.currentTarget) fecharModalSenha();
 });
 
+// Show/hide campo motivo negação conforme status selecionado
+document.getElementById('aut-status')?.addEventListener('change', function() {
+  const wrap = document.getElementById('aut-wrap-negacao');
+  if (wrap) wrap.style.display = this.value === 'negado' ? '' : 'none';
+});
+
 /* ── Init ────────────────────────────────────────────────── */
 (async () => {
   // Ativa a primeira aba que o usuário tem permissão
@@ -2041,7 +2056,11 @@ async function carregarAutorizacoes() {
         <td>${a.convenio_nome}</td>
         <td>${a.procedimento_nome}</td>
         <td style="font-size:.85rem;">${a.data_agendamento}</td>
-        <td>${STATUS_BADGE[a.status] || a.status}</td>
+        <td>${STATUS_BADGE[a.status] || a.status}${
+          a.status === 'negado' && a.motivo_negacao
+            ? `<br><small style="color:var(--neon-pink);font-size:.75rem;" title="${a.motivo_negacao.replace(/"/g,'&quot;')}">ℹ️ ${a.motivo_negacao.length > 40 ? a.motivo_negacao.substring(0,40)+'…' : a.motivo_negacao}</small>`
+            : ''
+        }</td>
         <td style="font-size:.8rem;color:var(--text-muted);white-space:nowrap;">${a.criado_por_nome || '—'}</td>
         <td style="white-space:nowrap;display:flex;gap:.35rem;">
           ${a.pedido_arquivo ? (() => {
@@ -2064,9 +2083,10 @@ async function salvarAutorizacao() {
   const conv   = document.getElementById('aut-convenio').value;
   const proc   = document.getElementById('aut-procedimento').value;
   const data   = document.getElementById('aut-data').value;
-  const status = document.getElementById('aut-status').value;
-  const obs    = document.getElementById('aut-observacao').value.trim();
-  const files  = document.getElementById('aut-arquivo').files;
+  const status    = document.getElementById('aut-status').value;
+  const obs        = document.getElementById('aut-observacao').value.trim();
+  const motivoNeg  = document.getElementById('aut-motivo-negacao')?.value.trim() || '';
+  const files      = document.getElementById('aut-arquivo').files;
 
   if (!nome || !conv || !proc || !data) {
     toast('Paciente, convênio, procedimento e data são obrigatórios.', 'erro'); return;
@@ -2081,6 +2101,7 @@ async function salvarAutorizacao() {
   fd.append('data_agendamento',  data);
   fd.append('status',            status);
   fd.append('observacao',        obs);
+  fd.append('motivo_negacao',    status === 'negado' ? motivoNeg : '');
   for (const f of files) fd.append('pedido_arquivo[]', f);
 
   try {
@@ -2118,6 +2139,12 @@ function editarAutorizacao(id) {
   document.getElementById('aut-data').value     = yy && mm && dd ? `${yy}-${mm}-${dd}` : '';
   document.getElementById('aut-status').value   = a.status;
   document.getElementById('aut-observacao').value = a.observacao || '';
+  const mnEl = document.getElementById('aut-motivo-negacao');
+  if (mnEl) {
+    mnEl.value = a.motivo_negacao || '';
+    const wrap = document.getElementById('aut-wrap-negacao');
+    if (wrap) wrap.style.display = a.status === 'negado' ? '' : 'none';
+  }
   document.getElementById('aut-form-titulo').textContent = 'Editar Autorização';
   document.getElementById('aut-btn-label').textContent   = 'Salvar';
   document.getElementById('aut-btn-cancelar').style.display = '';
@@ -2140,6 +2167,10 @@ function cancelarEdicaoAutorizacao() {
   ['aut-paciente-nome','aut-cpf','aut-telefone','aut-observacao'].forEach(id => {
     const el = document.getElementById(id); if (el) el.value = '';
   });
+  const mnEl2 = document.getElementById('aut-motivo-negacao');
+  if (mnEl2) mnEl2.value = '';
+  const wrapNeg = document.getElementById('aut-wrap-negacao');
+  if (wrapNeg) wrapNeg.style.display = 'none';
   document.getElementById('aut-convenio').value    = '';
   document.getElementById('aut-procedimento').value = '';
   document.getElementById('aut-data').value         = '';

@@ -97,7 +97,7 @@ try {
                 $stmt = $conn->prepare(
                     "SELECT a.id, a.paciente_nome, a.paciente_cpf, a.paciente_telefone,
                             DATE_FORMAT(a.data_agendamento,'%d/%m/%Y') AS data_agendamento,
-                            a.status, a.pedido_arquivo, a.observacao,
+                            a.status, a.pedido_arquivo, a.observacao, a.motivo_negacao,
                             DATE_FORMAT(a.criado_em,'%d/%m/%Y %H:%i')     AS criado_em,
                             DATE_FORMAT(a.atualizado_em,'%d/%m/%Y %H:%i') AS atualizado_em,
                             c.id AS convenio_id,   c.nome AS convenio_nome,
@@ -124,6 +124,7 @@ try {
             $procId    = intval($_POST['procedimento_id'] ?? 0);
             $status    = $_POST['status']                 ?? 'pendente';
             $obs       = trim($_POST['observacao']        ?? '');
+            $motivoNeg = $_podeAutorizar ? trim($_POST['motivo_negacao'] ?? '') : '';
 
             if (!$nome || !$dtAg || !$convId || !$procId) {
                 http_response_code(422);
@@ -140,10 +141,10 @@ try {
             $stmt = $conn->prepare(
                 "INSERT INTO autorizacoes
                     (convenio_id, paciente_nome, paciente_cpf, paciente_telefone,
-                     data_agendamento, procedimento_id, pedido_arquivo, status, observacao, criado_por)
-                 VALUES (?,?,?,?,?,?,?,?,?,?)"
+                     data_agendamento, procedimento_id, pedido_arquivo, status, observacao, motivo_negacao, criado_por)
+                 VALUES (?,?,?,?,?,?,?,?,?,?,?)"
             );
-            $stmt->bind_param('issssisssi', $convId, $nome, $cpf, $tel, $dtAg, $procId, $arquivoJson, $status, $obs, $criadoPor);
+            $stmt->bind_param('issssissssi', $convId, $nome, $cpf, $tel, $dtAg, $procId, $arquivoJson, $status, $obs, $motivoNeg, $criadoPor);
             if (!$stmt->execute()) { throw new RuntimeException($conn->error); }
             echo json_encode(['mensagem' => 'Autorização criada.', 'id' => $conn->insert_id]);
             break;
@@ -162,6 +163,7 @@ try {
             $procId = intval($_POST['procedimento_id'] ?? 0);
             $status = $_POST['status']                 ?? 'pendente';
             $obs    = trim($_POST['observacao']        ?? '');
+            $motivoNeg = $_podeAutorizar ? trim($_POST['motivo_negacao'] ?? '') : null;
 
             if (!$nome || !$dtAg || !$convId || !$procId) {
                 http_response_code(422);
@@ -188,10 +190,11 @@ try {
             $stmt = $conn->prepare(
                 "UPDATE autorizacoes
                  SET convenio_id=?, paciente_nome=?, paciente_cpf=?, paciente_telefone=?,
-                     data_agendamento=?, procedimento_id=?, pedido_arquivo=?, status=?, observacao=?
+                     data_agendamento=?, procedimento_id=?, pedido_arquivo=?, status=?, observacao=?,
+                     motivo_negacao=?
                  WHERE id=?"
             );
-            $stmt->bind_param('issssisssi', $convId, $nome, $cpf, $tel, $dtAg, $procId, $arquivoFinalJson, $status, $obs, $id);
+            $stmt->bind_param('issssissssi', $convId, $nome, $cpf, $tel, $dtAg, $procId, $arquivoFinalJson, $status, $obs, $motivoNeg, $id);
             if (!$stmt->execute()) { throw new RuntimeException($conn->error); }
             echo json_encode(['mensagem' => 'Autorização atualizada.']);
             break;
