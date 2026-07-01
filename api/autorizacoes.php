@@ -11,37 +11,60 @@ define('UPLOAD_TIPOS', ['application/pdf','image/jpeg','image/png','image/webp']
 $method = $_SERVER['REQUEST_METHOD'];
 $conn   = getConnection();
 
-/* ── helper: salvar arquivo ───────────────────────────────── */
-function salvarArquivo(): ?string {
-    if (empty($_FILES['pedido_arquivo']) || $_FILES['pedido_arquivo']['error'] === UPLOAD_ERR_NO_FILE) {
-        return null;
+/* ── helper: salvar múltiplos arquivos ───────────────────── */
+function salvarArquivos(): array {
+    if (empty($_FILES['pedido_arquivo']) || !isset($_FILES['pedido_arquivo']['name'])) {
+        return [];
     }
     $f = $_FILES['pedido_arquivo'];
-    if ($f['error'] !== UPLOAD_ERR_OK) {
-        throw new RuntimeException('Erro no upload do arquivo (código ' . $f['error'] . ').');
+    // Normaliza para array (múltiplos files vêm como arrays de arrays)
+    $names    = is_array($f['name'])     ? $f['name']     : [$f['name']];
+    $tmps     = is_array($f['tmp_name']) ? $f['tmp_name'] : [$f['tmp_name']];
+    $errors   = is_array($f['error'])    ? $f['error']    : [$f['error']];
+    $sizes    = is_array($f['size'])     ? $f['size']     : [$f['size']];
+
+    $salvos = [];
+    foreach ($names as $i => $name) {
+        if ($errors[$i] === UPLOAD_ERR_NO_FILE) continue;
+        if ($errors[$i] !== UPLOAD_ERR_OK) {
+            throw new RuntimeException('Erro no upload de "' . htmlspecialchars($name) . '" (código ' . $errors[$i] . ').');
+        }
+        if ($sizes[$i] > UPLOAD_MAX_MB * 1024 * 1024) {
+            throw new RuntimeException('"' . htmlspecialchars($name) . '" excede ' . UPLOAD_MAX_MB . ' MB.');
+        }
+        $tipo = mime_content_type($tmps[$i]);
+        if (!in_array($tipo, UPLOAD_TIPOS, true)) {
+            throw new RuntimeException('"' . htmlspecialchars($name) . '" tem tipo não permitido. Use PDF, JPG ou PNG.');
+        }
+        if (!is_dir(UPLOAD_DIR)) {
+            mkdir(UPLOAD_DIR, 0755, true);
+        }
+        $ext      = strtolower(pathinfo($name, PATHINFO_EXTENSION));
+        $filename = uniqid('pedido_', true) . '.' . $ext;
+        if (!move_uploaded_file($tmps[$i], UPLOAD_DIR . $filename)) {
+            throw new RuntimeException('Não foi possível salvar "' . htmlspecialchars($name) . '".');
+        }
+        $salvos[] = $filename;
     }
-    if ($f['size'] > UPLOAD_MAX_MB * 1024 * 1024) {
-        throw new RuntimeException('Arquivo muito grande. Máximo ' . UPLOAD_MAX_MB . ' MB.');
+    return $salvos;
+}
+
+function excluirArquivos(array $filenames): void {
+    foreach ($filenames as $f) {
+        if ($f && file_exists(UPLOAD_DIR . $f)) @unlink(UPLOAD_DIR . $f);
     }
-    $tipo = mime_content_type($f['tmp_name']);
-    if (!in_array($tipo, UPLOAD_TIPOS, true)) {
-        throw new RuntimeException('Tipo de arquivo não permitido. Use PDF, JPG ou PNG.');
-    }
-    if (!is_dir(UPLOAD_DIR)) {
-        mkdir(UPLOAD_DIR, 0755, true);
-    }
-    $ext      = pathinfo($f['name'], PATHINFO_EXTENSION);
-    $filename = uniqid('pedido_', true) . '.' . strtolower($ext);
-    if (!move_uploaded_file($f['tmp_name'], UPLOAD_DIR . $filename)) {
-        throw new RuntimeException('Não foi possível salvar o arquivo.');
-    }
-    return $filename;
 }
 
 function excluirArquivo(?string $filename): void {
-    if ($filename && file_exists(UPLOAD_DIR . $filename)) {
-        @unlink(UPLOAD_DIR . $filename);
-    }
+    if ($filename) excluirArquivos([$filename]);
+}
+
+/* ── decodifica pedido_arquivo (suporta JSON array e string legada) ── */
+function decodificarArquivos(?string $valor): array {
+    if (!$valor) return [];
+    $arr = json_decode($valor, true);
+    if (is_array($arr)) return $arr;
+    return [$valor]; // legado: string simples
 }
 
 try {
@@ -100,7 +123,8 @@ try {
             }
             if (!in_array($status, ['pendente','autorizado','negado'], true)) $status = 'pendente';
 
-            $arquivo = salvarArquivo();
+            $novosArquivos = salvarArquivos();
+            $arquivoJson  = $novosArquivos ? json_encode($novosArquivos) : null;
 
             $stmt = $conn->prepare(
                 "INSERT INTO autorizacoes
@@ -108,7 +132,7 @@ try {
                      data_agendamento, procedimento_id, pedido_arquivo, status, observacao)
                  VALUES (?,?,?,?,?,?,?,?,?)"
             );
-            $stmt->bind_param('issssisss', $convId, $nome, $cpf, $tel, $dtAg, $procId, $arquivo, $status, $obs);
+            $stmt->bind_param('issssisss', $convId, $nome, $cpf, $tel, $dtAg, $procId, $arquivoJson, $status, $obs);
             if (!$stmt->execute()) { throw new RuntimeException($conn->error); }
             echo json_encode(['mensagem' => 'Autorização criada.', 'id' => $conn->insert_id]);
             break;
@@ -148,16 +172,18 @@ try {
             }
             if (!in_array($status, ['pendente','autorizado','negado'], true)) $status = 'pendente';
 
-            // Busca arquivo atual
+            // Busca arquivos atuais
             $curRow = $conn->query("SELECT pedido_arquivo FROM autorizacoes WHERE id = $id")->fetch_assoc();
-            $arquivoAtual = $curRow['pedido_arquivo'] ?? null;
+            $arquivosAtuais = decodificarArquivos($curRow['pedido_arquivo'] ?? null);
 
-            $novoArquivo = salvarArquivo();
-            if ($novoArquivo !== null) {
-                excluirArquivo($arquivoAtual);
-                $arquivoFinal = $novoArquivo;
+            $novosArquivos = salvarArquivos();
+            if ($novosArquivos) {
+                // Substitui: exclui os antigos e usa os novos
+                excluirArquivos($arquivosAtuais);
+                $arquivoFinalJson = json_encode($novosArquivos);
             } else {
-                $arquivoFinal = $arquivoAtual;
+                // Mantém os arquivos existentes
+                $arquivoFinalJson = $curRow['pedido_arquivo'] ?? null;
             }
 
             $stmt = $conn->prepare(
@@ -166,7 +192,7 @@ try {
                      data_agendamento=?, procedimento_id=?, pedido_arquivo=?, status=?, observacao=?
                  WHERE id=?"
             );
-            $stmt->bind_param('issssisssi', $convId, $nome, $cpf, $tel, $dtAg, $procId, $arquivoFinal, $status, $obs, $id);
+            $stmt->bind_param('issssisssi', $convId, $nome, $cpf, $tel, $dtAg, $procId, $arquivoFinalJson, $status, $obs, $id);
             if (!$stmt->execute()) { throw new RuntimeException($conn->error); }
             echo json_encode(['mensagem' => 'Autorização atualizada.']);
             break;
@@ -179,7 +205,7 @@ try {
             $stmt = $conn->prepare("DELETE FROM autorizacoes WHERE id = ?");
             $stmt->bind_param('i', $id);
             $stmt->execute();
-            if ($stmt->affected_rows > 0) excluirArquivo($curRow['pedido_arquivo'] ?? null);
+            if ($stmt->affected_rows > 0) excluirArquivos(decodificarArquivos($curRow['pedido_arquivo'] ?? null));
             echo json_encode(['mensagem' => 'Autorização excluída.']);
             break;
 

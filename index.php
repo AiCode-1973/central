@@ -530,7 +530,7 @@ function temPerm(string $m): bool {
         <div class="form-inline-row">
           <div class="form-group" style="flex:1;">
             <label>Pedido Médico <small style="color:var(--text-muted);font-weight:400;">(PDF, JPG ou PNG — máx. 10 MB)</small></label>
-            <input type="file" id="aut-arquivo" accept=".pdf,.jpg,.jpeg,.png,.webp"
+            <input type="file" id="aut-arquivo" accept=".pdf,.jpg,.jpeg,.png,.webp" multiple
               style="width:100%;padding:.35rem .65rem;border:1px solid rgba(99,179,237,.25);border-radius:6px;background:var(--bg2);color:var(--text);font-size:.9rem;">
             <div id="aut-arquivo-atual" style="display:none;margin-top:.35rem;font-size:.8rem;color:var(--text-muted);"></div>
           </div>
@@ -2038,7 +2038,12 @@ async function carregarAutorizacoes() {
         <td style="font-size:.85rem;">${a.data_agendamento}</td>
         <td>${STATUS_BADGE[a.status] || a.status}</td>
         <td style="white-space:nowrap;display:flex;gap:.35rem;">
-          ${a.pedido_arquivo ? `<a href="uploads/pedidos/${encodeURIComponent(a.pedido_arquivo)}" target="_blank" class="btn-app sm" style="border-color:var(--neon-cyan);color:var(--neon-cyan);text-decoration:none;" title="Ver pedido"><i class="fas fa-file-alt"></i></a>` : ''}
+          ${a.pedido_arquivo ? (() => {
+            let arqs;
+            try { arqs = JSON.parse(a.pedido_arquivo); } catch(e) { arqs = [a.pedido_arquivo]; }
+            if (!Array.isArray(arqs)) arqs = [arqs];
+            return arqs.map((f,i) => `<a href="uploads/pedidos/${encodeURIComponent(f)}" target="_blank" class="btn-app sm" style="border-color:var(--neon-cyan);color:var(--neon-cyan);text-decoration:none;" title="Ver pedido ${i+1}"><i class="fas fa-file-alt"></i>${arqs.length > 1 ? ' '+(i+1) : ''}</a>`).join('');
+          })() : ''}
           <button class="btn-app prim sm" title="Editar" onclick="editarAutorizacao(${a.id})"><i class="fas fa-edit"></i></button>
           <button class="btn-del" title="Excluir" onclick="delAutorizacao(${a.id})"><i class="fas fa-trash"></i></button>
         </td>
@@ -2055,7 +2060,7 @@ async function salvarAutorizacao() {
   const data   = document.getElementById('aut-data').value;
   const status = document.getElementById('aut-status').value;
   const obs    = document.getElementById('aut-observacao').value.trim();
-  const file   = document.getElementById('aut-arquivo').files[0];
+  const files  = document.getElementById('aut-arquivo').files;
 
   if (!nome || !conv || !proc || !data) {
     toast('Paciente, convênio, procedimento e data são obrigatórios.', 'erro'); return;
@@ -2070,7 +2075,7 @@ async function salvarAutorizacao() {
   fd.append('data_agendamento',  data);
   fd.append('status',            status);
   fd.append('observacao',        obs);
-  if (file) fd.append('pedido_arquivo', file);
+  for (const f of files) fd.append('pedido_arquivo[]', f);
 
   try {
     const url = _autorizacaoEditId
@@ -2106,7 +2111,11 @@ function editarAutorizacao(id) {
   document.getElementById('aut-btn-cancelar').style.display = '';
   const wrap = document.getElementById('aut-arquivo-atual');
   if (a.pedido_arquivo) {
-    wrap.innerHTML = `<i class="fas fa-paperclip"></i> Arquivo atual: <a href="uploads/pedidos/${encodeURIComponent(a.pedido_arquivo)}" target="_blank" style="color:var(--neon-cyan);">${a.pedido_arquivo}</a>`;
+    let arqs;
+    try { arqs = JSON.parse(a.pedido_arquivo); } catch(e) { arqs = [a.pedido_arquivo]; }
+    if (!Array.isArray(arqs)) arqs = [arqs];
+    wrap.innerHTML = '<i class="fas fa-paperclip"></i> Arquivo(s) atual(is): ' +
+      arqs.map((f,i) => `<a href="uploads/pedidos/${encodeURIComponent(f)}" target="_blank" style="color:var(--neon-cyan);margin-right:.5rem;">Arquivo ${i+1}</a>`).join('');
     wrap.style.display = '';
   } else {
     wrap.style.display = 'none';

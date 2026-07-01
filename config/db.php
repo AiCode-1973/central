@@ -207,7 +207,7 @@ function _criarTabelas(mysqli $conn): void {
         paciente_telefone  VARCHAR(20)  DEFAULT NULL,
         data_agendamento   DATE         NOT NULL,
         procedimento_id    INT          NOT NULL,
-        pedido_arquivo     VARCHAR(300) DEFAULT NULL,
+        pedido_arquivo     TEXT         DEFAULT NULL,
         status             ENUM('pendente','autorizado','negado') NOT NULL DEFAULT 'pendente',
         observacao         TEXT,
         criado_em          TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -215,6 +215,9 @@ function _criarTabelas(mysqli $conn): void {
         KEY fk_aut_conv (convenio_id),
         KEY fk_aut_proc (procedimento_id)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+    // Migração: pedido_arquivo VARCHAR → TEXT (para suportar múltiplos arquivos em JSON)
+    $conn->query("ALTER TABLE autorizacoes MODIFY COLUMN pedido_arquivo TEXT DEFAULT NULL");
 
     $conn->query("SET FOREIGN_KEY_CHECKS = 1");
 }
