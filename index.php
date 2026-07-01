@@ -2045,6 +2045,27 @@ async function delProcedimento(id) {
 ══════════════════════════════════════════════════════════ */
 let _autorizacoesCache = [];
 let _autorizacaoEditId  = null;
+let _autArquivosAtuais  = []; // filenames mantidos durante edição
+
+function renderArquivosAtuais() {
+  const wrap = document.getElementById('aut-arquivo-atual');
+  if (!wrap) return;
+  if (_autArquivosAtuais.length === 0) { wrap.style.display = 'none'; wrap.innerHTML = ''; return; }
+  wrap.style.display = '';
+  wrap.innerHTML = '<i class="fas fa-paperclip"></i> <strong style="margin-right:.3rem;">Existentes:</strong>' +
+    _autArquivosAtuais.map((f, i) =>
+      `<span style="display:inline-flex;align-items:center;gap:.2rem;margin-right:.5rem;">` +
+      `<a href="uploads/pedidos/${encodeURIComponent(f)}" target="_blank" style="color:var(--neon-cyan);">Arquivo ${i+1}</a>` +
+      `<button type="button" onclick="removerArquivoAtual('${f.replace(/\\/g,'\\\\').replace(/'/g,\"\\'\")}')"
+        style="background:none;border:none;color:var(--neon-pink);cursor:pointer;font-size:1rem;line-height:1;padding:0 .1rem;" title="Remover">&times;</button>` +
+      `</span>`
+    ).join('');
+}
+
+function removerArquivoAtual(f) {
+  _autArquivosAtuais = _autArquivosAtuais.filter(x => x !== f);
+  renderArquivosAtuais();
+}
 
 const STATUS_BADGE = {
   pendente:   '<span style="background:rgba(246,224,94,.15);color:#f6e05e;border:1px solid rgba(246,224,94,.3);border-radius:4px;padding:.1rem .45rem;font-size:.75rem;font-weight:700;">Pendente</span>',
@@ -2126,6 +2147,7 @@ async function salvarAutorizacao() {
   fd.append('motivo_analise',    status === 'analise' ? (document.getElementById('aut-motivo-analise')?.value.trim() || '') : '');
   fd.append('data_autorizacao',  document.getElementById('aut-data-autorizacao')?.value || '');
   for (const f of files) fd.append('pedido_arquivo[]', f);
+  for (const f of _autArquivosAtuais) fd.append('arquivos_manter[]', f);
 
   try {
     let url, method;
@@ -2187,17 +2209,13 @@ function editarAutorizacao(id) {
   document.getElementById('aut-form-titulo').textContent = 'Editar Autorização';
   document.getElementById('aut-btn-label').textContent   = 'Salvar';
   document.getElementById('aut-btn-cancelar').style.display = '';
-  const wrap = document.getElementById('aut-arquivo-atual');
+  let arqsAtuais = [];
   if (a.pedido_arquivo) {
-    let arqs;
-    try { arqs = JSON.parse(a.pedido_arquivo); } catch(e) { arqs = [a.pedido_arquivo]; }
-    if (!Array.isArray(arqs)) arqs = [arqs];
-    wrap.innerHTML = '<i class="fas fa-paperclip"></i> Arquivo(s) atual(is): ' +
-      arqs.map((f,i) => `<a href="uploads/pedidos/${encodeURIComponent(f)}" target="_blank" style="color:var(--neon-cyan);margin-right:.5rem;">Arquivo ${i+1}</a>`).join('');
-    wrap.style.display = '';
-  } else {
-    wrap.style.display = 'none';
+    try { arqsAtuais = JSON.parse(a.pedido_arquivo); } catch(e) { arqsAtuais = [a.pedido_arquivo]; }
+    if (!Array.isArray(arqsAtuais)) arqsAtuais = [arqsAtuais];
   }
+  _autArquivosAtuais = arqsAtuais.filter(Boolean);
+  renderArquivosAtuais();
   document.getElementById('aut-form-wrap').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
@@ -2221,7 +2239,8 @@ function cancelarEdicaoAutorizacao() {
   document.getElementById('aut-data').value         = '';
   document.getElementById('aut-status').value       = 'pendente';
   document.getElementById('aut-arquivo').value      = '';
-  document.getElementById('aut-arquivo-atual').style.display = 'none';
+  _autArquivosAtuais = [];
+  renderArquivosAtuais();
   document.getElementById('aut-form-titulo').textContent = 'Nova Autorização';
   document.getElementById('aut-btn-label').textContent   = 'Cadastrar';
   document.getElementById('aut-btn-cancelar').style.display = 'none';

@@ -178,15 +178,14 @@ try {
             $curRow = $conn->query("SELECT pedido_arquivo FROM autorizacoes WHERE id = $id")->fetch_assoc();
             $arquivosAtuais = decodificarArquivos($curRow['pedido_arquivo'] ?? null);
 
+            // Arquivos que o cliente quer manter (só aceita os que realmente existem no registro)
+            $arquivosManter = isset($_POST['arquivos_manter']) ? array_values(array_intersect((array)$_POST['arquivos_manter'], $arquivosAtuais)) : $arquivosAtuais;
+            $arquivosRemover = array_diff($arquivosAtuais, $arquivosManter);
+
             $novosArquivos = salvarArquivos();
-            if ($novosArquivos) {
-                // Substitui: exclui os antigos e usa os novos
-                excluirArquivos($arquivosAtuais);
-                $arquivoFinalJson = json_encode($novosArquivos);
-            } else {
-                // Mantém os arquivos existentes
-                $arquivoFinalJson = $curRow['pedido_arquivo'] ?? null;
-            }
+            excluirArquivos($arquivosRemover); // exclui apenas os desmarcados
+            $todosArquivos = array_merge($arquivosManter, $novosArquivos);
+            $arquivoFinalJson = $todosArquivos ? json_encode(array_values($todosArquivos)) : null;
 
             $stmt = $conn->prepare(
                 "UPDATE autorizacoes
