@@ -2102,7 +2102,9 @@ async function carregarAutorizacoes() {
             ? `<br><small style="color:var(--neon-purple);font-size:.75rem;" title="${a.motivo_analise.replace(/"/g,'&quot;')}">ℹ️ ${a.motivo_analise.length > 40 ? a.motivo_analise.substring(0,40)+'…' : a.motivo_analise}</small>`
             : ''
         }</td>
-        <td style="font-size:.82rem;color:var(--neon-green);white-space:nowrap;">${a.data_autorizacao || '—'}</td>
+        <td style="font-size:.82rem;white-space:nowrap;">
+          <span style="color:var(--neon-green);">${a.data_autorizacao || '—'}</span>${a.autorizado_por_nome ? `<br><small style="color:var(--text-muted);">${a.autorizado_por_nome}</small>` : ''}
+        </td>
         <td style="font-size:.8rem;color:var(--text-muted);white-space:nowrap;">${a.criado_por_nome || '—'}</td>
         <td style="white-space:nowrap;display:flex;gap:.35rem;">
           ${a.pedido_arquivo ? (() => {

@@ -103,11 +103,13 @@ try {
                             DATE_FORMAT(a.atualizado_em,'%d/%m/%Y %H:%i') AS atualizado_em,
                             c.id AS convenio_id,   c.nome AS convenio_nome,
                             p.id AS procedimento_id, p.nome AS procedimento_nome,
-                            u.nome AS criado_por_nome
+                            u.nome  AS criado_por_nome,
+                            ua.nome AS autorizado_por_nome
                      FROM autorizacoes a
-                     JOIN convenios    c ON c.id = a.convenio_id
-                     JOIN procedimentos p ON p.id = a.procedimento_id
-                     LEFT JOIN usuarios u ON u.id = a.criado_por
+                     JOIN convenios    c  ON c.id  = a.convenio_id
+                     JOIN procedimentos p ON p.id  = a.procedimento_id
+                     LEFT JOIN usuarios u  ON u.id  = a.criado_por
+                     LEFT JOIN usuarios ua ON ua.id = a.autorizado_por
                      ORDER BY a.data_agendamento DESC, a.id DESC"
                 );
                 $stmt->execute();
@@ -197,14 +199,27 @@ try {
             $todosArquivos = array_merge($arquivosManter, $novosArquivos);
             $arquivoFinalJson = $todosArquivos ? json_encode(array_values($todosArquivos)) : null;
 
+            // Grava quem autorizou quando status muda para 'autorizado'
+            $autorizadoPorId = null;
+            if ($_podeAutorizar && $status === 'autorizado') {
+                $autorizadoPorId = $_autUser['id'];
+            } elseif ($_podeAutorizar && $status !== 'autorizado') {
+                // se autorizador rebaixar o status, limpa o campo
+                $autorizadoPorId = null;
+            } else {
+                // operador não muda: mantém o valor atual
+                $rowAut = $conn->query("SELECT autorizado_por FROM autorizacoes WHERE id = $id")->fetch_assoc();
+                $autorizadoPorId = $rowAut['autorizado_por'] ?? null;
+            }
+
             $stmt = $conn->prepare(
                 "UPDATE autorizacoes
                  SET convenio_id=?, paciente_nome=?, paciente_cpf=?, paciente_telefone=?,
                      data_agendamento=?, procedimento_id=?, pedido_arquivo=?, status=?, observacao=?,
-                     motivo_negacao=?, motivo_analise=?, data_autorizacao=?
+                     motivo_negacao=?, motivo_analise=?, data_autorizacao=?, autorizado_por=?
                  WHERE id=?"
             );
-            $stmt->bind_param('issssissssssi', $convId, $nome, $cpf, $tel, $dtAg, $procId, $arquivoFinalJson, $status, $obs, $motivoNeg, $motivoAnalise, $dtAutorizacao, $id);
+            $stmt->bind_param('issssissssssii', $convId, $nome, $cpf, $tel, $dtAg, $procId, $arquivoFinalJson, $status, $obs, $motivoNeg, $motivoAnalise, $dtAutorizacao, $autorizadoPorId, $id);
             if (!$stmt->execute()) { throw new RuntimeException($conn->error); }
             echo json_encode(['mensagem' => 'Autorização atualizada.']);
             break;
