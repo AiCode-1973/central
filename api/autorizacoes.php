@@ -97,7 +97,7 @@ try {
                 $stmt = $conn->prepare(
                     "SELECT a.id, a.paciente_nome, a.paciente_cpf, a.paciente_telefone,
                             DATE_FORMAT(a.data_agendamento,'%d/%m/%Y') AS data_agendamento,
-                            a.status, a.pedido_arquivo, a.observacao, a.motivo_negacao,
+                            a.status, a.pedido_arquivo, a.observacao, a.motivo_negacao, a.motivo_analise,
                             DATE_FORMAT(a.data_autorizacao,'%d/%m/%Y') AS data_autorizacao,
                             DATE_FORMAT(a.criado_em,'%d/%m/%Y %H:%i')     AS criado_em,
                             DATE_FORMAT(a.atualizado_em,'%d/%m/%Y %H:%i') AS atualizado_em,
@@ -164,7 +164,6 @@ try {
             $procId = intval($_POST['procedimento_id'] ?? 0);
             $status = $_POST['status']                 ?? 'pendente';
             $obs    = trim($_POST['observacao']        ?? '');
-            $motivoNeg    = $_podeAutorizar ? trim($_POST['motivo_negacao']    ?? '') : null;
             $dtAutorizacao = $_podeAutorizar ? (trim($_POST['data_autorizacao'] ?? '') ?: null) : null;
 
             if (!$nome || !$dtAg || !$convId || !$procId) {
@@ -174,8 +173,8 @@ try {
             }
             if (!in_array($status, ['pendente','analise','autorizado','negado'], true)) $status = 'pendente';
             if (!$_podeAutorizar) $status = 'pendente'; // sem permissão: sempre pendente
-
-            // Busca arquivos atuais
+            $motivoNeg     = $_podeAutorizar ? trim($_POST['motivo_negacao'] ?? '') : '';
+            $motivoAnalise = $_podeAutorizar ? trim($_POST['motivo_analise']  ?? '') : '';
             $curRow = $conn->query("SELECT pedido_arquivo FROM autorizacoes WHERE id = $id")->fetch_assoc();
             $arquivosAtuais = decodificarArquivos($curRow['pedido_arquivo'] ?? null);
 
@@ -193,10 +192,10 @@ try {
                 "UPDATE autorizacoes
                  SET convenio_id=?, paciente_nome=?, paciente_cpf=?, paciente_telefone=?,
                      data_agendamento=?, procedimento_id=?, pedido_arquivo=?, status=?, observacao=?,
-                     motivo_negacao=?, data_autorizacao=?
+                     motivo_negacao=?, motivo_analise=?, data_autorizacao=?
                  WHERE id=?"
             );
-            $stmt->bind_param('issssisssssi', $convId, $nome, $cpf, $tel, $dtAg, $procId, $arquivoFinalJson, $status, $obs, $motivoNeg, $dtAutorizacao, $id);
+            $stmt->bind_param('issssissssssi', $convId, $nome, $cpf, $tel, $dtAg, $procId, $arquivoFinalJson, $status, $obs, $motivoNeg, $motivoAnalise, $dtAutorizacao, $id);
             if (!$stmt->execute()) { throw new RuntimeException($conn->error); }
             echo json_encode(['mensagem' => 'Autorização atualizada.']);
             break;

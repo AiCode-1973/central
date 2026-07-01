@@ -557,6 +557,13 @@ function temPerm(string $m): bool {
               style="width:100%;padding:.4rem .65rem;border:1px solid rgba(246,135,179,.4);border-radius:6px;background:var(--bg2);color:var(--text);font-size:.9rem;resize:vertical;"></textarea>
           </div>
         </div>
+        <div class="form-inline-row" id="aut-wrap-analise" style="display:none;">
+          <div class="form-group" style="flex:1;">
+            <label style="color:var(--neon-purple);"><i class="fas fa-search"></i> Justificativa da Análise</label>
+            <textarea id="aut-motivo-analise" rows="2" placeholder="Descreva o motivo pelo qual o pedido está em análise…"
+              style="width:100%;padding:.4rem .65rem;border:1px solid rgba(183,148,244,.4);border-radius:6px;background:var(--bg2);color:var(--text);font-size:.9rem;resize:vertical;"></textarea>
+          </div>
+        </div>
         <?php endif; ?>
         <div style="display:flex;gap:.4rem;margin-top:.5rem;">
           <button class="btn-app suc" onclick="salvarAutorizacao()">
@@ -1821,10 +1828,12 @@ document.getElementById('modal-senha')?.addEventListener('click', e => {
   if (e.target === e.currentTarget) fecharModalSenha();
 });
 
-// Show/hide campo motivo negação conforme status selecionado
+// Show/hide campos de justificativa conforme status selecionado
 document.getElementById('aut-status')?.addEventListener('change', function() {
-  const wrap = document.getElementById('aut-wrap-negacao');
-  if (wrap) wrap.style.display = this.value === 'negado' ? '' : 'none';
+  const wrapNeg = document.getElementById('aut-wrap-negacao');
+  const wrapAna = document.getElementById('aut-wrap-analise');
+  if (wrapNeg) wrapNeg.style.display = this.value === 'negado'  ? '' : 'none';
+  if (wrapAna) wrapAna.style.display = this.value === 'analise' ? '' : 'none';
 });
 
 /* ── Init ────────────────────────────────────────────────── */
@@ -2067,6 +2076,10 @@ async function carregarAutorizacoes() {
           a.status === 'negado' && a.motivo_negacao
             ? `<br><small style="color:var(--neon-pink);font-size:.75rem;" title="${a.motivo_negacao.replace(/"/g,'&quot;')}">ℹ️ ${a.motivo_negacao.length > 40 ? a.motivo_negacao.substring(0,40)+'…' : a.motivo_negacao}</small>`
             : ''
+        }${
+          a.status === 'analise' && a.motivo_analise
+            ? `<br><small style="color:var(--neon-purple);font-size:.75rem;" title="${a.motivo_analise.replace(/"/g,'&quot;')}">ℹ️ ${a.motivo_analise.length > 40 ? a.motivo_analise.substring(0,40)+'…' : a.motivo_analise}</small>`
+            : ''
         }</td>
         <td style="font-size:.82rem;color:var(--neon-green);white-space:nowrap;">${a.data_autorizacao || '—'}</td>
         <td style="font-size:.8rem;color:var(--text-muted);white-space:nowrap;">${a.criado_por_nome || '—'}</td>
@@ -2109,7 +2122,8 @@ async function salvarAutorizacao() {
   fd.append('data_agendamento',  data);
   fd.append('status',            status);
   fd.append('observacao',        obs);
-  fd.append('motivo_negacao',    status === 'negado' ? motivoNeg : '');
+  fd.append('motivo_negacao',    status === 'negado'  ? motivoNeg  : '');
+  fd.append('motivo_analise',    status === 'analise' ? (document.getElementById('aut-motivo-analise')?.value.trim() || '') : '');
   fd.append('data_autorizacao',  document.getElementById('aut-data-autorizacao')?.value || '');
   for (const f of files) fd.append('pedido_arquivo[]', f);
 
@@ -2154,6 +2168,12 @@ function editarAutorizacao(id) {
     const wrap = document.getElementById('aut-wrap-negacao');
     if (wrap) wrap.style.display = a.status === 'negado' ? '' : 'none';
   }
+  const maEl = document.getElementById('aut-motivo-analise');
+  if (maEl) {
+    maEl.value = a.motivo_analise || '';
+    const wrapA = document.getElementById('aut-wrap-analise');
+    if (wrapA) wrapA.style.display = a.status === 'analise' ? '' : 'none';
+  }
   const dtAutEl = document.getElementById('aut-data-autorizacao');
   if (dtAutEl) {
     // data vem como dd/mm/yyyy, converte para yyyy-mm-dd
@@ -2188,8 +2208,12 @@ function cancelarEdicaoAutorizacao() {
   });
   const mnEl2 = document.getElementById('aut-motivo-negacao');
   if (mnEl2) mnEl2.value = '';
+  const maEl2 = document.getElementById('aut-motivo-analise');
+  if (maEl2) maEl2.value = '';
   const wrapNeg = document.getElementById('aut-wrap-negacao');
   if (wrapNeg) wrapNeg.style.display = 'none';
+  const wrapAna = document.getElementById('aut-wrap-analise');
+  if (wrapAna) wrapAna.style.display = 'none';
   const dtAutEl2 = document.getElementById('aut-data-autorizacao');
   if (dtAutEl2) dtAutEl2.value = '';
   document.getElementById('aut-convenio').value    = '';

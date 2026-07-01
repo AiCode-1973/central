@@ -225,6 +225,8 @@ function _criarTabelas(mysqli $conn): void {
     $conn->query("ALTER TABLE autorizacoes ADD COLUMN IF NOT EXISTS criado_por INT DEFAULT NULL");
     // Migração: adiciona motivo_negacao se não existir
     $conn->query("ALTER TABLE autorizacoes ADD COLUMN IF NOT EXISTS motivo_negacao TEXT DEFAULT NULL");
+    // Migração: adiciona motivo_analise se não existir
+    $conn->query("ALTER TABLE autorizacoes ADD COLUMN IF NOT EXISTS motivo_analise TEXT DEFAULT NULL");
     // Migração: adiciona data_autorizacao se não existir
     $conn->query("ALTER TABLE autorizacoes ADD COLUMN IF NOT EXISTS data_autorizacao DATE DEFAULT NULL");
 
