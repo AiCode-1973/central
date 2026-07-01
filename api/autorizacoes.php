@@ -155,6 +155,16 @@ try {
             $id = intval($_GET['id'] ?? 0);
             if (!$id) { http_response_code(422); echo json_encode(['erro' => 'id obrigatório.']); break; }
 
+            // Operador sem permissão de autorizar não pode editar registros já autorizados
+            if (!$_podeAutorizar) {
+                $chkRow = $conn->query("SELECT status FROM autorizacoes WHERE id = $id")->fetch_assoc();
+                if ($chkRow && $chkRow['status'] === 'autorizado') {
+                    http_response_code(403);
+                    echo json_encode(['erro' => 'Registro já autorizado. Apenas o autorizador pode editá-lo.']);
+                    break;
+                }
+            }
+
             // Dados sempre vêm via $_POST (enviado como POST + _method=PUT pelo JS)
             $nome   = trim($_POST['paciente_nome']     ?? '');
             $cpf    = trim($_POST['paciente_cpf']      ?? '');

@@ -2173,6 +2173,11 @@ async function salvarAutorizacao() {
 function editarAutorizacao(id) {
   const a = _autorizacoesCache.find(x => +x.id === +id);
   if (!a) return;
+  const podeAutorizar = (PERMISSOES || []).includes('autorizar_exames');
+  if (!podeAutorizar && a.status === 'autorizado') {
+    toast('Registro já autorizado. Apenas o autorizador pode editá-lo.', 'erro');
+    return;
+  }
   _autorizacaoEditId = id;
   document.getElementById('aut-paciente-nome').value = a.paciente_nome;
   document.getElementById('aut-cpf').value           = a.paciente_cpf || '';
