@@ -527,8 +527,13 @@ function temPerm(string $m): bool {
               <option value="negado">Negado</option>
             </select>
           </div>
+          <div class="form-group" style="min-width:160px;">
+            <label style="color:var(--neon-green);"><i class="fas fa-calendar-check"></i> Data de Autorização</label>
+            <input type="date" id="aut-data-autorizacao" style="width:100%;">
+          </div>
           <?php else: ?>
           <input type="hidden" id="aut-status" value="pendente">
+          <input type="hidden" id="aut-data-autorizacao" value="">
           <?php endif; ?>
         </div>
         <div class="form-inline-row">
@@ -569,7 +574,7 @@ function temPerm(string $m): bool {
             <tr>
               <th>Paciente</th><th>CPF</th><th>Telefone</th>
               <th>Convênio</th><th>Procedimento</th><th>Agendamento</th>
-              <th>Status</th><th>Operador</th><th></th>
+              <th>Status</th><th>Dt. Autorização</th><th>Operador</th><th></th>
             </tr>
           </thead>
           <tbody id="tbody-autorizacoes">
@@ -2061,6 +2066,7 @@ async function carregarAutorizacoes() {
             ? `<br><small style="color:var(--neon-pink);font-size:.75rem;" title="${a.motivo_negacao.replace(/"/g,'&quot;')}">ℹ️ ${a.motivo_negacao.length > 40 ? a.motivo_negacao.substring(0,40)+'…' : a.motivo_negacao}</small>`
             : ''
         }</td>
+        <td style="font-size:.82rem;color:var(--neon-green);white-space:nowrap;">${a.data_autorizacao || '—'}</td>
         <td style="font-size:.8rem;color:var(--text-muted);white-space:nowrap;">${a.criado_por_nome || '—'}</td>
         <td style="white-space:nowrap;display:flex;gap:.35rem;">
           ${a.pedido_arquivo ? (() => {
@@ -2102,6 +2108,7 @@ async function salvarAutorizacao() {
   fd.append('status',            status);
   fd.append('observacao',        obs);
   fd.append('motivo_negacao',    status === 'negado' ? motivoNeg : '');
+  fd.append('data_autorizacao',  document.getElementById('aut-data-autorizacao')?.value || '');
   for (const f of files) fd.append('pedido_arquivo[]', f);
 
   try {
@@ -2145,6 +2152,16 @@ function editarAutorizacao(id) {
     const wrap = document.getElementById('aut-wrap-negacao');
     if (wrap) wrap.style.display = a.status === 'negado' ? '' : 'none';
   }
+  const dtAutEl = document.getElementById('aut-data-autorizacao');
+  if (dtAutEl) {
+    // data vem como dd/mm/yyyy, converte para yyyy-mm-dd
+    if (a.data_autorizacao) {
+      const [dda,mma,yya] = a.data_autorizacao.split('/');
+      dtAutEl.value = yya && mma && dda ? `${yya}-${mma}-${dda}` : '';
+    } else {
+      dtAutEl.value = '';
+    }
+  }
   document.getElementById('aut-form-titulo').textContent = 'Editar Autorização';
   document.getElementById('aut-btn-label').textContent   = 'Salvar';
   document.getElementById('aut-btn-cancelar').style.display = '';
@@ -2171,6 +2188,8 @@ function cancelarEdicaoAutorizacao() {
   if (mnEl2) mnEl2.value = '';
   const wrapNeg = document.getElementById('aut-wrap-negacao');
   if (wrapNeg) wrapNeg.style.display = 'none';
+  const dtAutEl2 = document.getElementById('aut-data-autorizacao');
+  if (dtAutEl2) dtAutEl2.value = '';
   document.getElementById('aut-convenio').value    = '';
   document.getElementById('aut-procedimento').value = '';
   document.getElementById('aut-data').value         = '';
