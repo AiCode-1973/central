@@ -1,7 +1,7 @@
 <?php
 header('Content-Type: application/json; charset=utf-8');
 require_once __DIR__ . '/../config/auth.php';
-requireLogin(true);
+$_autUser = requireLogin(true);
 require_once __DIR__ . '/../config/db.php';
 
 define('UPLOAD_DIR', __DIR__ . '/../uploads/pedidos/');
@@ -13,7 +13,10 @@ $method = $_SERVER['REQUEST_METHOD'];
 if ($method === 'POST' && ($_POST['_method'] ?? '') === 'PUT') {
     $method = 'PUT';
 }
-$conn   = getConnection();
+$conn = getConnection();
+
+// Verifica se o usuário pode alterar o status (permissão autorizar_exames)
+$_podeAutorizar = in_array('autorizar_exames', $_autUser['permissoes'] ?? [], true);
 
 /* ── helper: salvar múltiplos arquivos ───────────────────── */
 function salvarArquivos(): array {
@@ -126,6 +129,7 @@ try {
                 break;
             }
             if (!in_array($status, ['pendente','autorizado','negado'], true)) $status = 'pendente';
+            if (!$_podeAutorizar) $status = 'pendente'; // sem permissão: sempre pendente
 
             $novosArquivos = salvarArquivos();
             $arquivoJson  = $novosArquivos ? json_encode($novosArquivos) : null;
@@ -162,6 +166,7 @@ try {
                 break;
             }
             if (!in_array($status, ['pendente','autorizado','negado'], true)) $status = 'pendente';
+            if (!$_podeAutorizar) $status = 'pendente'; // sem permissão: sempre pendente
 
             // Busca arquivos atuais
             $curRow = $conn->query("SELECT pedido_arquivo FROM autorizacoes WHERE id = $id")->fetch_assoc();

@@ -55,7 +55,7 @@ try {
                 break;
             }
 
-            $modulosValidos = ['dashboard','atendimentos','picos','fechamentos','motivos','semanas','pesquisa','usuarios','autorizacoes','convenios','procedimentos'];
+            $modulosValidos = ['dashboard','atendimentos','picos','fechamentos','motivos','semanas','pesquisa','usuarios','autorizacoes','convenios','procedimentos','autorizar_exames'];
             $modulos = array_values(array_intersect((array)$modulos, $modulosValidos));
 
             // Remove 'usuarios' de perfis não-admin (segurança)

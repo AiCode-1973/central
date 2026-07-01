@@ -141,7 +141,7 @@ function _criarTabelas(mysqli $conn): void {
         // Migração: garante novos módulos apenas para admin
         // (admin não é gerenciado pela tabela, mas mantemos para consistência)
         $insP2 = $conn->prepare("INSERT IGNORE INTO perfis_permissoes (perfil_slug, modulo) VALUES (?, ?)");
-        foreach (['autorizacoes','convenios','procedimentos'] as $m) {
+        foreach (['autorizacoes','convenios','procedimentos','autorizar_exames'] as $m) {
             $s = 'admin'; $insP2->bind_param('ss', $s, $m); $insP2->execute();
         }
         // NOTA: NÃO re-inserir para outros perfis — admin pode ter removido via UI

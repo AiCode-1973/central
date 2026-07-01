@@ -518,6 +518,7 @@ function temPerm(string $m): bool {
             <label>Data do Agendamento <span style="color:var(--neon-pink);">*</span></label>
             <input type="date" id="aut-data" style="width:100%;">
           </div>
+          <?php if (temPerm('autorizar_exames')): ?>
           <div class="form-group" style="min-width:150px;">
             <label>Status</label>
             <select id="aut-status" style="width:100%;padding:.4rem .65rem;border:1px solid rgba(99,179,237,.25);border-radius:6px;background:var(--bg2);color:var(--text);font-size:.9rem;">
@@ -526,6 +527,9 @@ function temPerm(string $m): bool {
               <option value="negado">Negado</option>
             </select>
           </div>
+          <?php else: ?>
+          <input type="hidden" id="aut-status" value="pendente">
+          <?php endif; ?>
         </div>
         <div class="form-inline-row">
           <div class="form-group" style="flex:1;">
@@ -1612,16 +1616,17 @@ async function delPerfil(id) {
 
 /* ── Permissões por Perfil ────────────────────────────────── */
 const MODULOS_LABELS = {
-  dashboard:      'Dashboard',
-  atendimentos:   'Atendimentos',
-  picos:          'Horários de Pico',
-  fechamentos:    'Fechamentos',
-  motivos:        'Motivos',
-  semanas:        'Semanas',
-  pesquisa:       'Pesquisa de Satisfação',
-  autorizacoes:   'Autorizações de Exames',
-  convenios:      'Convênios',
-  procedimentos:  'Procedimentos',
+  dashboard:        'Dashboard',
+  atendimentos:     'Atendimentos',
+  picos:            'Horários de Pico',
+  fechamentos:      'Fechamentos',
+  motivos:          'Motivos',
+  semanas:          'Semanas',
+  pesquisa:         'Pesquisa de Satisfação',
+  autorizacoes:     'Autorizações de Exames',
+  convenios:        'Convênios',
+  procedimentos:    'Procedimentos',
+  autorizar_exames: 'Autorizar Exames (alterar status)',
 };
 let _permSlug = '';
 
