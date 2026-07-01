@@ -101,10 +101,12 @@ try {
                             DATE_FORMAT(a.criado_em,'%d/%m/%Y %H:%i')     AS criado_em,
                             DATE_FORMAT(a.atualizado_em,'%d/%m/%Y %H:%i') AS atualizado_em,
                             c.id AS convenio_id,   c.nome AS convenio_nome,
-                            p.id AS procedimento_id, p.nome AS procedimento_nome
+                            p.id AS procedimento_id, p.nome AS procedimento_nome,
+                            u.nome AS criado_por_nome
                      FROM autorizacoes a
                      JOIN convenios    c ON c.id = a.convenio_id
                      JOIN procedimentos p ON p.id = a.procedimento_id
+                     LEFT JOIN usuarios u ON u.id = a.criado_por
                      ORDER BY a.data_agendamento DESC, a.id DESC"
                 );
                 $stmt->execute();
@@ -133,14 +135,15 @@ try {
 
             $novosArquivos = salvarArquivos();
             $arquivoJson  = $novosArquivos ? json_encode($novosArquivos) : null;
+            $criadoPor    = (int)$_autUser['id'];
 
             $stmt = $conn->prepare(
                 "INSERT INTO autorizacoes
                     (convenio_id, paciente_nome, paciente_cpf, paciente_telefone,
-                     data_agendamento, procedimento_id, pedido_arquivo, status, observacao)
-                 VALUES (?,?,?,?,?,?,?,?,?)"
+                     data_agendamento, procedimento_id, pedido_arquivo, status, observacao, criado_por)
+                 VALUES (?,?,?,?,?,?,?,?,?,?)"
             );
-            $stmt->bind_param('issssisss', $convId, $nome, $cpf, $tel, $dtAg, $procId, $arquivoJson, $status, $obs);
+            $stmt->bind_param('issssisssi', $convId, $nome, $cpf, $tel, $dtAg, $procId, $arquivoJson, $status, $obs, $criadoPor);
             if (!$stmt->execute()) { throw new RuntimeException($conn->error); }
             echo json_encode(['mensagem' => 'Autorização criada.', 'id' => $conn->insert_id]);
             break;

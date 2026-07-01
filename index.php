@@ -560,7 +560,7 @@ function temPerm(string $m): bool {
             <tr>
               <th>Paciente</th><th>CPF</th><th>Telefone</th>
               <th>Convênio</th><th>Procedimento</th><th>Agendamento</th>
-              <th>Status</th><th></th>
+              <th>Status</th><th>Operador</th><th></th>
             </tr>
           </thead>
           <tbody id="tbody-autorizacoes">
@@ -2042,6 +2042,7 @@ async function carregarAutorizacoes() {
         <td>${a.procedimento_nome}</td>
         <td style="font-size:.85rem;">${a.data_agendamento}</td>
         <td>${STATUS_BADGE[a.status] || a.status}</td>
+        <td style="font-size:.8rem;color:var(--text-muted);white-space:nowrap;">${a.criado_por_nome || '—'}</td>
         <td style="white-space:nowrap;display:flex;gap:.35rem;">
           ${a.pedido_arquivo ? (() => {
             let arqs;

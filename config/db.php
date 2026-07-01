@@ -210,6 +210,7 @@ function _criarTabelas(mysqli $conn): void {
         pedido_arquivo     TEXT         DEFAULT NULL,
         status             ENUM('pendente','autorizado','negado') NOT NULL DEFAULT 'pendente',
         observacao         TEXT,
+        criado_por         INT          DEFAULT NULL,
         criado_em          TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         atualizado_em      TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
         KEY fk_aut_conv (convenio_id),
@@ -218,6 +219,8 @@ function _criarTabelas(mysqli $conn): void {
 
     // Migração: pedido_arquivo VARCHAR → TEXT (para suportar múltiplos arquivos em JSON)
     $conn->query("ALTER TABLE autorizacoes MODIFY COLUMN pedido_arquivo TEXT DEFAULT NULL");
+    // Migração: adiciona criado_por se não existir
+    $conn->query("ALTER TABLE autorizacoes ADD COLUMN IF NOT EXISTS criado_por INT DEFAULT NULL");
 
     $conn->query("SET FOREIGN_KEY_CHECKS = 1");
 }
