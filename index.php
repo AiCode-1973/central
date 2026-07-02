@@ -621,6 +621,23 @@ function temPerm(string $m): bool {
       </div>
 
       <!-- Tabela -->
+      <div style="display:flex;align-items:center;gap:.6rem;margin-bottom:.6rem;flex-wrap:wrap;">
+        <div style="position:relative;flex:1;min-width:200px;">
+          <i class="fas fa-search" style="position:absolute;left:.6rem;top:50%;transform:translateY(-50%);color:var(--text-muted);pointer-events:none;font-size:.85rem;"></i>
+          <input type="text" id="aut-filtro" placeholder="Filtrar por paciente, CPF, convênio, procedimento ou status…"
+            oninput="_autPagina=1;_renderAutorizacoes();"
+            style="width:100%;padding:.38rem .65rem .38rem 2rem;border:1px solid rgba(99,179,237,.25);border-radius:6px;background:var(--bg2);color:var(--text);font-size:.88rem;">
+        </div>
+        <select id="aut-filtro-status" onchange="_autPagina=1;_renderAutorizacoes();"
+          style="padding:.38rem .65rem;border:1px solid rgba(99,179,237,.25);border-radius:6px;background:var(--bg2);color:var(--text);font-size:.88rem;min-width:140px;">
+          <option value="">Todos os status</option>
+          <option value="pendente">Pendente</option>
+          <option value="analise">Em Análise</option>
+          <option value="autorizado">Autorizado</option>
+          <option value="negado">Negado</option>
+        </select>
+        <span id="aut-contagem" style="font-size:.8rem;color:var(--text-muted);white-space:nowrap;"></span>
+      </div>
       <div class="table-responsive">
         <table class="tabela-app">
           <thead>
@@ -635,6 +652,8 @@ function temPerm(string $m): bool {
           </tbody>
         </table>
       </div>
+      <!-- Paginação -->
+      <div id="aut-paginacao" style="display:flex;align-items:center;gap:.4rem;flex-wrap:wrap;margin-top:.6rem;"></div>
     </div>
   </section>
 
@@ -2200,18 +2219,53 @@ const STATUS_BADGE = {
   negado:     '<span style="background:rgba(246,135,179,.15);color:#f687b3;border:1px solid rgba(246,135,179,.3);border-radius:4px;padding:.1rem .45rem;font-size:.75rem;font-weight:700;">Negado</span>',
 };
 
+let _autPagina    = 1;
+const _autPorPag  = 15;
+
 async function carregarAutorizacoes() {
   try {
     const lista = await api('api/autorizacoes.php');
     if (!lista) return;
     _autorizacoesCache = lista;
-    const tb = document.getElementById('tbody-autorizacoes');
-    if (!tb) return;
-    if (!lista.length) {
-      tb.innerHTML = '<tr><td colspan="8" style="color:var(--text-muted);">Nenhuma autorização cadastrada.</td></tr>';
-      return;
-    }
-    tb.innerHTML = lista.map(a => `
+    _autPagina = 1;
+    _renderAutorizacoes();
+  } catch(e) { toast(e.message, 'erro'); }
+}
+
+function _renderAutorizacoes() {
+  const tb      = document.getElementById('tbody-autorizacoes');
+  const pgWrap  = document.getElementById('aut-paginacao');
+  const contEl  = document.getElementById('aut-contagem');
+  if (!tb) return;
+
+  const termo   = (document.getElementById('aut-filtro')?.value || '').toLowerCase().trim();
+  const stFiltro = document.getElementById('aut-filtro-status')?.value || '';
+
+  const filtrado = _autorizacoesCache.filter(a => {
+    if (stFiltro && a.status !== stFiltro) return false;
+    if (!termo) return true;
+    return [a.paciente_nome, a.paciente_cpf, a.paciente_telefone,
+            a.convenio_nome, a.procedimento_nome, a.status]
+      .some(v => (v||'').toLowerCase().includes(termo));
+  });
+
+  const total  = filtrado.length;
+  const paginas = Math.max(1, Math.ceil(total / _autPorPag));
+  if (_autPagina > paginas) _autPagina = paginas;
+  const inicio = (_autPagina - 1) * _autPorPag;
+  const pagina = filtrado.slice(inicio, inicio + _autPorPag);
+
+  if (contEl) contEl.textContent = total
+    ? `${inicio + 1}–${Math.min(inicio + _autPorPag, total)} de ${total}`
+    : '';
+
+  if (!total) {
+    tb.innerHTML = '<tr><td colspan="10" style="color:var(--text-muted);">Nenhum registro encontrado.</td></tr>';
+    if (pgWrap) pgWrap.innerHTML = '';
+    return;
+  }
+
+  tb.innerHTML = pagina.map(a => `
       <tr>
         <td style="font-weight:600;">${a.paciente_nome}</td>
         <td style="font-size:.82rem;">${a.paciente_cpf || '—'}</td>
@@ -2250,7 +2304,46 @@ async function carregarAutorizacoes() {
           <button class="btn-del" title="Excluir" onclick="delAutorizacao(${a.id})"><i class="fas fa-trash"></i></button>
         </td>
       </tr>`).join('');
-  } catch(e) { toast(e.message, 'erro'); }
+
+  // Paginação
+  if (pgWrap) {
+    const btnStyle = (ativo) =>
+      `style="padding:.25rem .6rem;border-radius:5px;border:1px solid rgba(99,179,237,${ativo?'.7':'.25'});background:${ativo?'rgba(99,179,237,.2)':'transparent'};color:${ativo?'var(--neon-blue)':'var(--text-muted)'};cursor:${ativo?'default':'pointer'};font-size:.82rem;"`;
+    let html = '';
+    // Anterior
+    html += `<button onclick="_autIrPag(${_autPagina-1})" ${_autPagina===1?'disabled':''}
+      style="padding:.25rem .6rem;border-radius:5px;border:1px solid rgba(99,179,237,.25);background:transparent;color:var(--text-muted);cursor:pointer;font-size:.82rem;">
+      <i class="fas fa-chevron-left"></i></button>`;
+    // Números de página — exibe no máximo 7
+    const delta = 2;
+    let pages = new Set([1, paginas]);
+    for (let p = Math.max(1,_autPagina-delta); p <= Math.min(paginas,_autPagina+delta); p++) pages.add(p);
+    let prev = 0;
+    [...pages].sort((a,b)=>a-b).forEach(p => {
+      if (prev && p - prev > 1) html += `<span style="color:var(--text-muted);font-size:.82rem;padding:0 .2rem;">…</span>`;
+      html += `<button onclick="_autIrPag(${p})" ${p===_autPagina?'disabled':''} ${btnStyle(p===_autPagina)}>${p}</button>`;
+      prev = p;
+    });
+    // Próximo
+    html += `<button onclick="_autIrPag(${_autPagina+1})" ${_autPagina===paginas?'disabled':''}
+      style="padding:.25rem .6rem;border-radius:5px;border:1px solid rgba(99,179,237,.25);background:transparent;color:var(--text-muted);cursor:pointer;font-size:.82rem;">
+      <i class="fas fa-chevron-right"></i></button>`;
+    pgWrap.innerHTML = html;
+  }
+}
+
+function _autIrPag(p) {
+  const paginas = Math.max(1, Math.ceil(
+    _autorizacoesCache.filter(a => {
+      const st = document.getElementById('aut-filtro-status')?.value || '';
+      const t  = (document.getElementById('aut-filtro')?.value || '').toLowerCase().trim();
+      if (st && a.status !== st) return false;
+      if (!t) return true;
+      return [a.paciente_nome,a.paciente_cpf,a.paciente_telefone,a.convenio_nome,a.procedimento_nome,a.status].some(v=>(v||'').toLowerCase().includes(t));
+    }).length / _autPorPag
+  ));
+  _autPagina = Math.min(Math.max(1, p), paginas);
+  _renderAutorizacoes();
 }
 
 async function salvarAutorizacao() {
