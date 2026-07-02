@@ -29,6 +29,11 @@ function temPerm(string $m): bool {
   <script>
     const USUARIO_LOGADO = <?= json_encode($usuarioLogado) ?>;
     const PERMISSOES     = <?= json_encode($permissoes) ?>;
+    // Aplica tema salvo antes do render para evitar flash
+    (function(){
+      const t = localStorage.getItem('tema');
+      if (t === 'claro') document.documentElement.setAttribute('data-tema','claro');
+    })();
   </script>
 </head>
 <body>
@@ -107,6 +112,10 @@ function temPerm(string $m): bool {
     <a href="logout.php" class="btn-app dang sm" style="text-decoration:none;">
       <i class="fas fa-sign-out-alt"></i> Sair
     </a>
+    <button id="btn-tema" onclick="toggleTema()" title="Alternar modo claro/escuro"
+      style="background:none;border:1px solid var(--border);color:var(--text-muted);border-radius:6px;padding:.3rem .55rem;cursor:pointer;font-size:.95rem;transition:all .2s;">
+      <i class="fas fa-sun"></i>
+    </button>
   </div>
 </nav>
 
@@ -2277,6 +2286,28 @@ function mascaraTelefone(el) {
   else if (v.length > 2) v = v.replace(/(\d{2})(\d+)/,'($1) $2');
   el.value = v;
 }
+
+function toggleTema() {
+  const html = document.documentElement;
+  const claro = html.getAttribute('data-tema') === 'claro';
+  if (claro) {
+    html.removeAttribute('data-tema');
+    localStorage.setItem('tema', 'escuro');
+  } else {
+    html.setAttribute('data-tema', 'claro');
+    localStorage.setItem('tema', 'claro');
+  }
+  const btn = document.getElementById('btn-tema');
+  if (btn) btn.innerHTML = claro ? '<i class="fas fa-sun"></i>' : '<i class="fas fa-moon"></i>';
+}
+
+// Sincroniza ícone do botão com o tema atual ao carregar
+document.addEventListener('DOMContentLoaded', function() {
+  const btn = document.getElementById('btn-tema');
+  if (!btn) return;
+  const claro = document.documentElement.getAttribute('data-tema') === 'claro';
+  btn.innerHTML = claro ? '<i class="fas fa-moon"></i>' : '<i class="fas fa-sun"></i>';
+});
 </script>
 </body>
 </html>

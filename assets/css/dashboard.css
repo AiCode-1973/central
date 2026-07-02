@@ -20,9 +20,29 @@
   --glow-yellow:  0 0 12px rgba(246,224,94,.35);
 }
 
+[data-tema="claro"] {
+  --bg:           #f0f4f8;
+  --bg2:          #ffffff;
+  --card:         #ffffff;
+  --border:       rgba(49,130,206,.2);
+  --neon-cyan:    #2b6cb0;
+  --neon-green:   #276749;
+  --neon-pink:    #b83280;
+  --neon-yellow:  #b7791f;
+  --neon-purple:  #6b46c1;
+  --text:         #1a202c;
+  --text-muted:   #718096;
+  --sombra:       0 4px 20px rgba(0,0,0,.1);
+  --glow-cyan:    0 0 12px rgba(43,108,176,.2);
+  --glow-green:   0 0 12px rgba(39,103,73,.2);
+  --glow-pink:    0 0 12px rgba(184,50,128,.2);
+  --glow-yellow:  0 0 12px rgba(183,121,31,.2);
+}
+
 body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background: var(--bg); margin: 0; color: var(--text); min-height: 100vh; }
 
 .navbar-app { background: rgba(13,17,23,.97); border-bottom: 1px solid rgba(99,179,237,.2); box-shadow: 0 1px 12px rgba(0,0,0,.5); padding: 0 1.5rem; height: 60px; display: flex; align-items: center; gap: 1rem; position: sticky; top: 0; z-index: 1000; backdrop-filter: blur(10px); }
+[data-tema="claro"] .navbar-app { background: rgba(240,244,248,.97); border-bottom-color: rgba(49,130,206,.2); box-shadow: 0 1px 12px rgba(0,0,0,.08); }
 .navbar-app .brand { color: var(--text); font-family: inherit; font-size: 1rem; font-weight: 700; line-height: 1.2; white-space: nowrap; }
 .navbar-app .brand small { font-size: .65rem; font-weight: 400; color: var(--text-muted); display: block; text-shadow: none; }
 .navbar-app .nav-tabs-app { display: flex; gap: .25rem; margin-left: auto; }
@@ -64,13 +84,17 @@ body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background
 .form-inline-row .form-group input:focus, .form-inline-row .form-group select:focus { outline: none; border-color: var(--neon-cyan); box-shadow: 0 0 8px rgba(0,255,255,.2); }
 /* Calendário nativo do input[type=date] sempre claro para melhor legibilidade */
 input[type="date"] { color-scheme: light; }
+[data-tema="claro"] input[type="date"] { color-scheme: light; }
 
 .tabela-app { width: 100%; border-collapse: collapse; font-size: .87rem; margin-top: .5rem; }
 .tabela-app thead tr { background: rgba(255,255,255,.04); border-bottom: 1px solid rgba(99,179,237,.25); }
 .tabela-app thead th { padding: .6rem .75rem; text-align: left; font-weight: 700; color: var(--text-muted); text-transform: uppercase; font-size: .73rem; letter-spacing: .05em; }
 .tabela-app tbody tr:nth-child(even) { background: rgba(255,255,255,.02); }
+[data-tema="claro"] .tabela-app tbody tr:nth-child(even) { background: rgba(0,0,0,.025); }
 .tabela-app tbody td { padding: .5rem .75rem; border-bottom: 1px solid rgba(255,255,255,.04); color: var(--text); }
+[data-tema="claro"] .tabela-app tbody td { border-bottom-color: rgba(0,0,0,.06); }
 .tabela-app tbody tr:hover { background: rgba(99,179,237,.06); }
+[data-tema="claro"] .tabela-app tbody tr:hover { background: rgba(43,108,176,.06); }
 .tabela-app .btn-del { border: 1px solid var(--neon-pink); background: transparent; color: var(--neon-pink); border-radius: 5px; padding: .2rem .55rem; cursor: pointer; font-size: .8rem; transition: all .2s; }
 .tabela-app .btn-del:hover { background: var(--neon-pink); color: #000; box-shadow: var(--glow-pink); }
 
@@ -88,6 +112,7 @@ input[type="date"] { color-scheme: light; }
 
 #toast-container { position: fixed; bottom: 1.5rem; right: 1.5rem; z-index: 9999; display: flex; flex-direction: column; gap: .4rem; }
 .toast-msg { background: var(--card); border: 1px solid rgba(99,179,237,.4); color: var(--text); padding: .65rem 1.1rem; border-radius: 8px; font-size: .88rem; font-weight: 600; box-shadow: 0 4px 16px rgba(0,0,0,.5); animation: fadeInUp .25s ease; }
+[data-tema="claro"] .toast-msg { box-shadow: 0 4px 16px rgba(0,0,0,.15); border-color: rgba(43,108,176,.4); }
 .toast-msg.erro { border-color: var(--neon-pink); color: var(--neon-pink); }
 .toast-msg.suc  { border-color: var(--neon-green); color: var(--neon-green); }
 @keyframes fadeInUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
