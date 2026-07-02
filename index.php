@@ -2173,6 +2173,26 @@ function removerGuiaAtual(idx) {
   renderGuiasAtuais();
 }
 
+function imprimirGuia(filename) {
+  const url = 'uploads/pedidos/' + encodeURIComponent(filename);
+  const ext = filename.split('.').pop().toLowerCase();
+  if (ext === 'pdf') {
+    // PDF: abre em nova aba — o visualizador do navegador tem botão de impressão nativo
+    window.open(url, '_blank');
+    return;
+  }
+  // Imagem: abre página mínima e dispara impressão automaticamente
+  const w = window.open('', '_blank');
+  if (!w) { alert('Permita popups para imprimir.'); return; }
+  w.document.write(
+    '<!DOCTYPE html><html><head><title>Guia</title>' +
+    '<style>*{margin:0;padding:0;box-sizing:border-box;}body{display:flex;justify-content:center;align-items:flex-start;}' +
+    'img{max-width:100%;height:auto;}@media print{img{max-width:100%;page-break-inside:avoid;}}</style></head>' +
+    '<body><img src="' + url + '" onload="window.focus();window.print();" onerror="document.body.innerHTML=\'<p>Erro ao carregar arquivo.</p>\';"></body></html>'
+  );
+  w.document.close();
+}
+
 const STATUS_BADGE = {
   pendente:   '<span style="background:rgba(246,224,94,.15);color:#f6e05e;border:1px solid rgba(246,224,94,.3);border-radius:4px;padding:.1rem .45rem;font-size:.75rem;font-weight:700;">Pendente</span>',
   analise:    '<span style="background:rgba(183,148,244,.15);color:#b794f4;border:1px solid rgba(183,148,244,.3);border-radius:4px;padding:.1rem .45rem;font-size:.75rem;font-weight:700;">Em Análise</span>',
@@ -2213,7 +2233,7 @@ async function carregarAutorizacoes() {
           ${a.guia_arquivo ? (() => {
             let gs; try { gs = JSON.parse(a.guia_arquivo); } catch(e) { gs = [a.guia_arquivo]; }
             if (!Array.isArray(gs)) gs = [gs];
-            return gs.filter(Boolean).map((f,i) => `<a href="uploads/pedidos/${encodeURIComponent(f)}" target="_blank" style="display:inline-flex;align-items:center;gap:.2rem;margin-top:.2rem;color:var(--neon-green);font-size:.75rem;text-decoration:none;" title="Guia ${i+1}"><i class="fas fa-file-medical"></i> Guia${gs.length > 1 ? ' '+(i+1) : ''}</a>`).join(' ');
+            return gs.filter(Boolean).map((f,i) => `<span style="display:inline-flex;align-items:center;gap:.25rem;margin-top:.2rem;"><a href="uploads/pedidos/${encodeURIComponent(f)}" target="_blank" style="display:inline-flex;align-items:center;gap:.2rem;color:var(--neon-green);font-size:.75rem;text-decoration:none;" title="Abrir guia ${i+1}"><i class="fas fa-file-medical"></i> Guia${gs.length > 1 ? ' '+(i+1) : ''}</a><button type="button" onclick="imprimirGuia('${f.replace(/'/g,"\\'")}')" style="background:none;border:1px solid rgba(104,211,145,.4);border-radius:4px;color:var(--neon-green);cursor:pointer;font-size:.7rem;padding:.05rem .3rem;line-height:1.4;" title="Imprimir guia ${i+1}"><i class="fas fa-print"></i></button></span>`).join(' ');
           })() : ''}
         </td>
         <td style="font-size:.8rem;color:var(--text-muted);white-space:nowrap;">
