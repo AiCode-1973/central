@@ -173,28 +173,37 @@ function temPerm(string $m): bool {
 
     <!-- Vista Semanal -->
     <div id="view-semana">
-      <div class="charts-grid">
+      <!-- KPI strip -->
+      <div class="kpi-strip" id="kpi-strip-semana">
+        <div class="kpi-item">       <span class="ki-label"><i class="fas fa-calendar-check"></i> Agendados</span>  <span class="ki-valor" id="kpi-agendados">—</span></div>
+        <div class="kpi-item verde"> <span class="ki-label"><i class="fas fa-user-check"></i> Atendidos</span>   <span class="ki-valor" id="kpi-atendidos">—</span></div>
+        <div class="kpi-item verm">  <span class="ki-label"><i class="fas fa-times-circle"></i> Cancelados</span> <span class="ki-valor" id="kpi-cancelados">—</span></div>
+        <div class="kpi-item amar">  <span class="ki-label"><i class="fas fa-user-times"></i> Faltas</span>      <span class="ki-valor" id="kpi-faltas">—</span></div>
+        <div class="kpi-item roxa">  <span class="ki-label"><i class="fas fa-door-closed"></i> Fechamentos</span><span class="ki-valor" id="kpi-fechamentos">—</span></div>
+      </div>
+
+      <div class="charts-grid" style="grid-template-columns:2fr 1fr;">
         <div class="painel">
           <div class="painel-titulo"><i class="fas fa-chart-bar"></i> Evolução de Atendimentos (diário)</div>
           <div class="chart-wrap"><canvas id="chart-evolucao"></canvas></div>
         </div>
         <div class="painel">
           <div class="painel-titulo"><i class="fas fa-chart-pie"></i> Motivos de Fechamento — Distribuição</div>
-          <div style="display:flex;align-items:center;gap:1rem;">
-            <div style="flex:0 0 200px;max-width:200px;"><canvas id="chart-pizza"></canvas></div>
-            <div id="pizza-legenda" style="flex:1;font-size:.85rem;"></div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:.75rem;">
+            <div style="width:140px;"><canvas id="chart-pizza"></canvas></div>
+            <div id="pizza-legenda" style="width:100%;font-size:.82rem;"></div>
           </div>
         </div>
       </div>
 
       <div class="charts-grid" style="grid-template-columns:1fr 1fr 1fr;">
         <div class="painel">
-          <div class="painel-titulo"><i class="fas fa-clock"></i> Top 5 Horários de Pico — <span id="pico-semana-label" style="font-weight:400;color:var(--text-muted);font-size:.82rem;">selecione uma semana</span></div>
+          <div class="painel-titulo"><i class="fas fa-clock"></i> Top 5 Horários de Pico — <span id="pico-semana-label" style="font-weight:400;color:var(--text-muted);font-size:.78rem;">selecione uma semana</span></div>
           <div class="chart-wrap"><canvas id="chart-picos"></canvas></div>
         </div>
         <div class="painel">
           <div class="painel-titulo"><i class="fas fa-door-closed"></i> Motivos de Fechamento</div>
-          <div id="resumo-fechamentos" style="font-size:.9rem;color:var(--text);">
+          <div id="resumo-fechamentos" style="font-size:.88rem;color:var(--text);">
             Selecione uma semana para visualizar.
           </div>
         </div>
@@ -943,6 +952,19 @@ async function carregarDashboardMes() {
 async function carregarDashboard(sid) {
   try {
     const d = await api('api/estatisticas.php?semana_id=' + sid);
+
+    // KPI strip
+    const totAgend = d.por_dia.reduce((s,r) => s + +r.total_agendados, 0);
+    const totAtend = d.por_dia.reduce((s,r) => s + +r.total_atendidos, 0);
+    const totCanc  = d.por_dia.reduce((s,r) => s + +r.total_cancelados, 0);
+    const totFalta = d.por_dia.reduce((s,r) => s + +r.total_faltas, 0);
+    const totFech  = d.fechamentos.reduce((s,f) => s + +f.total, 0);
+    const el = id => document.getElementById(id);
+    if (el('kpi-agendados'))  el('kpi-agendados').textContent  = totAgend;
+    if (el('kpi-atendidos'))  el('kpi-atendidos').textContent  = totAtend;
+    if (el('kpi-cancelados')) el('kpi-cancelados').textContent = totCanc;
+    if (el('kpi-faltas'))     el('kpi-faltas').textContent     = totFalta;
+    if (el('kpi-fechamentos'))el('kpi-fechamentos').textContent = totFech;
 
     // Gráfico evolução
     const dias   = d.por_dia.map(r => fmtData(r.data));
