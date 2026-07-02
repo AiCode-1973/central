@@ -173,14 +173,6 @@ function temPerm(string $m): bool {
 
     <!-- Vista Semanal -->
     <div id="view-semana">
-      <!-- KPI strip -->
-      <div class="kpi-strip" id="kpi-strip-semana">
-        <div class="kpi-item">       <span class="ki-label"><i class="fas fa-calendar-check"></i> Agendados</span>  <span class="ki-valor" id="kpi-agendados">—</span></div>
-        <div class="kpi-item verde"> <span class="ki-label"><i class="fas fa-user-check"></i> Atendidos</span>   <span class="ki-valor" id="kpi-atendidos">—</span></div>
-        <div class="kpi-item verm">  <span class="ki-label"><i class="fas fa-times-circle"></i> Cancelados</span> <span class="ki-valor" id="kpi-cancelados">—</span></div>
-        <div class="kpi-item amar">  <span class="ki-label"><i class="fas fa-user-times"></i> Faltas</span>      <span class="ki-valor" id="kpi-faltas">—</span></div>
-        <div class="kpi-item roxa">  <span class="ki-label"><i class="fas fa-door-closed"></i> Fechamentos</span><span class="ki-valor" id="kpi-fechamentos">—</span></div>
-      </div>
 
       <div class="charts-grid" style="grid-template-columns:2fr 1fr;">
         <div class="painel">
@@ -952,19 +944,6 @@ async function carregarDashboardMes() {
 async function carregarDashboard(sid) {
   try {
     const d = await api('api/estatisticas.php?semana_id=' + sid);
-
-    // KPI strip
-    const totAgend = d.por_dia.reduce((s,r) => s + +r.total_agendados, 0);
-    const totAtend = d.por_dia.reduce((s,r) => s + +r.total_atendidos, 0);
-    const totCanc  = d.por_dia.reduce((s,r) => s + +r.total_cancelados, 0);
-    const totFalta = d.por_dia.reduce((s,r) => s + +r.total_faltas, 0);
-    const totFech  = d.fechamentos.reduce((s,f) => s + +f.total, 0);
-    const el = id => document.getElementById(id);
-    if (el('kpi-agendados'))  el('kpi-agendados').textContent  = totAgend;
-    if (el('kpi-atendidos'))  el('kpi-atendidos').textContent  = totAtend;
-    if (el('kpi-cancelados')) el('kpi-cancelados').textContent = totCanc;
-    if (el('kpi-faltas'))     el('kpi-faltas').textContent     = totFalta;
-    if (el('kpi-fechamentos'))el('kpi-fechamentos').textContent = totFech;
 
     // Gráfico evolução
     const dias   = d.por_dia.map(r => fmtData(r.data));
