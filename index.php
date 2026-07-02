@@ -586,6 +586,17 @@ function temPerm(string $m): bool {
               style="width:100%;padding:.4rem .65rem;border:1px solid rgba(183,148,244,.4);border-radius:6px;background:var(--bg2);color:var(--text);font-size:.9rem;resize:vertical;"></textarea>
           </div>
         </div>
+        <!-- Guia autorizada pelo convênio — visível somente para autorizador quando status = autorizado -->
+        <div class="form-inline-row" id="aut-wrap-guia" style="display:none;">
+          <div class="form-group" style="flex:1;">
+            <label style="color:var(--neon-green);"><i class="fas fa-file-medical"></i> Guia Autorizada pelo Convênio
+              <small style="color:var(--text-muted);font-weight:400;"> — PDF, JPG ou PNG, máx. 10 MB, múltiplos arquivos</small>
+            </label>
+            <input type="file" id="aut-guia-arquivo" accept=".pdf,.jpg,.jpeg,.png,.webp" multiple
+              style="width:100%;padding:.35rem .65rem;border:1px solid rgba(104,211,145,.3);border-radius:6px;background:var(--bg2);color:var(--text);font-size:.9rem;">
+            <div id="aut-guia-atual" style="display:none;margin-top:.35rem;font-size:.8rem;color:var(--text-muted);"></div>
+          </div>
+        </div>
         <?php endif; ?>
         <!-- Contato com paciente — visível para operador quando negado ou em análise -->
         <div class="form-inline-row" id="aut-wrap-contato" style="display:none;">
@@ -1903,9 +1914,11 @@ document.getElementById('aut-status')?.addEventListener('change', function() {
   const wrapNeg     = document.getElementById('aut-wrap-negacao');
   const wrapAna     = document.getElementById('aut-wrap-analise');
   const wrapContato = document.getElementById('aut-wrap-contato');
-  if (wrapNeg)     wrapNeg.style.display     = this.value === 'negado'  ? '' : 'none';
-  if (wrapAna)     wrapAna.style.display     = this.value === 'analise' ? '' : 'none';
+  const wrapGuia    = document.getElementById('aut-wrap-guia');
+  if (wrapNeg)     wrapNeg.style.display     = this.value === 'negado'    ? '' : 'none';
+  if (wrapAna)     wrapAna.style.display     = this.value === 'analise'   ? '' : 'none';
   if (wrapContato) wrapContato.style.display = (this.value === 'negado' || this.value === 'analise') ? '' : 'none';
+  if (wrapGuia)    wrapGuia.style.display    = this.value === 'autorizado' ? '' : 'none';
 });
 
 /* ── Init ────────────────────────────────────────────────── */
@@ -2118,6 +2131,7 @@ async function delProcedimento(id) {
 let _autorizacoesCache = [];
 let _autorizacaoEditId  = null;
 let _autArquivosAtuais  = []; // filenames mantidos durante edição
+let _autGuiasAtuais     = []; // guias autorizadas mantidas durante edição
 
 function renderArquivosAtuais() {
   const wrap = document.getElementById('aut-arquivo-atual');
@@ -2137,6 +2151,26 @@ function renderArquivosAtuais() {
 function removerArquivoAtual(idx) {
   _autArquivosAtuais.splice(idx, 1);
   renderArquivosAtuais();
+}
+
+function renderGuiasAtuais() {
+  const wrap = document.getElementById('aut-guia-atual');
+  if (!wrap) return;
+  if (_autGuiasAtuais.length === 0) { wrap.style.display = 'none'; wrap.innerHTML = ''; return; }
+  wrap.style.display = '';
+  wrap.innerHTML = '<i class="fas fa-file-medical" style="color:var(--neon-green);"></i> <strong style="margin-right:.3rem;color:var(--neon-green);">Guias existentes:</strong>' +
+    _autGuiasAtuais.map((f, i) =>
+      `<span style="display:inline-flex;align-items:center;gap:.2rem;margin-right:.5rem;">` +
+      `<a href="uploads/pedidos/${encodeURIComponent(f)}" target="_blank" style="color:var(--neon-green);">Guia ${i+1}</a>` +
+      `<button type="button" onclick="removerGuiaAtual(${i})" ` +
+      `style="background:none;border:none;color:var(--neon-pink);cursor:pointer;font-size:1rem;line-height:1;padding:0 .1rem;" title="Remover">&times;</button>` +
+      `</span>`
+    ).join('');
+}
+
+function removerGuiaAtual(idx) {
+  _autGuiasAtuais.splice(idx, 1);
+  renderGuiasAtuais();
 }
 
 const STATUS_BADGE = {
@@ -2176,6 +2210,11 @@ async function carregarAutorizacoes() {
         }</td>
         <td style="font-size:.82rem;white-space:nowrap;">
           <span style="color:var(--neon-green);">${a.data_autorizacao || '—'}</span>${a.autorizado_por_nome ? `<br><small style="color:var(--text-muted);">${a.autorizado_por_nome}</small>` : ''}
+          ${a.guia_arquivo ? (() => {
+            let gs; try { gs = JSON.parse(a.guia_arquivo); } catch(e) { gs = [a.guia_arquivo]; }
+            if (!Array.isArray(gs)) gs = [gs];
+            return gs.filter(Boolean).map((f,i) => `<a href="uploads/pedidos/${encodeURIComponent(f)}" target="_blank" style="display:inline-flex;align-items:center;gap:.2rem;margin-top:.2rem;color:var(--neon-green);font-size:.75rem;text-decoration:none;" title="Guia ${i+1}"><i class="fas fa-file-medical"></i> Guia${gs.length > 1 ? ' '+(i+1) : ''}</a>`).join(' ');
+          })() : ''}
         </td>
         <td style="font-size:.8rem;color:var(--text-muted);white-space:nowrap;">
           ${a.criado_por_nome || '—'}${(a.contato_data || a.contato_descricao) ? `<br><span style="color:var(--neon-yellow);font-size:.75rem;" title="${(a.contato_descricao||'').replace(/"/g,'&quot;')}"><i class="fas fa-phone-alt"></i> ${a.contato_data || ''}${a.contato_descricao ? ' — ' + (a.contato_descricao.length > 35 ? a.contato_descricao.substring(0,35)+'…' : a.contato_descricao) : ''}</span>` : ''}
@@ -2226,6 +2265,10 @@ async function salvarAutorizacao() {
   fd.append('contato_descricao',   document.getElementById('aut-contato-descricao')?.value.trim() || '');
   for (const f of files) fd.append('pedido_arquivo[]', f);
   for (const f of _autArquivosAtuais) fd.append('arquivos_manter[]', f);
+  // Guias autorizadas
+  const guiaFiles = Array.from(document.getElementById('aut-guia-arquivo')?.files || []);
+  for (const f of guiaFiles) fd.append('guia_arquivo[]', f);
+  for (const f of _autGuiasAtuais) fd.append('guias_manter[]', f);
 
   try {
     let url, method;
@@ -2310,6 +2353,16 @@ function editarAutorizacao(id) {
   }
   _autArquivosAtuais = arqsAtuais.filter(Boolean);
   renderArquivosAtuais();
+  // Guias autorizadas
+  const wrapGuia = document.getElementById('aut-wrap-guia');
+  if (wrapGuia) wrapGuia.style.display = a.status === 'autorizado' ? '' : 'none';
+  let guiasAtuais = [];
+  if (a.guia_arquivo) {
+    try { guiasAtuais = JSON.parse(a.guia_arquivo); } catch(e) { guiasAtuais = [a.guia_arquivo]; }
+    if (!Array.isArray(guiasAtuais)) guiasAtuais = [guiasAtuais];
+  }
+  _autGuiasAtuais = guiasAtuais.filter(Boolean);
+  renderGuiasAtuais();
   document.getElementById('aut-form-wrap').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
@@ -2330,6 +2383,11 @@ function cancelarEdicaoAutorizacao() {
   if (wrapContato) wrapContato.style.display = 'none';
   const cdEl2 = document.getElementById('aut-contato-data'); if (cdEl2) cdEl2.value = '';
   const cDesEl2 = document.getElementById('aut-contato-descricao'); if (cDesEl2) cDesEl2.value = '';
+  const wrapGuia2 = document.getElementById('aut-wrap-guia');
+  if (wrapGuia2) wrapGuia2.style.display = 'none';
+  const guiaEl2 = document.getElementById('aut-guia-arquivo'); if (guiaEl2) guiaEl2.value = '';
+  _autGuiasAtuais = [];
+  renderGuiasAtuais();
   const dtAutEl2 = document.getElementById('aut-data-autorizacao');
   if (dtAutEl2) dtAutEl2.value = '';
   document.getElementById('aut-convenio').value    = '';

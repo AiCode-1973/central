@@ -234,6 +234,7 @@ function _criarTabelas(mysqli $conn): void {
     // Migração: contato do operador com o paciente após negação/análise
     $conn->query("ALTER TABLE autorizacoes ADD COLUMN IF NOT EXISTS contato_data DATE DEFAULT NULL");
     $conn->query("ALTER TABLE autorizacoes ADD COLUMN IF NOT EXISTS contato_descricao TEXT DEFAULT NULL");
+    $conn->query("ALTER TABLE autorizacoes ADD COLUMN IF NOT EXISTS guia_arquivo TEXT DEFAULT NULL");
 
     $conn->query("SET FOREIGN_KEY_CHECKS = 1");
 }

@@ -56,6 +56,32 @@ function salvarArquivos(): array {
     return $salvos;
 }
 
+/* ── helper: salvar guias autorizadas ───────────────────── */
+function salvarGuiaArquivos(): array {
+    if (empty($_FILES['guia_arquivo']) || !isset($_FILES['guia_arquivo']['name'])) {
+        return [];
+    }
+    $f      = $_FILES['guia_arquivo'];
+    $names  = is_array($f['name'])     ? $f['name']     : [$f['name']];
+    $tmps   = is_array($f['tmp_name']) ? $f['tmp_name'] : [$f['tmp_name']];
+    $errors = is_array($f['error'])    ? $f['error']    : [$f['error']];
+    $sizes  = is_array($f['size'])     ? $f['size']     : [$f['size']];
+    $salvos = [];
+    foreach ($names as $i => $name) {
+        if ($errors[$i] === UPLOAD_ERR_NO_FILE) continue;
+        if ($errors[$i] !== UPLOAD_ERR_OK) throw new RuntimeException('Erro no upload de guia "' . htmlspecialchars($name) . '" (cód. ' . $errors[$i] . ').');
+        if ($sizes[$i] > UPLOAD_MAX_MB * 1024 * 1024) throw new RuntimeException('Guia "' . htmlspecialchars($name) . '" excede ' . UPLOAD_MAX_MB . ' MB.');
+        $tipo = mime_content_type($tmps[$i]);
+        if (!in_array($tipo, UPLOAD_TIPOS, true)) throw new RuntimeException('Guia "' . htmlspecialchars($name) . '" tem tipo não permitido. Use PDF, JPG ou PNG.');
+        if (!is_dir(UPLOAD_DIR)) mkdir(UPLOAD_DIR, 0755, true);
+        $ext      = strtolower(pathinfo($name, PATHINFO_EXTENSION));
+        $filename = uniqid('guia_', true) . '.' . $ext;
+        if (!move_uploaded_file($tmps[$i], UPLOAD_DIR . $filename)) throw new RuntimeException('Nao foi possivel salvar guia "' . htmlspecialchars($name) . '".');
+        $salvos[] = $filename;
+    }
+    return $salvos;
+}
+
 function excluirArquivos(array $filenames): void {
     foreach ($filenames as $f) {
         if ($f && file_exists(UPLOAD_DIR . $f)) @unlink(UPLOAD_DIR . $f);
@@ -101,6 +127,7 @@ try {
                             DATE_FORMAT(a.data_autorizacao,'%d/%m/%Y') AS data_autorizacao,
                             DATE_FORMAT(a.contato_data,'%d/%m/%Y') AS contato_data,
                             a.contato_descricao,
+                            a.guia_arquivo,
                             DATE_FORMAT(a.criado_em,'%d/%m/%Y %H:%i')     AS criado_em,
                             DATE_FORMAT(a.atualizado_em,'%d/%m/%Y %H:%i') AS atualizado_em,
                             c.id AS convenio_id,   c.nome AS convenio_nome,
@@ -192,7 +219,7 @@ try {
             // Contato com paciente — editável pelo operador quando status negado ou analise
             $contatoData  = trim($_POST['contato_data'] ?? '') ?: null;
             $contatoDesc  = trim($_POST['contato_descricao'] ?? '') ?: null;
-            $curRow = $conn->query("SELECT pedido_arquivo FROM autorizacoes WHERE id = $id")->fetch_assoc();
+            $curRow = $conn->query("SELECT pedido_arquivo, guia_arquivo FROM autorizacoes WHERE id = $id")->fetch_assoc();
             $arquivosAtuais = decodificarArquivos($curRow['pedido_arquivo'] ?? null);
 
             // Arquivos que o cliente quer manter (só aceita os que realmente existem no registro)
@@ -200,9 +227,20 @@ try {
             $arquivosRemover = array_diff($arquivosAtuais, $arquivosManter);
 
             $novosArquivos = salvarArquivos();
-            excluirArquivos($arquivosRemover); // exclui apenas os desmarcados
+            excluirArquivos($arquivosRemover);
             $todosArquivos = array_merge($arquivosManter, $novosArquivos);
             $arquivoFinalJson = $todosArquivos ? json_encode(array_values($todosArquivos)) : null;
+
+            // Guias autorizadas — somente autorizador pode alterar
+            $guiasAtuais  = decodificarArquivos($curRow['guia_arquivo'] ?? null);
+            $guiasManter  = $_podeAutorizar
+                ? (isset($_POST['guias_manter']) ? array_values(array_intersect((array)$_POST['guias_manter'], $guiasAtuais)) : $guiasAtuais)
+                : $guiasAtuais;
+            $guiasRemover = array_diff($guiasAtuais, $guiasManter);
+            $novasGuias   = $_podeAutorizar ? salvarGuiaArquivos() : [];
+            excluirArquivos($guiasRemover);
+            $todasGuias    = array_merge($guiasManter, $novasGuias);
+            $guiaFinalJson = $todasGuias ? json_encode(array_values($todasGuias)) : null;
 
             // Grava quem autorizou quando status muda para 'autorizado'
             $autorizadoPorId = null;
@@ -222,10 +260,10 @@ try {
                  SET convenio_id=?, paciente_nome=?, paciente_cpf=?, paciente_telefone=?,
                      data_agendamento=?, procedimento_id=?, pedido_arquivo=?, status=?, observacao=?,
                      motivo_negacao=?, motivo_analise=?, data_autorizacao=?, autorizado_por=?,
-                     contato_data=?, contato_descricao=?
+                     contato_data=?, contato_descricao=?, guia_arquivo=?
                  WHERE id=?"
             );
-            $stmt->bind_param('issssissssssissi', $convId, $nome, $cpf, $tel, $dtAg, $procId, $arquivoFinalJson, $status, $obs, $motivoNeg, $motivoAnalise, $dtAutorizacao, $autorizadoPorId, $contatoData, $contatoDesc, $id);
+            $stmt->bind_param('issssissssssisssi', $convId, $nome, $cpf, $tel, $dtAg, $procId, $arquivoFinalJson, $status, $obs, $motivoNeg, $motivoAnalise, $dtAutorizacao, $autorizadoPorId, $contatoData, $contatoDesc, $guiaFinalJson, $id);
             if (!$stmt->execute()) { throw new RuntimeException($conn->error); }
             echo json_encode(['mensagem' => 'Autorização atualizada.']);
             break;
@@ -234,11 +272,14 @@ try {
         case 'DELETE':
             $id = intval($_GET['id'] ?? 0);
             if (!$id) { http_response_code(422); echo json_encode(['erro' => 'id obrigatório.']); break; }
-            $curRow = $conn->query("SELECT pedido_arquivo FROM autorizacoes WHERE id = $id")->fetch_assoc();
+            $curRow = $conn->query("SELECT pedido_arquivo, guia_arquivo FROM autorizacoes WHERE id = $id")->fetch_assoc();
             $stmt = $conn->prepare("DELETE FROM autorizacoes WHERE id = ?");
             $stmt->bind_param('i', $id);
             $stmt->execute();
-            if ($stmt->affected_rows > 0) excluirArquivos(decodificarArquivos($curRow['pedido_arquivo'] ?? null));
+            if ($stmt->affected_rows > 0) {
+                excluirArquivos(decodificarArquivos($curRow['pedido_arquivo'] ?? null));
+                excluirArquivos(decodificarArquivos($curRow['guia_arquivo']   ?? null));
+            }
             echo json_encode(['mensagem' => 'Autorização excluída.']);
             break;
 
