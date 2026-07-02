@@ -182,7 +182,7 @@ function temPerm(string $m): bool {
         <div class="painel">
           <div class="painel-titulo"><i class="fas fa-chart-pie"></i> Motivos de Fechamento — Distribuição</div>
           <div style="display:flex;align-items:center;gap:1rem;">
-            <div style="flex:0 0 120px;width:120px;height:120px;"><canvas id="chart-pizza" width="120" height="120"></canvas></div>
+            <div style="flex:0 0 120px;width:120px;height:120px;"><canvas id="chart-pizza" style="width:120px!important;height:120px!important;"></canvas></div>
             <div id="pizza-legenda" style="flex:1;font-size:.82rem;"></div>
           </div>
         </div>
@@ -983,6 +983,9 @@ async function carregarDashboard(sid) {
 
     // Gráfico pizza — Motivos de Fechamento
     if (chartPizza) chartPizza.destroy();
+    // Redefine dimensões do canvas após destroy
+    const cvPizza = document.getElementById('chart-pizza');
+    if (cvPizza) { cvPizza.width = 120; cvPizza.height = 120; }
     const coresPizza = ['#ff2d78','#ffe600','#00ffff','#00ff88','#b94fff','#ff8c00','#00e5d4','#ff69b4'];
     const pizzaWrap = document.getElementById('chart-pizza')?.closest('div[style*="display:flex"]');
     if (!d.fechamentos.length) {
@@ -1000,7 +1003,9 @@ async function carregarDashboard(sid) {
         },
         options: {
           responsive: false,
-          maintainAspectRatio: true,
+          maintainAspectRatio: false,
+          width: 120,
+          height: 120,
           plugins: {
             legend: { display: false },
             datalabels: {
