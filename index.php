@@ -182,7 +182,9 @@ function temPerm(string $m): bool {
         <div class="painel">
           <div class="painel-titulo"><i class="fas fa-chart-pie"></i> Motivos de Fechamento — Distribuição</div>
           <div style="display:flex;align-items:center;gap:1rem;">
-            <div style="flex-shrink:0;"><canvas id="chart-pizza"></canvas></div>
+            <div style="flex-shrink:0;width:200px;height:200px;">
+              <canvas id="chart-pizza" style="display:block;width:200px;height:200px;"></canvas>
+            </div>
             <div id="pizza-legenda" style="flex:1;font-size:.82rem;"></div>
           </div>
         </div>
@@ -990,8 +992,10 @@ async function carregarDashboard(sid) {
       if (pizzaLegenda) pizzaLegenda.innerHTML = '<p style="color:var(--text-muted);font-size:.88rem;">Nenhum fechamento registrado nesta semana.</p>';
     } else {
       // Define tamanho antes de instanciar — único método confiável com responsive:false
-      cvPizza.width  = 130;
-      cvPizza.height = 130;
+      cvPizza.width  = 200;
+      cvPizza.height = 200;
+      cvPizza.style.width  = '200px';
+      cvPizza.style.height = '200px';
       chartPizza = new Chart(cvPizza, {
         type: 'doughnut',
         plugins: [ChartDataLabels],
