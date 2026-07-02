@@ -182,7 +182,7 @@ function temPerm(string $m): bool {
         <div class="painel">
           <div class="painel-titulo"><i class="fas fa-chart-pie"></i> Motivos de Fechamento — Distribuição</div>
           <div style="display:flex;align-items:center;gap:1rem;">
-            <div style="flex:0 0 100px;"><canvas id="chart-pizza"></canvas></div>
+            <div style="flex:0 0 75px;"><canvas id="chart-pizza"></canvas></div>
             <div id="pizza-legenda" style="flex:1;font-size:.82rem;"></div>
           </div>
         </div>
