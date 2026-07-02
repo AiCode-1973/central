@@ -587,6 +587,18 @@ function temPerm(string $m): bool {
           </div>
         </div>
         <?php endif; ?>
+        <!-- Contato com paciente — visível para operador quando negado ou em análise -->
+        <div class="form-inline-row" id="aut-wrap-contato" style="display:none;">
+          <div class="form-group" style="flex:0 0 180px;">
+            <label style="color:var(--neon-yellow);"><i class="fas fa-phone-alt"></i> Data do Contato</label>
+            <input type="date" id="aut-contato-data" style="width:100%;">
+          </div>
+          <div class="form-group" style="flex:1;">
+            <label style="color:var(--neon-yellow);"><i class="fas fa-comment-dots"></i> Descrição do Contato com o Paciente</label>
+            <textarea id="aut-contato-descricao" rows="2" placeholder="Descreva o que foi tratado com o paciente (data do contato, o que foi explicado…)"
+              style="width:100%;padding:.4rem .65rem;border:1px solid rgba(246,224,94,.4);border-radius:6px;background:var(--bg2);color:var(--text);font-size:.9rem;resize:vertical;"></textarea>
+          </div>
+        </div>
         <div style="display:flex;gap:.4rem;margin-top:.5rem;">
           <button class="btn-app suc" onclick="salvarAutorizacao()">
             <i class="fas fa-save"></i> <span id="aut-btn-label">Cadastrar</span>
@@ -1888,10 +1900,12 @@ document.getElementById('modal-senha')?.addEventListener('click', e => {
 
 // Show/hide campos de justificativa conforme status selecionado
 document.getElementById('aut-status')?.addEventListener('change', function() {
-  const wrapNeg = document.getElementById('aut-wrap-negacao');
-  const wrapAna = document.getElementById('aut-wrap-analise');
-  if (wrapNeg) wrapNeg.style.display = this.value === 'negado'  ? '' : 'none';
-  if (wrapAna) wrapAna.style.display = this.value === 'analise' ? '' : 'none';
+  const wrapNeg     = document.getElementById('aut-wrap-negacao');
+  const wrapAna     = document.getElementById('aut-wrap-analise');
+  const wrapContato = document.getElementById('aut-wrap-contato');
+  if (wrapNeg)     wrapNeg.style.display     = this.value === 'negado'  ? '' : 'none';
+  if (wrapAna)     wrapAna.style.display     = this.value === 'analise' ? '' : 'none';
+  if (wrapContato) wrapContato.style.display = (this.value === 'negado' || this.value === 'analise') ? '' : 'none';
 });
 
 /* ── Init ────────────────────────────────────────────────── */
@@ -2163,7 +2177,9 @@ async function carregarAutorizacoes() {
         <td style="font-size:.82rem;white-space:nowrap;">
           <span style="color:var(--neon-green);">${a.data_autorizacao || '—'}</span>${a.autorizado_por_nome ? `<br><small style="color:var(--text-muted);">${a.autorizado_por_nome}</small>` : ''}
         </td>
-        <td style="font-size:.8rem;color:var(--text-muted);white-space:nowrap;">${a.criado_por_nome || '—'}</td>
+        <td style="font-size:.8rem;color:var(--text-muted);white-space:nowrap;">
+          ${a.criado_por_nome || '—'}${(a.contato_data || a.contato_descricao) ? `<br><span style="color:var(--neon-yellow);font-size:.75rem;" title="${(a.contato_descricao||'').replace(/"/g,'&quot;')}"><i class="fas fa-phone-alt"></i> ${a.contato_data || ''}${a.contato_descricao ? ' — ' + (a.contato_descricao.length > 35 ? a.contato_descricao.substring(0,35)+'…' : a.contato_descricao) : ''}</span>` : ''}
+        </td>
         <td style="white-space:nowrap;display:flex;gap:.35rem;">
           ${a.pedido_arquivo ? (() => {
             let arqs;
@@ -2206,6 +2222,8 @@ async function salvarAutorizacao() {
   fd.append('motivo_negacao',    status === 'negado'  ? motivoNeg  : '');
   fd.append('motivo_analise',    status === 'analise' ? (document.getElementById('aut-motivo-analise')?.value.trim() || '') : '');
   fd.append('data_autorizacao',  document.getElementById('aut-data-autorizacao')?.value || '');
+  fd.append('contato_data',        document.getElementById('aut-contato-data')?.value || '');
+  fd.append('contato_descricao',   document.getElementById('aut-contato-descricao')?.value.trim() || '');
   for (const f of files) fd.append('pedido_arquivo[]', f);
   for (const f of _autArquivosAtuais) fd.append('arquivos_manter[]', f);
 
@@ -2261,6 +2279,17 @@ function editarAutorizacao(id) {
     const wrapA = document.getElementById('aut-wrap-analise');
     if (wrapA) wrapA.style.display = a.status === 'analise' ? '' : 'none';
   }
+  // Contato com paciente
+  const wrapContato = document.getElementById('aut-wrap-contato');
+  if (wrapContato) wrapContato.style.display = (a.status === 'negado' || a.status === 'analise') ? '' : 'none';
+  const cdEl = document.getElementById('aut-contato-data');
+  if (cdEl) {
+    // converte dd/mm/yyyy para yyyy-mm-dd
+    if (a.contato_data) { const [d,m,y] = a.contato_data.split('/'); cdEl.value = y && m && d ? `${y}-${m}-${d}` : ''; }
+    else cdEl.value = '';
+  }
+  const cDesEl = document.getElementById('aut-contato-descricao');
+  if (cDesEl) cDesEl.value = a.contato_descricao || '';
   const dtAutEl = document.getElementById('aut-data-autorizacao');
   if (dtAutEl) {
     // data vem como dd/mm/yyyy, converte para yyyy-mm-dd
@@ -2297,6 +2326,10 @@ function cancelarEdicaoAutorizacao() {
   if (wrapNeg) wrapNeg.style.display = 'none';
   const wrapAna = document.getElementById('aut-wrap-analise');
   if (wrapAna) wrapAna.style.display = 'none';
+  const wrapContato = document.getElementById('aut-wrap-contato');
+  if (wrapContato) wrapContato.style.display = 'none';
+  const cdEl2 = document.getElementById('aut-contato-data'); if (cdEl2) cdEl2.value = '';
+  const cDesEl2 = document.getElementById('aut-contato-descricao'); if (cDesEl2) cDesEl2.value = '';
   const dtAutEl2 = document.getElementById('aut-data-autorizacao');
   if (dtAutEl2) dtAutEl2.value = '';
   document.getElementById('aut-convenio').value    = '';
