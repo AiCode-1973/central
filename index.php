@@ -54,7 +54,7 @@ function temPerm(string $m): bool {
       <?= htmlspecialchars($usuarioLogado['nome']) ?>
       <small style="margin-left:.25rem;opacity:.65;">(<?= $usuarioLogado['perfil'] ?>)</small>
     </span>
-    <button onclick="abrirModalSenha()" class="btn-app sm" title="Alterar senha"
+    <button onclick="abrirModalPerfil()" class="btn-app sm" title="Alterar senha"
       style="border-color:var(--neon-cyan);color:var(--neon-cyan);">
       <i class="fas fa-key"></i>
     </button>
@@ -714,10 +714,10 @@ function temPerm(string $m): bool {
 <div id="toast-container"></div>
 
 <!-- ══ MODAL ALTERAR SENHA ══════════════════════════════════ -->
-<div class="modal-overlay" id="modal-senha">
+<div class="modal-overlay" id="modal-perfil-senha">
   <div class="modal-box">
-    <button class="modal-close" onclick="fecharModalSenha()" title="Fechar">&times;</button>
-    <h3><i class="fas fa-key" style="color:var(--neon-cyan);margin-right:.5rem;"></i>Alterar Senha</h3>
+    <button class="modal-close" onclick="fecharModalPerfil()" title="Fechar">&times;</button>
+    <h3><i class="fas fa-key" style="color:var(--neon-cyan);margin-right:.5rem;"></i>Alterar Minha Senha</h3>
     <div class="modal-campo">
       <label>Senha Atual</label>
       <input type="password" id="ms-senha-atual" placeholder="Senha atual" autocomplete="current-password">
@@ -731,7 +731,7 @@ function temPerm(string $m): bool {
       <input type="password" id="ms-confirmacao" placeholder="Repita a nova senha" autocomplete="new-password">
     </div>
     <div class="modal-actions">
-      <button class="btn-app sm" onclick="fecharModalSenha()" style="border-color:var(--text-muted);color:var(--text-muted);">Cancelar</button>
+      <button class="btn-app sm" onclick="fecharModalPerfil()" style="border-color:var(--text-muted);color:var(--text-muted);">Cancelar</button>
       <button class="btn-app prim sm" onclick="salvarNovaSenha()"><i class="fas fa-save"></i> Salvar</button>
     </div>
   </div>
@@ -2323,16 +2323,16 @@ function mascaraTelefone(el) {
   el.value = v;
 }
 
-/* ── Alterar senha ────────────────────────────────────────── */
-function abrirModalSenha() {
+/* ── Alterar senha (próprio usuário) ────────────────────── */
+function abrirModalPerfil() {
   ['ms-senha-atual','ms-nova-senha','ms-confirmacao'].forEach(id => {
     const el = document.getElementById(id); if (el) el.value = '';
   });
-  document.getElementById('modal-senha').classList.add('open');
+  document.getElementById('modal-perfil-senha').style.display = 'flex';
   document.getElementById('ms-senha-atual').focus();
 }
-function fecharModalSenha() {
-  document.getElementById('modal-senha').classList.remove('open');
+function fecharModalPerfil() {
+  document.getElementById('modal-perfil-senha').style.display = 'none';
 }
 async function salvarNovaSenha() {
   const atual  = document.getElementById('ms-senha-atual').value;
@@ -2350,17 +2350,17 @@ async function salvarNovaSenha() {
     const data = await res.json();
     if (!res.ok) { toast(data.erro || 'Erro ao alterar senha.', 'erro'); return; }
     toast(data.mensagem || 'Senha alterada com sucesso!', 'suc');
-    fecharModalSenha();
+    fecharModalPerfil();
   } catch(e) { toast('Erro de conexão.', 'erro'); }
 }
 // Fecha modal ao clicar no overlay
 document.addEventListener('click', function(e) {
-  const m = document.getElementById('modal-senha');
-  if (m && e.target === m) fecharModalSenha();
+  const m = document.getElementById('modal-perfil-senha');
+  if (m && e.target === m) fecharModalPerfil();
 });
 // Fecha modal com Escape
 document.addEventListener('keydown', function(e) {
-  if (e.key === 'Escape') fecharModalSenha();
+  if (e.key === 'Escape') fecharModalPerfil();
 });
 
 function toggleTema() {
