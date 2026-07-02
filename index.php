@@ -1021,8 +1021,6 @@ async function carregarDashboard(sid) {
             <span>${f.descricao} <strong>(${f.total})</strong></span>
           </div>`).join('');
     }
-          </div>`).join('');
-    }
 
     // Label da semana no título do gráfico de picos
     const semAtual = (window._semanasCache || []).find(s => s.id == sid);
