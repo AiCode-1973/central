@@ -34,7 +34,7 @@ try {
     }
 
     // Busca hash atual
-    $stmt = $conn->prepare("SELECT senha_hash FROM usuarios WHERE id = ? AND ativo = 1");
+    $stmt = $conn->prepare("SELECT senha FROM usuarios WHERE id = ? AND ativo = 1");
     $stmt->bind_param('i', $_au['id']);
     $stmt->execute();
     $row = $stmt->get_result()->fetch_assoc();
@@ -44,14 +44,14 @@ try {
         exit;
     }
 
-    if (!password_verify($senhaAtual, $row['senha_hash'])) {
+    if (!password_verify($senhaAtual, $row['senha'])) {
         http_response_code(403);
         echo json_encode(['erro' => 'Senha atual incorreta.']);
         exit;
     }
 
     $novoHash = password_hash($novaSenha, PASSWORD_DEFAULT);
-    $upd = $conn->prepare("UPDATE usuarios SET senha_hash = ? WHERE id = ?");
+    $upd = $conn->prepare("UPDATE usuarios SET senha = ? WHERE id = ?");
     $upd->bind_param('si', $novoHash, $_au['id']);
     $upd->execute();
 
