@@ -1111,8 +1111,8 @@ function renderPesquisaChart(wrapId, canvasId, dados, chartRef, setChart) {
   // Tabela resumo + canvas
   wrap.innerHTML = `
     <div style="display:flex;flex-wrap:nowrap;gap:1.25rem;align-items:center;">
-      <div style="flex:0 0 160px;max-width:160px;">
-        <canvas id="${canvasId}"></canvas>
+      <div style="flex-shrink:0;width:200px;height:200px;">
+        <canvas id="${canvasId}" style="display:block;width:200px;height:200px;"></canvas>
       </div>
       <div style="flex:1;min-width:0;">
         <table style="width:100%;border-collapse:collapse;font-size:.87rem;">
@@ -1133,7 +1133,12 @@ function renderPesquisaChart(wrapId, canvasId, dados, chartRef, setChart) {
     </div>`;
 
   if (chartRef) chartRef.destroy();
-  const novo = new Chart(document.getElementById(canvasId), {
+  const cvPesq = document.getElementById(canvasId);
+  cvPesq.width  = 200;
+  cvPesq.height = 200;
+  cvPesq.style.width  = '200px';
+  cvPesq.style.height = '200px';
+  const novo = new Chart(cvPesq, {
     type: 'doughnut',
     plugins: [ChartDataLabels],
     data: {
@@ -1141,7 +1146,7 @@ function renderPesquisaChart(wrapId, canvasId, dados, chartRef, setChart) {
       datasets: [{ data: values, backgroundColor: SATISFACAO_CORES, borderWidth: 0 }],
     },
     options: {
-      responsive: true,
+      responsive: false,
       cutout: '60%',
       plugins: {
         legend: { display: false },
