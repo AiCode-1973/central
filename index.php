@@ -29,10 +29,11 @@ function temPerm(string $m): bool {
   <script>
     const USUARIO_LOGADO = <?= json_encode($usuarioLogado) ?>;
     const PERMISSOES     = <?= json_encode($permissoes) ?>;
-    // Aplica tema salvo antes do render para evitar flash
+    // Aplica tema e estado do sidebar antes do render para evitar flash
     (function(){
       const t = localStorage.getItem('tema');
       if (t === 'claro') document.documentElement.setAttribute('data-tema','claro');
+      if (localStorage.getItem('sbCollapsed') === '1') document.documentElement.setAttribute('data-sb','collapsed');
     })();
   </script>
 </head>
@@ -40,70 +41,14 @@ function temPerm(string $m): bool {
 
 <!-- ══ NAVBAR ══════════════════════════════════════════════ -->
 <nav class="navbar-app">
+  <button class="sb-toggle" id="btn-sb-toggle" onclick="toggleSidebar()" title="Expandir/recolher menu"><i class="fas fa-bars"></i></button>
   <i class="fas fa-hospital-alt" style="color:var(--neon-cyan);font-size:1.5rem;"></i>
   <div class="brand">
     Hospital Santo Expedito
     <small>Central de Agendamento — Dashboard</small>
   </div>
-  <div class="nav-tabs-app">
-    <?php if (temPerm('dashboard')): ?>
-    <button class="tab-btn active" onclick="showTab('dashboard',this)">
-      <i class="fas fa-chart-line"></i> <span>Dashboard</span>
-    </button>
-    <?php endif; ?>
-    <?php if (temPerm('atendimentos')): ?>
-    <button class="tab-btn" onclick="showTab('atendimentos',this)">
-      <i class="fas fa-calendar-check"></i> <span>Atendimentos</span>
-    </button>
-    <?php endif; ?>
-    <?php if (temPerm('picos')): ?>
-    <button class="tab-btn" onclick="showTab('picos',this)">
-      <i class="fas fa-clock"></i> <span>Horários de Pico</span>
-    </button>
-    <?php endif; ?>
-    <?php if (temPerm('fechamentos')): ?>
-    <button class="tab-btn" onclick="showTab('fechamentos',this)">
-      <i class="fas fa-door-closed"></i> <span>Fechamentos</span>
-    </button>
-    <?php endif; ?>
-    <?php if (temPerm('motivos')): ?>
-    <button class="tab-btn" onclick="showTab('motivos',this)">
-      <i class="fas fa-tags"></i> <span>Motivos</span>
-    </button>
-    <?php endif; ?>
-    <?php if (temPerm('semanas')): ?>
-    <button class="tab-btn" onclick="showTab('semanas',this)">
-      <i class="fas fa-calendar-week"></i> <span>Semanas</span>
-    </button>
-    <?php endif; ?>
-    <?php if (temPerm('pesquisa')): ?>
-    <button class="tab-btn" onclick="showTab('pesquisa',this)">
-      <i class="fas fa-star"></i> <span>Pesquisa</span>
-    </button>
-    <?php endif; ?>
-    <?php if (temPerm('usuarios')): ?>
-    <button class="tab-btn" onclick="showTab('usuarios',this)">
-      <i class="fas fa-users"></i> <span>Usuários</span>
-    </button>
-    <?php endif; ?>
-    <?php if (temPerm('autorizacoes')): ?>
-    <button class="tab-btn" onclick="showTab('autorizacoes',this)">
-      <i class="fas fa-file-medical"></i> <span>Autorizações</span>
-    </button>
-    <?php endif; ?>
-    <?php if (temPerm('convenios')): ?>
-    <button class="tab-btn" onclick="showTab('convenios',this)">
-      <i class="fas fa-handshake"></i> <span>Convênios</span>
-    </button>
-    <?php endif; ?>
-    <?php if (temPerm('procedimentos')): ?>
-    <button class="tab-btn" onclick="showTab('procedimentos',this)">
-      <i class="fas fa-stethoscope"></i> <span>Procedimentos</span>
-    </button>
-    <?php endif; ?>
-  </div>
   <!-- Usuário logado + logout -->
-  <div style="display:flex;align-items:center;gap:.6rem;padding-left:1rem;border-left:1px solid rgba(255,255,255,.08);flex-shrink:0;">
+  <div style="display:flex;align-items:center;gap:.6rem;margin-left:auto;padding-left:1rem;border-left:1px solid rgba(255,255,255,.08);flex-shrink:0;">
     <span style="font-size:.8rem;color:var(--text-muted);white-space:nowrap;">
       <i class="fas fa-user-circle"></i>
       <?= htmlspecialchars($usuarioLogado['nome']) ?>
@@ -118,6 +63,67 @@ function temPerm(string $m): bool {
     </button>
   </div>
 </nav>
+
+<div class="sb-overlay" id="sb-overlay" onclick="toggleSidebar()"></div>
+<aside class="sidebar" id="sidebar">
+  <nav class="sb-nav">
+    <?php if (temPerm('dashboard')): ?>
+    <button class="tab-btn active" onclick="showTab('dashboard',this)" title="Dashboard">
+      <i class="fas fa-chart-line"></i> <span>Dashboard</span>
+    </button>
+    <?php endif; ?>
+    <?php if (temPerm('atendimentos')): ?>
+    <button class="tab-btn" onclick="showTab('atendimentos',this)" title="Atendimentos">
+      <i class="fas fa-calendar-check"></i> <span>Atendimentos</span>
+    </button>
+    <?php endif; ?>
+    <?php if (temPerm('picos')): ?>
+    <button class="tab-btn" onclick="showTab('picos',this)" title="Horários de Pico">
+      <i class="fas fa-clock"></i> <span>Horários de Pico</span>
+    </button>
+    <?php endif; ?>
+    <?php if (temPerm('fechamentos')): ?>
+    <button class="tab-btn" onclick="showTab('fechamentos',this)" title="Fechamentos">
+      <i class="fas fa-door-closed"></i> <span>Fechamentos</span>
+    </button>
+    <?php endif; ?>
+    <?php if (temPerm('motivos')): ?>
+    <button class="tab-btn" onclick="showTab('motivos',this)" title="Motivos">
+      <i class="fas fa-tags"></i> <span>Motivos</span>
+    </button>
+    <?php endif; ?>
+    <?php if (temPerm('semanas')): ?>
+    <button class="tab-btn" onclick="showTab('semanas',this)" title="Semanas">
+      <i class="fas fa-calendar-week"></i> <span>Semanas</span>
+    </button>
+    <?php endif; ?>
+    <?php if (temPerm('pesquisa')): ?>
+    <button class="tab-btn" onclick="showTab('pesquisa',this)" title="Pesquisa">
+      <i class="fas fa-star"></i> <span>Pesquisa</span>
+    </button>
+    <?php endif; ?>
+    <?php if (temPerm('usuarios')): ?>
+    <button class="tab-btn" onclick="showTab('usuarios',this)" title="Usuários">
+      <i class="fas fa-users"></i> <span>Usuários</span>
+    </button>
+    <?php endif; ?>
+    <?php if (temPerm('autorizacoes')): ?>
+    <button class="tab-btn" onclick="showTab('autorizacoes',this)" title="Autorizações">
+      <i class="fas fa-file-medical"></i> <span>Autorizações</span>
+    </button>
+    <?php endif; ?>
+    <?php if (temPerm('convenios')): ?>
+    <button class="tab-btn" onclick="showTab('convenios',this)" title="Convênios">
+      <i class="fas fa-handshake"></i> <span>Convênios</span>
+    </button>
+    <?php endif; ?>
+    <?php if (temPerm('procedimentos')): ?>
+    <button class="tab-btn" onclick="showTab('procedimentos',this)" title="Procedimentos">
+      <i class="fas fa-stethoscope"></i> <span>Procedimentos</span>
+    </button>
+    <?php endif; ?>
+  </nav>
+</aside>
 
 <div class="main-wrap">
 
@@ -747,6 +753,8 @@ function showTab(name, btn) {
       if (b.getAttribute('onclick').includes("'" + name + "'")) b.classList.add('active');
     });
   }
+  // Fecha sidebar no mobile ao navegar
+  if (window.innerWidth <= 768) document.documentElement.setAttribute('data-sb', '');
   // Oculta seletor de semana nas abas que não precisam dele
   const _tabsSemSemana = ['usuarios','autorizacoes','convenios','procedimentos'];
   const sel = document.querySelector('.semana-selector');
@@ -2301,7 +2309,20 @@ function toggleTema() {
   if (btn) btn.innerHTML = claro ? '<i class="fas fa-sun"></i>' : '<i class="fas fa-moon"></i>';
 }
 
-// Sincroniza ícone do botão com o tema atual ao carregar
+function toggleSidebar() {
+  const html = document.documentElement;
+  const mobile = window.innerWidth <= 768;
+  if (mobile) {
+    const open = html.getAttribute('data-sb') === 'open';
+    html.setAttribute('data-sb', open ? '' : 'open');
+  } else {
+    const collapsed = html.getAttribute('data-sb') === 'collapsed';
+    html.setAttribute('data-sb', collapsed ? '' : 'collapsed');
+    localStorage.setItem('sbCollapsed', collapsed ? '0' : '1');
+  }
+}
+
+// Sincroniza ícone do botão de tema ao carregar
 document.addEventListener('DOMContentLoaded', function() {
   const btn = document.getElementById('btn-tema');
   if (!btn) return;
