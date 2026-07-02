@@ -182,9 +182,7 @@ function temPerm(string $m): bool {
         <div class="painel">
           <div class="painel-titulo"><i class="fas fa-chart-pie"></i> Motivos de Fechamento — Distribuição</div>
           <div style="display:flex;align-items:center;gap:1rem;">
-            <div style="flex:0 0 120px;width:120px;height:120px;position:relative;">
-              <canvas id="chart-pizza"></canvas>
-            </div>
+            <div style="flex-shrink:0;"><canvas id="chart-pizza"></canvas></div>
             <div id="pizza-legenda" style="flex:1;font-size:.82rem;"></div>
           </div>
         </div>
@@ -987,10 +985,14 @@ async function carregarDashboard(sid) {
     if (chartPizza) { chartPizza.destroy(); chartPizza = null; }
     const coresPizza = ['#ff2d78','#ffe600','#00ffff','#00ff88','#b94fff','#ff8c00','#00e5d4','#ff69b4'];
     const pizzaLegenda = document.getElementById('pizza-legenda');
+    const cvPizza = document.getElementById('chart-pizza');
     if (!d.fechamentos.length) {
       if (pizzaLegenda) pizzaLegenda.innerHTML = '<p style="color:var(--text-muted);font-size:.88rem;">Nenhum fechamento registrado nesta semana.</p>';
     } else {
-      chartPizza = new Chart(document.getElementById('chart-pizza'), {
+      // Define tamanho antes de instanciar — único método confiável com responsive:false
+      cvPizza.width  = 130;
+      cvPizza.height = 130;
+      chartPizza = new Chart(cvPizza, {
         type: 'doughnut',
         plugins: [ChartDataLabels],
         data: {
@@ -1001,13 +1003,12 @@ async function carregarDashboard(sid) {
           }],
         },
         options: {
-          responsive: true,
-          maintainAspectRatio: false,
+          responsive: false,
           plugins: {
             legend: { display: false },
             datalabels: {
               color: '#0a0a0f',
-              font: { weight: 'bold', size: 9 },
+              font: { weight: 'bold', size: 10 },
               formatter: v => v > 0 ? v : '',
             },
           },
@@ -1018,6 +1019,8 @@ async function carregarDashboard(sid) {
           <div style="display:flex;align-items:center;gap:.4rem;margin-bottom:.4rem;">
             <span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:${coresPizza[i % coresPizza.length]};flex-shrink:0;"></span>
             <span>${f.descricao} <strong>(${f.total})</strong></span>
+          </div>`).join('');
+    }
           </div>`).join('');
     }
 
