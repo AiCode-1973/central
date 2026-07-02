@@ -54,6 +54,10 @@ function temPerm(string $m): bool {
       <?= htmlspecialchars($usuarioLogado['nome']) ?>
       <small style="margin-left:.25rem;opacity:.65;">(<?= $usuarioLogado['perfil'] ?>)</small>
     </span>
+    <button onclick="abrirModalSenha()" class="btn-app sm" title="Alterar senha"
+      style="border-color:var(--neon-cyan);color:var(--neon-cyan);">
+      <i class="fas fa-key"></i>
+    </button>
     <a href="logout.php" class="btn-app dang sm" style="text-decoration:none;">
       <i class="fas fa-sign-out-alt"></i> Sair
     </a>
@@ -708,6 +712,30 @@ function temPerm(string $m): bool {
 
 <!-- ══ TOAST ════════════════════════════════════════════════ -->
 <div id="toast-container"></div>
+
+<!-- ══ MODAL ALTERAR SENHA ══════════════════════════════════ -->
+<div class="modal-overlay" id="modal-senha">
+  <div class="modal-box">
+    <button class="modal-close" onclick="fecharModalSenha()" title="Fechar">&times;</button>
+    <h3><i class="fas fa-key" style="color:var(--neon-cyan);margin-right:.5rem;"></i>Alterar Senha</h3>
+    <div class="modal-campo">
+      <label>Senha Atual</label>
+      <input type="password" id="ms-senha-atual" placeholder="Senha atual" autocomplete="current-password">
+    </div>
+    <div class="modal-campo">
+      <label>Nova Senha</label>
+      <input type="password" id="ms-nova-senha" placeholder="Mínimo 6 caracteres" autocomplete="new-password">
+    </div>
+    <div class="modal-campo">
+      <label>Confirmar Nova Senha</label>
+      <input type="password" id="ms-confirmacao" placeholder="Repita a nova senha" autocomplete="new-password">
+    </div>
+    <div class="modal-actions">
+      <button class="btn-app sm" onclick="fecharModalSenha()" style="border-color:var(--text-muted);color:var(--text-muted);">Cancelar</button>
+      <button class="btn-app prim sm" onclick="salvarNovaSenha()"><i class="fas fa-save"></i> Salvar</button>
+    </div>
+  </div>
+</div>
 
 <!-- ══ SCRIPT ═══════════════════════════════════════════════ -->
 <script>
@@ -2295,6 +2323,46 @@ function mascaraTelefone(el) {
   el.value = v;
 }
 
+/* ── Alterar senha ────────────────────────────────────────── */
+function abrirModalSenha() {
+  ['ms-senha-atual','ms-nova-senha','ms-confirmacao'].forEach(id => {
+    const el = document.getElementById(id); if (el) el.value = '';
+  });
+  document.getElementById('modal-senha').classList.add('open');
+  document.getElementById('ms-senha-atual').focus();
+}
+function fecharModalSenha() {
+  document.getElementById('modal-senha').classList.remove('open');
+}
+async function salvarNovaSenha() {
+  const atual  = document.getElementById('ms-senha-atual').value;
+  const nova   = document.getElementById('ms-nova-senha').value;
+  const conf   = document.getElementById('ms-confirmacao').value;
+  if (!atual || !nova || !conf) { toast('Preencha todos os campos.', 'erro'); return; }
+  if (nova.length < 6)          { toast('A nova senha deve ter no mínimo 6 caracteres.', 'erro'); return; }
+  if (nova !== conf)             { toast('A nova senha e a confirmação não coincidem.', 'erro'); return; }
+  try {
+    const res = await fetch('api/perfil.php', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ senha_atual: atual, nova_senha: nova, confirmacao: conf })
+    });
+    const data = await res.json();
+    if (!res.ok) { toast(data.erro || 'Erro ao alterar senha.', 'erro'); return; }
+    toast(data.mensagem || 'Senha alterada com sucesso!', 'suc');
+    fecharModalSenha();
+  } catch(e) { toast('Erro de conexão.', 'erro'); }
+}
+// Fecha modal ao clicar no overlay
+document.addEventListener('click', function(e) {
+  const m = document.getElementById('modal-senha');
+  if (m && e.target === m) fecharModalSenha();
+});
+// Fecha modal com Escape
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') fecharModalSenha();
+});
+
 function toggleTema() {
   const html = document.documentElement;
   const claro = html.getAttribute('data-tema') === 'claro';
@@ -2321,8 +2389,6 @@ function toggleSidebar() {
     localStorage.setItem('sbCollapsed', collapsed ? '0' : '1');
   }
 }
-
-// Sincroniza ícone do botão de tema ao carregar
 document.addEventListener('DOMContentLoaded', function() {
   const btn = document.getElementById('btn-tema');
   if (!btn) return;

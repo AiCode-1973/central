@@ -61,6 +61,19 @@ html[data-sb="collapsed"] .tab-btn span { display: none; }
 .sb-toggle:hover { color: var(--neon-cyan); border-color: var(--neon-cyan); }
 .sb-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: 899; cursor: pointer; }
 
+/* ── Modal genérico ───────────────────────────────────── */
+.modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.6); z-index: 2000; align-items: center; justify-content: center; padding: 1rem; }
+.modal-overlay.open { display: flex; }
+.modal-box { background: var(--card); border: 1px solid var(--border); border-radius: var(--raio); box-shadow: var(--sombra); width: 100%; max-width: 420px; padding: 1.5rem; position: relative; }
+.modal-box h3 { margin: 0 0 1.25rem; font-size: 1rem; color: var(--text); }
+.modal-box .modal-campo { display: flex; flex-direction: column; gap: .2rem; margin-bottom: .85rem; }
+.modal-box .modal-campo label { font-size: .75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: .04em; }
+.modal-box .modal-campo input { padding: .45rem .7rem; border: 1px solid var(--border); border-radius: 6px; font-size: .9rem; background: var(--bg2); color: var(--text); }
+.modal-box .modal-campo input:focus { outline: none; border-color: var(--neon-cyan); box-shadow: 0 0 0 3px rgba(99,179,237,.15); }
+.modal-actions { display: flex; gap: .6rem; justify-content: flex-end; margin-top: 1.25rem; }
+.modal-close { position: absolute; top: .75rem; right: .85rem; background: none; border: none; color: var(--text-muted); font-size: 1.2rem; cursor: pointer; line-height: 1; }
+.modal-close:hover { color: var(--neon-pink); }
+
 .main-wrap { max-width: 1920px; margin-left: var(--sb-width); transition: margin-left .25s ease; padding: 1.5rem 2rem 3rem; }
 
 .semana-selector { background: var(--card); border: 1px solid var(--border); border-radius: var(--raio); box-shadow: var(--sombra); padding: .85rem 1.25rem; display: flex; flex-wrap: wrap; gap: .75rem; align-items: center; margin-bottom: 1.5rem; }
