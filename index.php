@@ -182,7 +182,7 @@ function temPerm(string $m): bool {
         <div class="painel">
           <div class="painel-titulo"><i class="fas fa-chart-pie"></i> Motivos de Fechamento — Distribuição</div>
           <div style="display:flex;align-items:center;gap:1rem;">
-            <div style="flex:0 0 75px;"><canvas id="chart-pizza"></canvas></div>
+            <div style="flex:0 0 75px;width:75px;height:75px;"><canvas id="chart-pizza" width="75" height="75"></canvas></div>
             <div id="pizza-legenda" style="flex:1;font-size:.82rem;"></div>
           </div>
         </div>
@@ -999,12 +999,13 @@ async function carregarDashboard(sid) {
           }],
         },
         options: {
-          responsive: true,
+          responsive: false,
+          maintainAspectRatio: true,
           plugins: {
             legend: { display: false },
             datalabels: {
               color: '#0a0a0f',
-              font: { weight: 'bold', size: 12 },
+              font: { weight: 'bold', size: 9 },
               formatter: v => v > 0 ? v : '',
             },
           },
