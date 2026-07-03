@@ -305,6 +305,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <div class="lp-footer">
       &copy; <?= date('Y') ?> Hospital Santo Expedito &mdash; Todos os direitos reservados<br>
       <span class="lp-footer-dev"><i class="fas fa-code"></i> Desenvolvido por: Demetrius Figueiredo</span>
+      <span class="lp-footer-dev"><i class="fas fa-code"></i> AiCode</span>
     </div>
     </div><!-- /lp-right-inner -->
   </div>
