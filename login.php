@@ -208,7 +208,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     .lp-footer {
       margin-top: 2rem; text-align: center;
-      font-size: .73rem; color: #334155;
+      font-size: .73rem; color: #94a3b8;
+      line-height: 1.8;
+    }
+    .lp-footer .lp-footer-dev {
+      color: #60a5fa;
+      font-weight: 600;
+      font-size: .72rem;
     }
 
     /* ── Responsivo ───────────────────────────────────── */
@@ -297,7 +303,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </form>
 
     <div class="lp-footer">
-      &copy; <?= date('Y') ?> Hospital Santo Expedito &mdash; Todos os direitos reservados
+      &copy; <?= date('Y') ?> Hospital Santo Expedito &mdash; Todos os direitos reservados<br>
+      <span class="lp-footer-dev"><i class="fas fa-code"></i> Desenvolvido por: Demetrius Figueiredo</span>
     </div>
     </div><!-- /lp-right-inner -->
   </div>
