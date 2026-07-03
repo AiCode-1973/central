@@ -146,8 +146,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       border-left: 1px solid rgba(96,165,250,.12);
     }
 
+    /* Limita a largura do conteúdo interno do painel direito */
+    .lp-right-inner {
+      width: 100%;
+      max-width: 380px;
+    }
+
     .lp-form-header {
-      text-align: center; margin-bottom: 2rem; width: 100%;
+      text-align: center; margin-bottom: 2rem;
     }
     .lp-form-header h2 {
       font-size: 1.25rem; font-weight: 700; color: #f1f5f9;
@@ -259,6 +265,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
   <!-- Direito: formulário de login -->
   <div class="lp-right">
+    <div class="lp-right-inner">
     <div class="lp-form-header">
       <h2><i class="fas fa-sign-in-alt" style="color:#60a5fa;margin-right:.4rem;"></i> Acesso ao Sistema</h2>
       <p>Informe suas credenciais para continuar</p>
@@ -271,7 +278,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </div>
     <?php endif; ?>
 
-    <form method="POST" action="login.php" autocomplete="on" style="width:100%;">
+    <form method="POST" action="login.php" autocomplete="on">
       <div class="form-group">
         <label for="email"><i class="fas fa-envelope"></i> E-mail</label>
         <input type="email" id="email" name="email"
@@ -292,6 +299,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <div class="lp-footer">
       &copy; <?= date('Y') ?> Hospital Santo Expedito &mdash; Todos os direitos reservados
     </div>
+    </div><!-- /lp-right-inner -->
   </div>
 
 </body>
