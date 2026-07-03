@@ -136,8 +136,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     /* ── Painel direito ───────────────────────────────── */
     .lp-right {
-      width: 420px;
-      flex-shrink: 0;
+      flex: 1;
       display: flex;
       flex-direction: column;
       align-items: center;
