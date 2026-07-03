@@ -304,8 +304,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     <div class="lp-footer">
       &copy; <?= date('Y') ?> Hospital Santo Expedito &mdash; Todos os direitos reservados<br>
-      <span class="lp-footer-dev"><i class="fas fa-code"></i> Desenvolvido por: Demetrius Figueiredo</span>
-      <span class="lp-footer-dev"><i class="fas fa-code"></i> AiCode</span>
+      <span class="lp-footer-dev"><i class="fas fa-code"></i> Desenvolvido por: Demetrius Figueiredo</span><br>
+      <a href="https://aicode.dev.br" target="_blank" rel="noopener" class="lp-footer-dev" style="text-decoration:none;"><i class="fas fa-external-link-alt"></i> AiCode</a>
     </div>
     </div><!-- /lp-right-inner -->
   </div>
