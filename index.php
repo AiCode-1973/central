@@ -507,124 +507,173 @@ function temPerm(string $m): bool {
       <div class="painel-titulo"><i class="fas fa-file-medical"></i> Autorizações de Exames</div>
 
       <!-- Formulário de cadastro/edição -->
-      <div id="aut-form-wrap" style="background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:1.25rem;margin-bottom:1.5rem;">
-        <div style="font-size:.8rem;font-weight:700;color:var(--neon-cyan);text-transform:uppercase;letter-spacing:.04em;margin-bottom:1rem;" id="aut-form-titulo">Nova Autorização</div>
-        <div class="form-inline-row">
-          <div class="form-group" style="flex:2;min-width:200px;">
-            <label>Nome do Paciente <span style="color:var(--neon-pink);">*</span></label>
-            <input type="text" id="aut-paciente-nome" placeholder="Nome completo" style="width:100%;">
+      <div id="aut-form-wrap" style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:1.5rem;margin-bottom:1.5rem;">
+
+        <!-- Cabeçalho do form -->
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;padding-bottom:.75rem;border-bottom:1px solid var(--border);">
+          <div style="display:flex;align-items:center;gap:.55rem;">
+            <div style="width:32px;height:32px;background:rgba(96,165,250,.12);border:1px solid rgba(96,165,250,.3);border-radius:7px;display:flex;align-items:center;justify-content:center;">
+              <i class="fas fa-file-medical" style="color:var(--neon-cyan);font-size:.9rem;"></i>
+            </div>
+            <span style="font-size:.9rem;font-weight:700;color:var(--text);letter-spacing:.02em;" id="aut-form-titulo">Nova Autorização</span>
           </div>
-          <div class="form-group" style="min-width:150px;">
-            <label>CPF</label>
-            <input type="text" id="aut-cpf" placeholder="000.000.000-00" maxlength="14" style="width:100%;" oninput="mascaraCPF(this)">
-          </div>
-          <div class="form-group" style="min-width:150px;">
-            <label>Telefone</label>
-            <input type="text" id="aut-telefone" placeholder="(00) 00000-0000" maxlength="15" style="width:100%;" oninput="mascaraTelefone(this)">
-          </div>
-          <div class="form-group" style="min-width:140px;">
-            <label><i class="fas fa-mobile-alt"></i> Tipo de Contato</label>
-            <select id="aut-telefone-contato" style="width:100%;padding:.4rem .65rem;border:1px solid rgba(96,165,250,.25);border-radius:6px;background:var(--bg2);color:var(--text);font-size:.9rem;">
-              <option value="ambos">📞 Ligar e WhatsApp</option>
-              <option value="whatsapp">💬 Somente WhatsApp</option>
-              <option value="ligar">📵 Somente Ligar</option>
-            </select>
-          </div>
-        </div>
-        <div class="form-inline-row">
-          <div class="form-group" style="flex:1;min-width:180px;">
-            <label>Convênio <span style="color:var(--neon-pink);">*</span></label>
-            <select id="aut-convenio" style="width:100%;padding:.4rem .65rem;border:1px solid rgba(99,179,237,.25);border-radius:6px;background:var(--bg2);color:var(--text);font-size:.9rem;">
-              <option value="">— Selecione —</option>
-            </select>
-          </div>
-          <div class="form-group" style="flex:1;min-width:180px;">
-            <label>Procedimento (Exame) <span style="color:var(--neon-pink);">*</span></label>
-            <select id="aut-procedimento" style="width:100%;padding:.4rem .65rem;border:1px solid rgba(99,179,237,.25);border-radius:6px;background:var(--bg2);color:var(--text);font-size:.9rem;">
-              <option value="">— Selecione —</option>
-            </select>
-          </div>
-          <div class="form-group" style="min-width:160px;">
-            <label>Data do Agendamento <span style="color:var(--neon-pink);">*</span></label>
-            <input type="date" id="aut-data" style="width:100%;">
-          </div>
-          <?php if (temPerm('autorizar_exames')): ?>
-          <div class="form-group" style="min-width:150px;">
-            <label>Status</label>
-            <select id="aut-status" style="width:100%;padding:.4rem .65rem;border:1px solid rgba(99,179,237,.25);border-radius:6px;background:var(--bg2);color:var(--text);font-size:.9rem;">
-              <option value="pendente">Pendente</option>
-              <option value="analise">Em Análise</option>
-              <option value="autorizado">Autorizado</option>
-              <option value="negado">Negado</option>
-            </select>
-          </div>
-          <div class="form-group" style="min-width:160px;">
-            <label style="color:var(--neon-green);"><i class="fas fa-calendar-check"></i> Data de Autorização</label>
-            <input type="date" id="aut-data-autorizacao" style="width:100%;">
-          </div>
-          <?php else: ?>
-          <input type="hidden" id="aut-status" value="pendente">
-          <input type="hidden" id="aut-data-autorizacao" value="">
-          <?php endif; ?>
-        </div>
-        <div class="form-inline-row">
-          <div class="form-group" style="flex:1;">
-            <label>Pedido Médico <small style="color:var(--text-muted);font-weight:400;">(PDF, JPG ou PNG — máx. 10 MB)</small></label>
-            <input type="file" id="aut-arquivo" accept=".pdf,.jpg,.jpeg,.png,.webp" multiple
-              style="width:100%;padding:.35rem .65rem;border:1px solid rgba(99,179,237,.25);border-radius:6px;background:var(--bg2);color:var(--text);font-size:.9rem;">
-            <div id="aut-arquivo-atual" style="display:none;margin-top:.35rem;font-size:.8rem;color:var(--text-muted);"></div>
-          </div>
-          <div class="form-group" style="flex:2;">
-            <label>Observação</label>
-            <input type="text" id="aut-observacao" placeholder="Opcional" style="width:100%;">
-          </div>
-        </div>
-        <?php if (temPerm('autorizar_exames')): ?>
-        <div class="form-inline-row" id="aut-wrap-negacao" style="display:none;">
-          <div class="form-group" style="flex:1;">
-            <label style="color:var(--neon-pink);"><i class="fas fa-ban"></i> Motivo da Negação</label>
-            <textarea id="aut-motivo-negacao" rows="2" placeholder="Descreva o motivo pelo qual a autorização foi negada…"
-              style="width:100%;padding:.4rem .65rem;border:1px solid rgba(246,135,179,.4);border-radius:6px;background:var(--bg2);color:var(--text);font-size:.9rem;resize:vertical;"></textarea>
-          </div>
-        </div>
-        <div class="form-inline-row" id="aut-wrap-analise" style="display:none;">
-          <div class="form-group" style="flex:1;">
-            <label style="color:var(--neon-purple);"><i class="fas fa-search"></i> Justificativa da Análise</label>
-            <textarea id="aut-motivo-analise" rows="2" placeholder="Descreva o motivo pelo qual o pedido está em análise…"
-              style="width:100%;padding:.4rem .65rem;border:1px solid rgba(183,148,244,.4);border-radius:6px;background:var(--bg2);color:var(--text);font-size:.9rem;resize:vertical;"></textarea>
-          </div>
-        </div>
-        <!-- Guia autorizada pelo convênio — visível somente para autorizador quando status = autorizado -->
-        <div class="form-inline-row" id="aut-wrap-guia" style="display:none;">
-          <div class="form-group" style="flex:1;">
-            <label style="color:var(--neon-green);"><i class="fas fa-file-medical"></i> Guia Autorizada pelo Convênio
-              <small style="color:var(--text-muted);font-weight:400;"> — PDF, JPG ou PNG, máx. 10 MB, múltiplos arquivos</small>
-            </label>
-            <input type="file" id="aut-guia-arquivo" accept=".pdf,.jpg,.jpeg,.png,.webp" multiple
-              style="width:100%;padding:.35rem .65rem;border:1px solid rgba(104,211,145,.3);border-radius:6px;background:var(--bg2);color:var(--text);font-size:.9rem;">
-            <div id="aut-guia-atual" style="display:none;margin-top:.35rem;font-size:.8rem;color:var(--text-muted);"></div>
-          </div>
-        </div>
-        <?php endif; ?>
-        <!-- Contato com paciente — visível para operador quando negado ou em análise -->
-        <div class="form-inline-row" id="aut-wrap-contato" style="display:none;">
-          <div class="form-group" style="flex:0 0 180px;">
-            <label style="color:var(--neon-yellow);"><i class="fas fa-phone-alt"></i> Data do Contato</label>
-            <input type="date" id="aut-contato-data" style="width:100%;">
-          </div>
-          <div class="form-group" style="flex:1;">
-            <label style="color:var(--neon-yellow);"><i class="fas fa-comment-dots"></i> Descrição do Contato com o Paciente</label>
-            <textarea id="aut-contato-descricao" rows="2" placeholder="Descreva o que foi tratado com o paciente (data do contato, o que foi explicado…)"
-              style="width:100%;padding:.4rem .65rem;border:1px solid rgba(246,224,94,.4);border-radius:6px;background:var(--bg2);color:var(--text);font-size:.9rem;resize:vertical;"></textarea>
-          </div>
-        </div>
-        <div style="display:flex;gap:.4rem;margin-top:.5rem;">
-          <button class="btn-app suc" onclick="salvarAutorizacao()">
-            <i class="fas fa-save"></i> <span id="aut-btn-label">Cadastrar</span>
-          </button>
-          <button class="btn-app sm" id="aut-btn-cancelar" style="display:none;border-color:var(--text-muted);color:var(--text-muted);" onclick="cancelarEdicaoAutorizacao()">
+          <button id="aut-btn-cancelar" style="display:none;background:none;border:1px solid rgba(148,163,184,.25);border-radius:6px;color:var(--text-muted);font-size:.8rem;font-weight:600;padding:.3rem .75rem;cursor:pointer;" onclick="cancelarEdicaoAutorizacao()">
             <i class="fas fa-times"></i> Cancelar
           </button>
+        </div>
+
+        <!-- Seção 1: Dados do Paciente -->
+        <div style="margin-bottom:1.25rem;">
+          <div style="font-size:.7rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:.75rem;display:flex;align-items:center;gap:.4rem;">
+            <i class="fas fa-user" style="color:var(--neon-cyan);opacity:.7;"></i> Dados do Paciente
+          </div>
+          <div class="form-inline-row">
+            <div class="form-group" style="flex:3;min-width:200px;">
+              <label>Nome do Paciente <span style="color:var(--neon-pink);">*</span></label>
+              <input type="text" id="aut-paciente-nome" placeholder="Nome completo do paciente" style="width:100%;">
+            </div>
+            <div class="form-group" style="flex:1;min-width:140px;">
+              <label>CPF</label>
+              <input type="text" id="aut-cpf" placeholder="000.000.000-00" maxlength="14" style="width:100%;" oninput="mascaraCPF(this)">
+            </div>
+          </div>
+          <div class="form-inline-row" style="margin-top:.5rem;">
+            <div class="form-group" style="flex:1;min-width:150px;">
+              <label><i class="fas fa-phone" style="opacity:.6;"></i> Telefone</label>
+              <input type="text" id="aut-telefone" placeholder="(00) 00000-0000" maxlength="15" style="width:100%;" oninput="mascaraTelefone(this)">
+            </div>
+            <div class="form-group" style="flex:1;min-width:160px;">
+              <label><i class="fas fa-mobile-alt" style="opacity:.6;"></i> Tipo de Contato</label>
+              <select id="aut-telefone-contato" style="width:100%;">
+                <option value="ambos">📞 Ligar e WhatsApp</option>
+                <option value="whatsapp">💬 Somente WhatsApp</option>
+                <option value="ligar">📵 Somente Ligar</option>
+              </select>
+            </div>
+            <div class="form-group" style="flex:2;min-width:200px;">
+              <label><i class="fas fa-comment" style="opacity:.6;"></i> Observação</label>
+              <input type="text" id="aut-observacao" placeholder="Informações adicionais (opcional)" style="width:100%;">
+            </div>
+          </div>
+        </div>
+
+        <!-- Divisor -->
+        <div style="height:1px;background:var(--border);margin-bottom:1.25rem;"></div>
+
+        <!-- Seção 2: Dados do Exame -->
+        <div style="margin-bottom:1.25rem;">
+          <div style="font-size:.7rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:.75rem;display:flex;align-items:center;gap:.4rem;">
+            <i class="fas fa-flask" style="color:var(--neon-cyan);opacity:.7;"></i> Dados do Exame
+          </div>
+          <div class="form-inline-row">
+            <div class="form-group" style="flex:2;min-width:180px;">
+              <label>Convênio <span style="color:var(--neon-pink);">*</span></label>
+              <select id="aut-convenio" style="width:100%;">
+                <option value="">— Selecione —</option>
+              </select>
+            </div>
+            <div class="form-group" style="flex:2;min-width:180px;">
+              <label>Procedimento <span style="color:var(--neon-pink);">*</span></label>
+              <select id="aut-procedimento" style="width:100%;">
+                <option value="">— Selecione —</option>
+              </select>
+            </div>
+            <div class="form-group" style="flex:1;min-width:155px;">
+              <label><i class="fas fa-calendar-alt" style="opacity:.6;"></i> Data do Agendamento <span style="color:var(--neon-pink);">*</span></label>
+              <input type="date" id="aut-data" style="width:100%;">
+            </div>
+          </div>
+          <div class="form-inline-row" style="margin-top:.5rem;">
+            <div class="form-group" style="flex:1;">
+              <label><i class="fas fa-paperclip" style="opacity:.6;"></i> Pedido Médico <small style="color:var(--text-muted);font-weight:400;text-transform:none;">(PDF, JPG ou PNG — máx. 10 MB)</small></label>
+              <input type="file" id="aut-arquivo" accept=".pdf,.jpg,.jpeg,.png,.webp" multiple style="width:100%;">
+              <div id="aut-arquivo-atual" style="display:none;margin-top:.35rem;font-size:.8rem;color:var(--text-muted);"></div>
+            </div>
+          </div>
+        </div>
+
+        <?php if (temPerm('autorizar_exames')): ?>
+        <!-- Divisor -->
+        <div style="height:1px;background:var(--border);margin-bottom:1.25rem;"></div>
+
+        <!-- Seção 3: Autorização (somente autorizador) -->
+        <div style="margin-bottom:1.25rem;">
+          <div style="font-size:.7rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:.75rem;display:flex;align-items:center;gap:.4rem;">
+            <i class="fas fa-stamp" style="color:var(--neon-cyan);opacity:.7;"></i> Autorização
+          </div>
+          <div class="form-inline-row">
+            <div class="form-group" style="min-width:150px;">
+              <label>Status</label>
+              <select id="aut-status" style="width:100%;">
+                <option value="pendente">Pendente</option>
+                <option value="analise">Em Análise</option>
+                <option value="autorizado">Autorizado</option>
+                <option value="negado">Negado</option>
+              </select>
+            </div>
+            <div class="form-group" style="min-width:155px;">
+              <label style="color:var(--neon-green);"><i class="fas fa-calendar-check"></i> Data de Autorização</label>
+              <input type="date" id="aut-data-autorizacao" style="width:100%;">
+            </div>
+          </div>
+          <!-- Motivo Negação -->
+          <div class="form-inline-row" id="aut-wrap-negacao" style="display:none;margin-top:.5rem;">
+            <div class="form-group" style="flex:1;">
+              <label style="color:var(--neon-pink);"><i class="fas fa-ban"></i> Motivo da Negação</label>
+              <textarea id="aut-motivo-negacao" rows="2" placeholder="Descreva o motivo pelo qual a autorização foi negada…"
+                style="width:100%;padding:.4rem .65rem;border:1px solid rgba(248,113,113,.35);border-radius:6px;background:var(--bg2);color:var(--text);font-size:.9rem;resize:vertical;"></textarea>
+            </div>
+          </div>
+          <!-- Justificativa Análise -->
+          <div class="form-inline-row" id="aut-wrap-analise" style="display:none;margin-top:.5rem;">
+            <div class="form-group" style="flex:1;">
+              <label style="color:var(--neon-purple);"><i class="fas fa-search"></i> Justificativa da Análise</label>
+              <textarea id="aut-motivo-analise" rows="2" placeholder="Descreva o motivo pelo qual o pedido está em análise…"
+                style="width:100%;padding:.4rem .65rem;border:1px solid rgba(165,180,252,.35);border-radius:6px;background:var(--bg2);color:var(--text);font-size:.9rem;resize:vertical;"></textarea>
+            </div>
+          </div>
+          <!-- Guia Autorizada -->
+          <div class="form-inline-row" id="aut-wrap-guia" style="display:none;margin-top:.5rem;">
+            <div class="form-group" style="flex:1;">
+              <label style="color:var(--neon-green);"><i class="fas fa-file-medical"></i> Guia Autorizada pelo Convênio
+                <small style="color:var(--text-muted);font-weight:400;text-transform:none;"> — PDF, JPG ou PNG, máx. 10 MB, múltiplos arquivos</small>
+              </label>
+              <input type="file" id="aut-guia-arquivo" accept=".pdf,.jpg,.jpeg,.png,.webp" multiple style="width:100%;padding:.35rem .65rem;border:1px solid rgba(52,211,153,.25);border-radius:6px;background:var(--bg2);color:var(--text);font-size:.9rem;">
+              <div id="aut-guia-atual" style="display:none;margin-top:.35rem;font-size:.8rem;color:var(--text-muted);"></div>
+            </div>
+          </div>
+        </div>
+        <?php else: ?>
+        <input type="hidden" id="aut-status" value="pendente">
+        <input type="hidden" id="aut-data-autorizacao" value="">
+        <?php endif; ?>
+
+        <!-- Seção Contato c/ Paciente (todos podem ver quando negado/análise) -->
+        <div class="form-inline-row" id="aut-wrap-contato" style="display:none;margin-top:.25rem;">
+          <div style="width:100%;background:rgba(251,191,36,.04);border:1px solid rgba(251,191,36,.2);border-radius:8px;padding:.85rem 1rem;">
+            <div style="font-size:.7rem;font-weight:700;color:var(--neon-yellow);text-transform:uppercase;letter-spacing:.07em;margin-bottom:.65rem;">
+              <i class="fas fa-phone-alt"></i> Registro de Contato com o Paciente
+            </div>
+            <div class="form-inline-row">
+              <div class="form-group" style="flex:0 0 175px;">
+                <label style="color:var(--neon-yellow);">Data do Contato</label>
+                <input type="date" id="aut-contato-data" style="width:100%;">
+              </div>
+              <div class="form-group" style="flex:1;">
+                <label style="color:var(--neon-yellow);">Descrição</label>
+                <textarea id="aut-contato-descricao" rows="2" placeholder="Descreva o que foi tratado com o paciente…"
+                  style="width:100%;padding:.4rem .65rem;border:1px solid rgba(251,191,36,.3);border-radius:6px;background:var(--bg2);color:var(--text);font-size:.9rem;resize:vertical;"></textarea>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Ações -->
+        <div style="display:flex;gap:.5rem;margin-top:1.25rem;padding-top:.9rem;border-top:1px solid var(--border);align-items:center;">
+          <button class="btn-app suc" onclick="salvarAutorizacao()" style="padding:.5rem 1.4rem;">
+            <i class="fas fa-save"></i> <span id="aut-btn-label">Cadastrar</span>
+          </button>
+          <span style="font-size:.78rem;color:var(--text-muted);"><span style="color:var(--neon-pink);">*</span> Campos obrigatórios</span>
         </div>
       </div>
 
