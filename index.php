@@ -522,6 +522,14 @@ function temPerm(string $m): bool {
             <label>Telefone</label>
             <input type="text" id="aut-telefone" placeholder="(00) 00000-0000" maxlength="15" style="width:100%;" oninput="mascaraTelefone(this)">
           </div>
+          <div class="form-group" style="min-width:140px;">
+            <label><i class="fas fa-mobile-alt"></i> Tipo de Contato</label>
+            <select id="aut-telefone-contato" style="width:100%;padding:.4rem .65rem;border:1px solid rgba(96,165,250,.25);border-radius:6px;background:var(--bg2);color:var(--text);font-size:.9rem;">
+              <option value="ambos">📞 Ligar e WhatsApp</option>
+              <option value="whatsapp">💬 Somente WhatsApp</option>
+              <option value="ligar">📵 Somente Ligar</option>
+            </select>
+          </div>
         </div>
         <div class="form-inline-row">
           <div class="form-group" style="flex:1;min-width:180px;">
@@ -2269,7 +2277,15 @@ function _renderAutorizacoes() {
       <tr>
         <td style="font-weight:600;">${a.paciente_nome}</td>
         <td style="font-size:.82rem;">${a.paciente_cpf || '—'}</td>
-        <td style="font-size:.82rem;">${a.paciente_telefone || '—'}</td>
+        <td style="font-size:.82rem;">${a.paciente_telefone || '—'}${a.paciente_telefone ? (() => {
+          const tc = a.telefone_contato || 'ambos';
+          const badge = tc === 'whatsapp'
+            ? `<span title="Somente WhatsApp" style="margin-left:.3rem;color:#25d366;font-size:.75rem;"><i class="fab fa-whatsapp"></i></span>`
+            : tc === 'ligar'
+            ? `<span title="Somente Ligar" style="margin-left:.3rem;color:var(--neon-cyan);font-size:.75rem;"><i class="fas fa-phone"></i></span>`
+            : `<span title="Ligar e WhatsApp" style="margin-left:.3rem;font-size:.75rem;"><span style="color:var(--neon-cyan);"><i class="fas fa-phone"></i></span> <span style="color:#25d366;"><i class="fab fa-whatsapp"></i></span></span>`;
+          return badge;
+        })() : ''}</td>
         <td>${a.convenio_nome}</td>
         <td>${a.procedimento_nome}</td>
         <td style="font-size:.85rem;">${a.data_agendamento}</td>
@@ -2366,6 +2382,7 @@ async function salvarAutorizacao() {
   fd.append('paciente_nome',     nome);
   fd.append('paciente_cpf',      cpf);
   fd.append('paciente_telefone', tel);
+  fd.append('telefone_contato',  document.getElementById('aut-telefone-contato')?.value || 'ambos');
   fd.append('convenio_id',       conv);
   fd.append('procedimento_id',   proc);
   fd.append('data_agendamento',  data);
@@ -2416,6 +2433,8 @@ function editarAutorizacao(id) {
   document.getElementById('aut-paciente-nome').value = a.paciente_nome;
   document.getElementById('aut-cpf').value           = a.paciente_cpf || '';
   document.getElementById('aut-telefone').value      = a.paciente_telefone || '';
+  const telContEl = document.getElementById('aut-telefone-contato');
+  if (telContEl) telContEl.value = a.telefone_contato || 'ambos';
   document.getElementById('aut-convenio').value      = a.convenio_id;
   document.getElementById('aut-procedimento').value  = a.procedimento_id;
   // data vem como dd/mm/yyyy, converte para yyyy-mm-dd
@@ -2484,6 +2503,8 @@ function cancelarEdicaoAutorizacao() {
   ['aut-paciente-nome','aut-cpf','aut-telefone','aut-observacao'].forEach(id => {
     const el = document.getElementById(id); if (el) el.value = '';
   });
+  const telContEl2 = document.getElementById('aut-telefone-contato');
+  if (telContEl2) telContEl2.value = 'ambos';
   const mnEl2 = document.getElementById('aut-motivo-negacao');
   if (mnEl2) mnEl2.value = '';
   const maEl2 = document.getElementById('aut-motivo-analise');

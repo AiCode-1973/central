@@ -128,6 +128,7 @@ try {
                             DATE_FORMAT(a.contato_data,'%d/%m/%Y') AS contato_data,
                             a.contato_descricao,
                             a.guia_arquivo,
+                            a.telefone_contato,
                             DATE_FORMAT(a.criado_em,'%d/%m/%Y %H:%i')     AS criado_em,
                             DATE_FORMAT(a.atualizado_em,'%d/%m/%Y %H:%i') AS atualizado_em,
                             c.id AS convenio_id,   c.nome AS convenio_nome,
@@ -217,8 +218,10 @@ try {
             $motivoNeg     = $_podeAutorizar ? trim($_POST['motivo_negacao'] ?? '') : '';
             $motivoAnalise = $_podeAutorizar ? trim($_POST['motivo_analise']  ?? '') : '';
             // Contato com paciente — editável pelo operador quando status negado ou analise
-            $contatoData  = trim($_POST['contato_data'] ?? '') ?: null;
-            $contatoDesc  = trim($_POST['contato_descricao'] ?? '') ?: null;
+            $contatoData    = trim($_POST['contato_data'] ?? '') ?: null;
+            $contatoDesc    = trim($_POST['contato_descricao'] ?? '') ?: null;
+            $telContato     = trim($_POST['telefone_contato'] ?? '');
+            if (!in_array($telContato, ['whatsapp','ligar','ambos'], true)) $telContato = 'ambos';
             $curRow = $conn->query("SELECT pedido_arquivo, guia_arquivo FROM autorizacoes WHERE id = $id")->fetch_assoc();
             $arquivosAtuais = decodificarArquivos($curRow['pedido_arquivo'] ?? null);
 
@@ -260,10 +263,10 @@ try {
                  SET convenio_id=?, paciente_nome=?, paciente_cpf=?, paciente_telefone=?,
                      data_agendamento=?, procedimento_id=?, pedido_arquivo=?, status=?, observacao=?,
                      motivo_negacao=?, motivo_analise=?, data_autorizacao=?, autorizado_por=?,
-                     contato_data=?, contato_descricao=?, guia_arquivo=?
+                     contato_data=?, contato_descricao=?, guia_arquivo=?, telefone_contato=?
                  WHERE id=?"
             );
-            $stmt->bind_param('issssissssssisssi', $convId, $nome, $cpf, $tel, $dtAg, $procId, $arquivoFinalJson, $status, $obs, $motivoNeg, $motivoAnalise, $dtAutorizacao, $autorizadoPorId, $contatoData, $contatoDesc, $guiaFinalJson, $id);
+            $stmt->bind_param('issssissssssissssi', $convId, $nome, $cpf, $tel, $dtAg, $procId, $arquivoFinalJson, $status, $obs, $motivoNeg, $motivoAnalise, $dtAutorizacao, $autorizadoPorId, $contatoData, $contatoDesc, $guiaFinalJson, $telContato, $id);
             if (!$stmt->execute()) { throw new RuntimeException($conn->error); }
             echo json_encode(['mensagem' => 'Autorização atualizada.']);
             break;
