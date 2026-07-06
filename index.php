@@ -694,11 +694,11 @@ function temPerm(string $m): bool {
           <option value="negado">Negado</option>
         </select>
         <span id="aut-contagem" style="font-size:.8rem;color:var(--text-muted);white-space:nowrap;"></span>
-        <button onclick="exportarExcelAutorizacoes()"
-          style="display:inline-flex;align-items:center;gap:.4rem;padding:.38rem .85rem;border:1px solid rgba(52,211,153,.35);border-radius:6px;background:transparent;color:var(--neon-green);font-size:.82rem;font-weight:700;cursor:pointer;white-space:nowrap;transition:background .2s;"
-          onmouseover="this.style.background='rgba(52,211,153,.08)'" onmouseout="this.style.background='transparent'"
-          title="Exportar relatório diário por status para Excel">
-          <i class="fas fa-file-excel"></i> Exportar Excel
+        <button onclick="imprimirRelatorioAutorizacoes()"
+          style="display:inline-flex;align-items:center;gap:.4rem;padding:.38rem .85rem;border:1px solid rgba(248,113,113,.35);border-radius:6px;background:transparent;color:var(--neon-pink);font-size:.82rem;font-weight:700;cursor:pointer;white-space:nowrap;transition:background .2s;"
+          onmouseover="this.style.background='rgba(248,113,113,.08)'" onmouseout="this.style.background='transparent'"
+          title="Imprimir relatório diário por status em PDF">
+          <i class="fas fa-print"></i> Imprimir PDF
         </button>
       </div>
       <div class="table-responsive">
@@ -2525,99 +2525,122 @@ function _autIrPag(p) {
   _renderAutorizacoes();
 }
 
-function exportarExcelAutorizacoes() {
-  // Data de hoje no formato dd/mm/yyyy para filtrar e nomear o arquivo
+function imprimirRelatorioAutorizacoes() {
   const hoje = new Date();
   const dd   = String(hoje.getDate()).padStart(2,'0');
   const mm   = String(hoje.getMonth()+1).padStart(2,'0');
   const yy   = hoje.getFullYear();
-  const hojeStr  = `${dd}/${mm}/${yy}`;   // formato da API
-  const nomeArq  = `autorizacoes_${yy}${mm}${dd}.csv`;
+  const hh   = String(hoje.getHours()).padStart(2,'0');
+  const mi   = String(hoje.getMinutes()).padStart(2,'0');
+  const hojeStr = `${dd}/${mm}/${yy}`;
 
-  // Usa o filtro ativo se existir; caso contrário filtra só pelo dia de hoje
   const termoFiltro  = (document.getElementById('aut-filtro')?.value || '').toLowerCase().trim();
   const statusFiltro = document.getElementById('aut-filtro-status')?.value || '';
+  const usarFiltroHoje = !termoFiltro && !statusFiltro;
 
   const STATUS_LABEL = { pendente:'Pendente', analise:'Em Análise', autorizado:'Autorizado', negado:'Negado' };
-  const CONTATO_LABEL = { whatsapp:'Somente WhatsApp', ligar:'Somente Ligar', ambos:'Ligar e WhatsApp' };
+  const STATUS_COLOR = { pendente:'#d97706', analise:'#4f46e5', autorizado:'#059669', negado:'#dc2626' };
 
-  // Filtra igual ao _renderAutorizacoes mas só registros de hoje (se nenhum filtro manual ativo)
-  const usarFiltroHoje = !termoFiltro && !statusFiltro;
   let registros = _autorizacoesCache.filter(a => {
     if (usarFiltroHoje && a.data_agendamento !== hojeStr) return false;
     if (statusFiltro && a.status !== statusFiltro) return false;
-    if (termoFiltro) {
-      return [a.paciente_nome,a.paciente_cpf,a.paciente_telefone,a.convenio_nome,a.procedimento_nome,a.status]
-        .some(v => (v||'').toLowerCase().includes(termoFiltro));
-    }
+    if (termoFiltro) return [a.paciente_nome,a.paciente_cpf,a.paciente_telefone,a.convenio_nome,a.procedimento_nome,a.status]
+      .some(v => (v||'').toLowerCase().includes(termoFiltro));
     return true;
   });
 
-  if (!registros.length) {
-    toast('Nenhum registro encontrado para exportar.', 'erro'); return;
-  }
+  if (!registros.length) { toast('Nenhum registro encontrado para imprimir.', 'erro'); return; }
 
-  // Ordena por status depois por nome
   const ordemStatus = { pendente:1, analise:2, autorizado:3, negado:4 };
   registros.sort((a,b) => (ordemStatus[a.status]||9) - (ordemStatus[b.status]||9) || a.paciente_nome.localeCompare(b.paciente_nome));
 
-  // Título do relatório
   const titulo = usarFiltroHoje
     ? `Relatório Diário de Autorizações — ${dd}/${mm}/${yy}`
-    : `Relatório de Autorizações — filtro aplicado`;
+    : `Relatório de Autorizações — Filtro aplicado`;
 
-  const esc = v => `"${(v||'').replace(/"/g,'""')}"`;
+  // Resumo por status
+  const resumo = registros.reduce((acc,a) => { acc[a.status] = (acc[a.status]||0)+1; return acc; }, {});
+  const resumoHtml = Object.entries(resumo).map(([s,q]) =>
+    `<span style="display:inline-flex;align-items:center;gap:6px;background:${STATUS_COLOR[s]}18;
+      border:1px solid ${STATUS_COLOR[s]}55;border-radius:5px;padding:4px 10px;font-size:12px;font-weight:700;color:${STATUS_COLOR[s]};">
+      ${STATUS_LABEL[s]||s}: ${q}
+    </span>`
+  ).join('&nbsp;') + `&nbsp;<span style="border:1px solid #999;border-radius:5px;padding:4px 10px;font-size:12px;font-weight:700;color:#333;">Total: ${registros.length}</span>`;
 
-  // Cabeçalho CSV
-  const cols = ['Status','Paciente','CPF','Telefone','Tipo Contato','Convênio','Procedimento',
-                 'Agendamento','Dt. Autorização','Autorizado Por','Operador',
-                 'Motivo Negação','Motivo Análise','Dt. Contato Paciente','Desc. Contato',
-                 'Msg WhatsApp Enviada','Dt. Envio WhatsApp','Ligação Realizada','Dt. Ligação'];
+  // Linhas da tabela agrupadas por status
+  let ultimoStatus = null;
+  const linhasHtml = registros.map(a => {
+    let separador = '';
+    if (a.status !== ultimoStatus) {
+      ultimoStatus = a.status;
+      separador = `<tr><td colspan="8"
+        style="background:${STATUS_COLOR[a.status]}14;color:${STATUS_COLOR[a.status]};
+        font-weight:800;font-size:11px;text-transform:uppercase;letter-spacing:.06em;
+        padding:6px 8px;border-top:2px solid ${STATUS_COLOR[a.status]}44;">
+        ${STATUS_LABEL[a.status]||a.status}
+      </td></tr>`;
+    }
+    const contatoIcons = (a.telefone_contato === 'whatsapp' || a.telefone_contato === 'ambos')
+      ? `<span style="color:#25d366;font-size:10px;">&#9679; WhatsApp</span> ` : '';
+    const contatoLigar = (a.telefone_contato === 'ligar' || a.telefone_contato === 'ambos')
+      ? `<span style="color:#2563eb;font-size:10px;">&#9679; Ligar</span>` : '';
+    return separador + `<tr>
+      <td>${a.paciente_nome}</td>
+      <td>${a.paciente_cpf||'—'}</td>
+      <td>${a.paciente_telefone||'—'}<br><span style="font-size:9px;">${contatoIcons}${contatoLigar}</span></td>
+      <td>${a.convenio_nome}</td>
+      <td>${a.procedimento_nome}</td>
+      <td style="text-align:center;">${a.data_agendamento}</td>
+      <td style="text-align:center;color:${STATUS_COLOR[a.status]||'#333'};font-weight:700;">${STATUS_LABEL[a.status]||a.status}</td>
+      <td>${a.criado_por_nome||'—'}</td>
+    </tr>`;
+  }).join('');
 
-  const linhas = [
-    [titulo],
-    [`Gerado em: ${dd}/${mm}/${yy} ${String(hoje.getHours()).padStart(2,'0')}:${String(hoje.getMinutes()).padStart(2,'0')}`],
-    [],
-    cols.map(esc).join(';'),
-    ...registros.map(a => [
-      esc(STATUS_LABEL[a.status] || a.status),
-      esc(a.paciente_nome),
-      esc(a.paciente_cpf),
-      esc(a.paciente_telefone),
-      esc(CONTATO_LABEL[a.telefone_contato] || a.telefone_contato),
-      esc(a.convenio_nome),
-      esc(a.procedimento_nome),
-      esc(a.data_agendamento),
-      esc(a.data_autorizacao),
-      esc(a.autorizado_por_nome),
-      esc(a.criado_por_nome),
-      esc(a.motivo_negacao),
-      esc(a.motivo_analise),
-      esc(a.contato_data),
-      esc(a.contato_descricao),
-      esc(a.msg_wpp_enviada == 1 ? 'Sim' : 'Não'),
-      esc(a.msg_wpp_data),
-      esc(a.ligacao_realizada == 1 ? 'Sim' : 'Não'),
-      esc(a.ligacao_data),
-    ].join(';')),
-    [],
-    // Resumo por status
-    [esc('RESUMO POR STATUS')],
-    [esc('Status'), esc('Qtd.')].join(';'),
-    ...Object.entries(
-      registros.reduce((acc,a) => { acc[a.status] = (acc[a.status]||0)+1; return acc; }, {})
-    ).map(([s,q]) => [esc(STATUS_LABEL[s]||s), esc(String(q))].join(';')),
-    [esc('TOTAL'), esc(String(registros.length))].join(';'),
-  ];
+  const html = `<!DOCTYPE html><html lang="pt-BR"><head>
+  <meta charset="UTF-8">
+  <title>${titulo}</title>
+  <style>
+    * { box-sizing:border-box; margin:0; padding:0; }
+    body { font-family:'Segoe UI',Arial,sans-serif; font-size:12px; color:#1e293b; padding:24px; }
+    .header { display:flex; justify-content:space-between; align-items:flex-start; border-bottom:2px solid #2563eb; padding-bottom:12px; margin-bottom:14px; }
+    .header-left h1 { font-size:15px; color:#1e3a5f; font-weight:800; }
+    .header-left h2 { font-size:12px; color:#2563eb; font-weight:600; margin-top:2px; }
+    .header-right { text-align:right; font-size:10px; color:#64748b; }
+    .resumo { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:14px; }
+    table { width:100%; border-collapse:collapse; font-size:11px; }
+    th { background:#1e3a5f; color:#fff; padding:6px 8px; text-align:left; font-size:10px; text-transform:uppercase; letter-spacing:.04em; }
+    td { padding:5px 8px; border-bottom:1px solid #e2e8f0; vertical-align:top; }
+    tr:nth-child(even) td { background:#f8fafc; }
+    .footer { margin-top:18px; text-align:center; font-size:9px; color:#94a3b8; border-top:1px solid #e2e8f0; padding-top:8px; }
+    @media print {
+      body { padding:10px; }
+      @page { margin:15mm 12mm; size:landscape; }
+    }
+  </style></head><body>
+  <div class="header">
+    <div class="header-left">
+      <h1>&#9962; Hospital Santo Expedito</h1>
+      <h2>${titulo}</h2>
+    </div>
+    <div class="header-right">Gerado em: ${dd}/${mm}/${yy} ${hh}:${mi}<br>Total de registros: ${registros.length}</div>
+  </div>
+  <div class="resumo">${resumoHtml}</div>
+  <table>
+    <thead><tr>
+      <th>Paciente</th><th>CPF</th><th>Telefone</th><th>Convênio</th>
+      <th>Procedimento</th><th style="text-align:center;">Agendamento</th>
+      <th style="text-align:center;">Status</th><th>Operador</th>
+    </tr></thead>
+    <tbody>${linhasHtml}</tbody>
+  </table>
+  <div class="footer">Hospital Santo Expedito &mdash; Central de Agendamento &mdash; Impresso em ${dd}/${mm}/${yy}</div>
+  <script>window.onload=function(){window.print();}<\/script>
+  </body></html>`;
 
-  // BOM UTF-8 para o Excel reconhecer acentos
-  const bom  = '\uFEFF';
-  const blob = new Blob([bom + linhas.join('\r\n')], { type: 'text/csv;charset=utf-8;' });
-  const url  = URL.createObjectURL(blob);
-  const a    = document.createElement('a');
-  a.href = url; a.download = nomeArq; a.click();
-  URL.revokeObjectURL(url);
-  toast(`Exportado: ${nomeArq}`, 'suc');
+  const w = window.open('','_blank','noopener');
+  if (!w) { toast('Permita popups para imprimir.', 'erro'); return; }
+  w.document.write(html);
+  w.document.close();
 }
 
 async function salvarAutorizacao() {
