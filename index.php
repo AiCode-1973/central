@@ -821,7 +821,7 @@ function temPerm(string $m): bool {
 <!-- ══ MODAL ENVIAR MENSAGEM AO PACIENTE ════════════════════ -->
 <div id="modal-msg-paciente" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:2100;align-items:center;justify-content:center;padding:1rem;">
   <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:1.75rem 2rem;width:100%;max-width:480px;box-shadow:0 8px 40px rgba(0,0,0,.6);position:relative;">
-    <button onclick="document.getElementById('modal-msg-paciente').style.display='none';"
+    <button onclick="_fecharModalWpp();"
       style="position:absolute;top:.75rem;right:.85rem;background:none;border:none;color:var(--text-muted);font-size:1.2rem;cursor:pointer;line-height:1;">&times;</button>
     <div style="font-size:.9rem;font-weight:700;color:#25d366;text-transform:uppercase;letter-spacing:.04em;margin-bottom:1.25rem;">
       <i class="fab fa-whatsapp"></i> Enviar Mensagem ao Paciente
@@ -836,9 +836,25 @@ function temPerm(string $m): bool {
       <textarea id="msg-pac-texto" rows="6"
         style="padding:.55rem .75rem;border:1px solid rgba(37,211,102,.25);border-radius:7px;background:var(--bg2);color:var(--text);font-size:.9rem;resize:vertical;line-height:1.55;"></textarea>
     </div>
+    <!-- Anexos locais para enviar pelo WhatsApp manualmente -->
+    <div style="margin-bottom:1rem;">
+      <label style="font-size:.75rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.04em;display:flex;align-items:center;gap:.4rem;margin-bottom:.4rem;">
+        <i class="fas fa-paperclip"></i> Anexos (opcional)
+      </label>
+      <label id="msg-anexo-label" style="display:flex;align-items:center;gap:.6rem;cursor:pointer;border:1px dashed rgba(37,211,102,.35);border-radius:7px;padding:.55rem .75rem;color:var(--text-muted);font-size:.82rem;transition:border-color .2s;" onmouseover="this.style.borderColor='#25d366'" onmouseout="this.style.borderColor='rgba(37,211,102,.35)'">
+        <i class="fas fa-plus" style="color:#25d366;"></i>
+        <span>Selecionar arquivos para anexar no WhatsApp</span>
+        <input type="file" id="msg-pac-anexos" multiple accept="image/*,.pdf,.doc,.docx" style="display:none;" onchange="_renderAnexosWpp(this.files)">
+      </label>
+      <div id="msg-pac-anexos-lista" style="display:none;margin-top:.5rem;display:flex;flex-direction:column;gap:.3rem;"></div>
+      <div style="font-size:.72rem;color:var(--text-muted);margin-top:.35rem;">
+        <i class="fas fa-info-circle" style="color:#fbbf24;"></i>
+        Após abrir o WhatsApp, anexe os arquivos listados acima manualmente na conversa.
+      </div>
+    </div>
     <div style="display:flex;gap:.5rem;justify-content:flex-end;flex-wrap:wrap;">
       <button class="btn-app sm" style="border-color:var(--text-muted);color:var(--text-muted);"
-        onclick="document.getElementById('modal-msg-paciente').style.display='none';">
+        onclick="_fecharModalWpp()">
         <i class="fas fa-times"></i> Fechar
       </button>
       <button class="btn-app sm" id="msg-pac-btn-wpp"
@@ -2037,14 +2053,47 @@ function _abrirModalMsgPaciente(nome, telefone, motivoNegacao) {
   document.getElementById('modal-msg-paciente').style.display = 'flex';
 }
 
+function _fecharModalWpp() {
+  document.getElementById('modal-msg-paciente').style.display = 'none';
+  // Limpa anexos ao fechar
+  document.getElementById('msg-pac-anexos').value = '';
+  document.getElementById('msg-pac-anexos-lista').innerHTML = '';
+  document.getElementById('msg-pac-anexos-lista').style.display = 'none';
+}
+
+function _renderAnexosWpp(files) {
+  const lista = document.getElementById('msg-pac-anexos-lista');
+  lista.innerHTML = '';
+  if (!files || !files.length) { lista.style.display = 'none'; return; }
+  lista.style.display = 'flex';
+  Array.from(files).forEach((f, i) => {
+    const ext = f.name.split('.').pop().toLowerCase();
+    const icone = ['jpg','jpeg','png','gif','webp'].includes(ext) ? 'fa-image'
+                : ext === 'pdf' ? 'fa-file-pdf'
+                : ['doc','docx'].includes(ext) ? 'fa-file-word' : 'fa-file';
+    const cor = ext === 'pdf' ? '#f87171' : ['doc','docx'].includes(ext) ? '#60a5fa' : '#34d399';
+    const tamanho = f.size < 1024*1024 ? (f.size/1024).toFixed(0)+'KB' : (f.size/1024/1024).toFixed(1)+'MB';
+    lista.innerHTML += `<div style="display:flex;align-items:center;gap:.5rem;background:var(--bg2);border:1px solid rgba(37,211,102,.2);border-radius:5px;padding:.35rem .65rem;font-size:.8rem;">
+      <i class="fas ${icone}" style="color:${cor};"></i>
+      <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text);">${f.name}</span>
+      <span style="color:var(--text-muted);white-space:nowrap;">${tamanho}</span>
+    </div>`;
+  });
+}
+
 function _abrirWhatsApp() {
   const tel  = document.getElementById('msg-pac-tel').textContent.replace(/\D/g, '');
   const msg  = document.getElementById('msg-pac-texto').value.trim();
   if (!tel) { toast('Telefone do paciente não informado.', 'erro'); return; }
-  // Adiciona DDI 55 (Brasil) se não começar com 55
   const numero = tel.startsWith('55') ? tel : '55' + tel;
   const url = 'https://wa.me/' + numero + '?text=' + encodeURIComponent(msg);
   window.open(url, '_blank', 'noopener');
+  // Se há anexos, lembrar o usuário
+  const arquivos = document.getElementById('msg-pac-anexos').files;
+  if (arquivos && arquivos.length) {
+    const nomes = Array.from(arquivos).map(f => '• ' + f.name).join('\n');
+    setTimeout(() => toast(`WhatsApp aberto! Lembre-se de anexar ${arquivos.length} arquivo(s) manualmente.`, 'aviso'), 400);
+  }
 }
 
 async function marcarWppEnviado(id) {
