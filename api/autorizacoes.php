@@ -135,6 +135,8 @@ try {
                             a.telefone_contato,
                             a.msg_wpp_enviada,
                             DATE_FORMAT(a.msg_wpp_data,'%d/%m/%Y %H:%i') AS msg_wpp_data,
+                            a.ligacao_realizada,
+                            DATE_FORMAT(a.ligacao_data,'%d/%m/%Y %H:%i') AS ligacao_data,
                             DATE_FORMAT(a.criado_em,'%d/%m/%Y %H:%i')     AS criado_em,
                             DATE_FORMAT(a.atualizado_em,'%d/%m/%Y %H:%i') AS atualizado_em,
                             c.id AS convenio_id,   c.nome AS convenio_nome,
@@ -297,16 +299,22 @@ try {
             echo json_encode(['mensagem' => 'Autorização excluída.']);
             break;
 
-        /* ── MARCAR MSG WPP ENVIADA (PATCH) ──────────────────── */
+        /* ── MARCAR MSG WPP ENVIADA / LIGAÇÃO (PATCH) ────────── */
         case 'PATCH':
             $id = intval($_GET['id'] ?? 0);
             if (!$id) { http_response_code(422); echo json_encode(['erro' => 'id obrigatório.']); break; }
             $body = json_decode(file_get_contents('php://input'), true) ?? [];
-            $enviar = intval($body['msg_wpp_enviada'] ?? 1);
-            if ($enviar) {
-                $conn->query("UPDATE autorizacoes SET msg_wpp_enviada=1, msg_wpp_data=NOW() WHERE id=$id");
-            } else {
-                $conn->query("UPDATE autorizacoes SET msg_wpp_enviada=0, msg_wpp_data=NULL WHERE id=$id");
+            if (isset($body['msg_wpp_enviada'])) {
+                $v = intval($body['msg_wpp_enviada']);
+                $conn->query($v
+                    ? "UPDATE autorizacoes SET msg_wpp_enviada=1, msg_wpp_data=NOW() WHERE id=$id"
+                    : "UPDATE autorizacoes SET msg_wpp_enviada=0, msg_wpp_data=NULL WHERE id=$id");
+            }
+            if (isset($body['ligacao_realizada'])) {
+                $v = intval($body['ligacao_realizada']);
+                $conn->query($v
+                    ? "UPDATE autorizacoes SET ligacao_realizada=1, ligacao_data=NOW() WHERE id=$id"
+                    : "UPDATE autorizacoes SET ligacao_realizada=0, ligacao_data=NULL WHERE id=$id");
             }
             echo json_encode(['mensagem' => 'Atualizado.']);
             break;

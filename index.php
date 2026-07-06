@@ -2007,6 +2007,21 @@ async function marcarWppEnviado(id) {
   } catch(e) { toast(e.message, 'erro'); }
 }
 
+async function marcarLigacao(id) {
+  if (!confirm('Confirmar que a ligação foi realizada ao paciente?')) return;
+  try {
+    const resp = await fetch('api/autorizacoes.php?id=' + id, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ligacao_realizada: 1 })
+    });
+    const json = await resp.json().catch(() => ({}));
+    if (!resp.ok) throw new Error(json.erro || 'Erro ao registrar.');
+    toast('Ligação confirmada.', 'suc');
+    await carregarAutorizacoes();
+  } catch(e) { toast(e.message, 'erro'); }
+}
+
 // Show/hide campos de justificativa conforme status selecionado
 document.getElementById('aut-status')?.addEventListener('change', function() {
   const wrapNeg     = document.getElementById('aut-wrap-negacao');
@@ -2397,6 +2412,17 @@ function _renderAutorizacoes() {
               style="border-color:#25d366;color:#25d366;"
               onclick="marcarWppEnviado(${a.id})">
               <i class="fab fa-whatsapp"></i> Enviado?</button>`;
+          })() : ''}
+          ${a.status === 'negado' && (a.telefone_contato === 'ligar' || a.telefone_contato === 'ambos') ? (() => {
+            if (a.ligacao_realizada == 1) {
+              return `<span title="Ligação realizada em ${a.ligacao_data || ''}"
+                style="display:inline-flex;align-items:center;gap:.2rem;font-size:.75rem;color:var(--neon-cyan);border:1px solid rgba(96,165,250,.35);border-radius:5px;padding:.2rem .5rem;cursor:default;">
+                <i class="fas fa-phone-alt"></i> Ligou</span>`;
+            }
+            return `<button class="btn-app sm" title="Confirmar que a ligação foi realizada"
+              style="border-color:var(--neon-cyan);color:var(--neon-cyan);"
+              onclick="marcarLigacao(${a.id})">
+              <i class="fas fa-phone-alt"></i> Ligou?</button>`;
           })() : ''}
           <button class="btn-app prim sm" title="Editar" onclick="editarAutorizacao(${a.id})"><i class="fas fa-edit"></i></button>
           <button class="btn-del" title="Excluir" onclick="delAutorizacao(${a.id})"><i class="fas fa-trash"></i></button>
