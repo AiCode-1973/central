@@ -2634,13 +2634,14 @@ function imprimirRelatorioAutorizacoes() {
     <tbody>${linhasHtml}</tbody>
   </table>
   <div class="footer">Hospital Santo Expedito &mdash; Central de Agendamento &mdash; Impresso em ${dd}/${mm}/${yy}</div>
-  <script>window.onload=function(){window.print();}<\/script>
+  <script>setTimeout(function(){window.print();},400);<\/script>
   </body></html>`;
 
-  const w = window.open('','_blank','noopener');
-  if (!w) { toast('Permita popups para imprimir.', 'erro'); return; }
-  w.document.write(html);
-  w.document.close();
+  const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+  const blobUrl = URL.createObjectURL(blob);
+  const w = window.open(blobUrl, '_blank');
+  if (!w) { URL.revokeObjectURL(blobUrl); toast('Permita popups para imprimir.', 'erro'); return; }
+  setTimeout(() => URL.revokeObjectURL(blobUrl), 30000);
 }
 
 async function salvarAutorizacao() {
