@@ -13,6 +13,10 @@ $method = $_SERVER['REQUEST_METHOD'];
 if ($method === 'POST' && ($_POST['_method'] ?? '') === 'PUT') {
     $method = 'PUT';
 }
+// Rota PATCH via POST + _method=PATCH (fetch JSON)
+if ($method === 'POST' && ($_GET['_method'] ?? '') === 'PATCH') {
+    $method = 'PATCH';
+}
 $conn = getConnection();
 
 // Verifica se o usuário pode alterar o status (permissão autorizar_exames)
@@ -129,6 +133,8 @@ try {
                             a.contato_descricao,
                             a.guia_arquivo,
                             a.telefone_contato,
+                            a.msg_wpp_enviada,
+                            DATE_FORMAT(a.msg_wpp_data,'%d/%m/%Y %H:%i') AS msg_wpp_data,
                             DATE_FORMAT(a.criado_em,'%d/%m/%Y %H:%i')     AS criado_em,
                             DATE_FORMAT(a.atualizado_em,'%d/%m/%Y %H:%i') AS atualizado_em,
                             c.id AS convenio_id,   c.nome AS convenio_nome,
@@ -268,6 +274,11 @@ try {
             );
             $stmt->bind_param('issssissssssissssi', $convId, $nome, $cpf, $tel, $dtAg, $procId, $arquivoFinalJson, $status, $obs, $motivoNeg, $motivoAnalise, $dtAutorizacao, $autorizadoPorId, $contatoData, $contatoDesc, $guiaFinalJson, $telContato, $id);
             if (!$stmt->execute()) { throw new RuntimeException($conn->error); }
+
+            // Se status mudou para negado e foi sinalizado o envio da msg wpp
+            if ($status === 'negado' && intval($_POST['msg_wpp_enviada'] ?? 0) === 1) {
+                $conn->query("UPDATE autorizacoes SET msg_wpp_enviada=1, msg_wpp_data=NOW() WHERE id=$id AND msg_wpp_enviada=0");
+            }
             echo json_encode(['mensagem' => 'Autorização atualizada.']);
             break;
 
@@ -284,6 +295,20 @@ try {
                 excluirArquivos(decodificarArquivos($curRow['guia_arquivo']   ?? null));
             }
             echo json_encode(['mensagem' => 'Autorização excluída.']);
+            break;
+
+        /* ── MARCAR MSG WPP ENVIADA (PATCH) ──────────────────── */
+        case 'PATCH':
+            $id = intval($_GET['id'] ?? 0);
+            if (!$id) { http_response_code(422); echo json_encode(['erro' => 'id obrigatório.']); break; }
+            $body = json_decode(file_get_contents('php://input'), true) ?? [];
+            $enviar = intval($body['msg_wpp_enviada'] ?? 1);
+            if ($enviar) {
+                $conn->query("UPDATE autorizacoes SET msg_wpp_enviada=1, msg_wpp_data=NOW() WHERE id=$id");
+            } else {
+                $conn->query("UPDATE autorizacoes SET msg_wpp_enviada=0, msg_wpp_data=NULL WHERE id=$id");
+            }
+            echo json_encode(['mensagem' => 'Atualizado.']);
             break;
 
         default:

@@ -1992,6 +1992,21 @@ function _abrirWhatsApp() {
   window.open(url, '_blank', 'noopener');
 }
 
+async function marcarWppEnviado(id) {
+  if (!confirm('Confirmar que a mensagem WhatsApp foi enviada ao paciente?')) return;
+  try {
+    const resp = await fetch('api/autorizacoes.php?id=' + id, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ msg_wpp_enviada: 1 })
+    });
+    const json = await resp.json().catch(() => ({}));
+    if (!resp.ok) throw new Error(json.erro || 'Erro ao registrar.');
+    toast('Mensagem marcada como enviada.', 'suc');
+    await carregarAutorizacoes();
+  } catch(e) { toast(e.message, 'erro'); }
+}
+
 // Show/hide campos de justificativa conforme status selecionado
 document.getElementById('aut-status')?.addEventListener('change', function() {
   const wrapNeg     = document.getElementById('aut-wrap-negacao');
@@ -2365,12 +2380,23 @@ function _renderAutorizacoes() {
         <td style="font-size:.8rem;color:var(--text-muted);white-space:nowrap;">
           ${a.criado_por_nome || '—'}${(a.contato_data || a.contato_descricao) ? `<br><span style="color:var(--neon-yellow);font-size:.75rem;" title="${(a.contato_descricao||'').replace(/"/g,'&quot;')}"><i class="fas fa-phone-alt"></i> ${a.contato_data || ''}${a.contato_descricao ? ' — ' + (a.contato_descricao.length > 35 ? a.contato_descricao.substring(0,35)+'…' : a.contato_descricao) : ''}</span>` : ''}
         </td>
-        <td style="white-space:nowrap;display:flex;gap:.35rem;">
+        <td style="white-space:nowrap;display:flex;gap:.35rem;flex-wrap:wrap;">
           ${a.pedido_arquivo ? (() => {
             let arqs;
             try { arqs = JSON.parse(a.pedido_arquivo); } catch(e) { arqs = [a.pedido_arquivo]; }
             if (!Array.isArray(arqs)) arqs = [arqs];
             return arqs.map((f,i) => `<a href="uploads/pedidos/${encodeURIComponent(f)}" target="_blank" class="btn-app sm" style="border-color:var(--neon-cyan);color:var(--neon-cyan);text-decoration:none;" title="Ver pedido ${i+1}"><i class="fas fa-file-alt"></i>${arqs.length > 1 ? ' '+(i+1) : ''}</a>`).join('');
+          })() : ''}
+          ${a.status === 'negado' && (a.telefone_contato === 'whatsapp' || a.telefone_contato === 'ambos') ? (() => {
+            if (a.msg_wpp_enviada == 1) {
+              return `<span title="Mensagem WhatsApp enviada em ${a.msg_wpp_data || ''}"
+                style="display:inline-flex;align-items:center;gap:.2rem;font-size:.75rem;color:#25d366;border:1px solid rgba(37,211,102,.35);border-radius:5px;padding:.2rem .5rem;cursor:default;">
+                <i class="fab fa-whatsapp"></i> Enviado</span>`;
+            }
+            return `<button class="btn-app sm" title="Marcar mensagem WhatsApp como enviada"
+              style="border-color:#25d366;color:#25d366;"
+              onclick="marcarWppEnviado(${a.id})">
+              <i class="fab fa-whatsapp"></i> Enviado?</button>`;
           })() : ''}
           <button class="btn-app prim sm" title="Editar" onclick="editarAutorizacao(${a.id})"><i class="fas fa-edit"></i></button>
           <button class="btn-del" title="Excluir" onclick="delAutorizacao(${a.id})"><i class="fas fa-trash"></i></button>

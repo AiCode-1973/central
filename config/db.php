@@ -236,6 +236,8 @@ function _criarTabelas(mysqli $conn): void {
     $conn->query("ALTER TABLE autorizacoes ADD COLUMN IF NOT EXISTS contato_descricao TEXT DEFAULT NULL");
     $conn->query("ALTER TABLE autorizacoes ADD COLUMN IF NOT EXISTS guia_arquivo TEXT DEFAULT NULL");
     $conn->query("ALTER TABLE autorizacoes ADD COLUMN IF NOT EXISTS telefone_contato ENUM('whatsapp','ligar','ambos') NOT NULL DEFAULT 'ambos'");
+    $conn->query("ALTER TABLE autorizacoes ADD COLUMN IF NOT EXISTS msg_wpp_enviada TINYINT(1) NOT NULL DEFAULT 0");
+    $conn->query("ALTER TABLE autorizacoes ADD COLUMN IF NOT EXISTS msg_wpp_data DATETIME DEFAULT NULL");
 
     $conn->query("SET FOREIGN_KEY_CHECKS = 1");
 }
