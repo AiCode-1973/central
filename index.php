@@ -694,6 +694,12 @@ function temPerm(string $m): bool {
           <option value="negado">Negado</option>
         </select>
         <span id="aut-contagem" style="font-size:.8rem;color:var(--text-muted);white-space:nowrap;"></span>
+        <button onclick="exportarExcelAutorizacoes()"
+          style="display:inline-flex;align-items:center;gap:.4rem;padding:.38rem .85rem;border:1px solid rgba(52,211,153,.35);border-radius:6px;background:transparent;color:var(--neon-green);font-size:.82rem;font-weight:700;cursor:pointer;white-space:nowrap;transition:background .2s;"
+          onmouseover="this.style.background='rgba(52,211,153,.08)'" onmouseout="this.style.background='transparent'"
+          title="Exportar relatório diário por status para Excel">
+          <i class="fas fa-file-excel"></i> Exportar Excel
+        </button>
       </div>
       <div class="table-responsive">
         <table class="tabela-app">
@@ -2517,6 +2523,101 @@ function _autIrPag(p) {
   ));
   _autPagina = Math.min(Math.max(1, p), paginas);
   _renderAutorizacoes();
+}
+
+function exportarExcelAutorizacoes() {
+  // Data de hoje no formato dd/mm/yyyy para filtrar e nomear o arquivo
+  const hoje = new Date();
+  const dd   = String(hoje.getDate()).padStart(2,'0');
+  const mm   = String(hoje.getMonth()+1).padStart(2,'0');
+  const yy   = hoje.getFullYear();
+  const hojeStr  = `${dd}/${mm}/${yy}`;   // formato da API
+  const nomeArq  = `autorizacoes_${yy}${mm}${dd}.csv`;
+
+  // Usa o filtro ativo se existir; caso contrário filtra só pelo dia de hoje
+  const termoFiltro  = (document.getElementById('aut-filtro')?.value || '').toLowerCase().trim();
+  const statusFiltro = document.getElementById('aut-filtro-status')?.value || '';
+
+  const STATUS_LABEL = { pendente:'Pendente', analise:'Em Análise', autorizado:'Autorizado', negado:'Negado' };
+  const CONTATO_LABEL = { whatsapp:'Somente WhatsApp', ligar:'Somente Ligar', ambos:'Ligar e WhatsApp' };
+
+  // Filtra igual ao _renderAutorizacoes mas só registros de hoje (se nenhum filtro manual ativo)
+  const usarFiltroHoje = !termoFiltro && !statusFiltro;
+  let registros = _autorizacoesCache.filter(a => {
+    if (usarFiltroHoje && a.data_agendamento !== hojeStr) return false;
+    if (statusFiltro && a.status !== statusFiltro) return false;
+    if (termoFiltro) {
+      return [a.paciente_nome,a.paciente_cpf,a.paciente_telefone,a.convenio_nome,a.procedimento_nome,a.status]
+        .some(v => (v||'').toLowerCase().includes(termoFiltro));
+    }
+    return true;
+  });
+
+  if (!registros.length) {
+    toast('Nenhum registro encontrado para exportar.', 'erro'); return;
+  }
+
+  // Ordena por status depois por nome
+  const ordemStatus = { pendente:1, analise:2, autorizado:3, negado:4 };
+  registros.sort((a,b) => (ordemStatus[a.status]||9) - (ordemStatus[b.status]||9) || a.paciente_nome.localeCompare(b.paciente_nome));
+
+  // Título do relatório
+  const titulo = usarFiltroHoje
+    ? `Relatório Diário de Autorizações — ${dd}/${mm}/${yy}`
+    : `Relatório de Autorizações — filtro aplicado`;
+
+  const esc = v => `"${(v||'').replace(/"/g,'""')}"`;
+
+  // Cabeçalho CSV
+  const cols = ['Status','Paciente','CPF','Telefone','Tipo Contato','Convênio','Procedimento',
+                 'Agendamento','Dt. Autorização','Autorizado Por','Operador',
+                 'Motivo Negação','Motivo Análise','Dt. Contato Paciente','Desc. Contato',
+                 'Msg WhatsApp Enviada','Dt. Envio WhatsApp','Ligação Realizada','Dt. Ligação'];
+
+  const linhas = [
+    [titulo],
+    [`Gerado em: ${dd}/${mm}/${yy} ${String(hoje.getHours()).padStart(2,'0')}:${String(hoje.getMinutes()).padStart(2,'0')}`],
+    [],
+    cols.map(esc).join(';'),
+    ...registros.map(a => [
+      esc(STATUS_LABEL[a.status] || a.status),
+      esc(a.paciente_nome),
+      esc(a.paciente_cpf),
+      esc(a.paciente_telefone),
+      esc(CONTATO_LABEL[a.telefone_contato] || a.telefone_contato),
+      esc(a.convenio_nome),
+      esc(a.procedimento_nome),
+      esc(a.data_agendamento),
+      esc(a.data_autorizacao),
+      esc(a.autorizado_por_nome),
+      esc(a.criado_por_nome),
+      esc(a.motivo_negacao),
+      esc(a.motivo_analise),
+      esc(a.contato_data),
+      esc(a.contato_descricao),
+      esc(a.msg_wpp_enviada == 1 ? 'Sim' : 'Não'),
+      esc(a.msg_wpp_data),
+      esc(a.ligacao_realizada == 1 ? 'Sim' : 'Não'),
+      esc(a.ligacao_data),
+    ].join(';')),
+    [],
+    // Resumo por status
+    [esc('RESUMO POR STATUS')],
+    [esc('Status'), esc('Qtd.')].join(';'),
+    ...Object.entries(
+      registros.reduce((acc,a) => { acc[a.status] = (acc[a.status]||0)+1; return acc; }, {})
+    ).map(([s,q]) => [esc(STATUS_LABEL[s]||s), esc(String(q))].join(';')),
+    [esc('TOTAL'), esc(String(registros.length))].join(';'),
+  ];
+
+  // BOM UTF-8 para o Excel reconhecer acentos
+  const bom  = '\uFEFF';
+  const blob = new Blob([bom + linhas.join('\r\n')], { type: 'text/csv;charset=utf-8;' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url; a.download = nomeArq; a.click();
+  URL.revokeObjectURL(url);
+  toast(`Exportado: ${nomeArq}`, 'suc');
 }
 
 async function salvarAutorizacao() {
