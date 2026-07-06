@@ -763,6 +763,38 @@ function temPerm(string $m): bool {
 </div>
 <?php endif; ?>
 
+<!-- ══ MODAL ENVIAR MENSAGEM AO PACIENTE ════════════════════ -->
+<div id="modal-msg-paciente" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:2100;align-items:center;justify-content:center;padding:1rem;">
+  <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:1.75rem 2rem;width:100%;max-width:480px;box-shadow:0 8px 40px rgba(0,0,0,.6);position:relative;">
+    <button onclick="document.getElementById('modal-msg-paciente').style.display='none';"
+      style="position:absolute;top:.75rem;right:.85rem;background:none;border:none;color:var(--text-muted);font-size:1.2rem;cursor:pointer;line-height:1;">&times;</button>
+    <div style="font-size:.9rem;font-weight:700;color:#25d366;text-transform:uppercase;letter-spacing:.04em;margin-bottom:1.25rem;">
+      <i class="fab fa-whatsapp"></i> Enviar Mensagem ao Paciente
+    </div>
+    <div style="font-size:.8rem;color:var(--text-muted);margin-bottom:.6rem;">
+      <i class="fas fa-user"></i> <span id="msg-pac-nome" style="color:var(--text);font-weight:600;"></span>
+      &nbsp;|&nbsp;
+      <i class="fas fa-phone"></i> <span id="msg-pac-tel" style="color:var(--text);"></span>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:.3rem;margin-bottom:1rem;">
+      <label style="font-size:.75rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.04em;">Mensagem</label>
+      <textarea id="msg-pac-texto" rows="6"
+        style="padding:.55rem .75rem;border:1px solid rgba(37,211,102,.25);border-radius:7px;background:var(--bg2);color:var(--text);font-size:.9rem;resize:vertical;line-height:1.55;"></textarea>
+    </div>
+    <div style="display:flex;gap:.5rem;justify-content:flex-end;flex-wrap:wrap;">
+      <button class="btn-app sm" style="border-color:var(--text-muted);color:var(--text-muted);"
+        onclick="document.getElementById('modal-msg-paciente').style.display='none';">
+        <i class="fas fa-times"></i> Fechar
+      </button>
+      <button class="btn-app sm" id="msg-pac-btn-wpp"
+        style="border-color:#25d366;color:#25d366;"
+        onclick="_abrirWhatsApp()">
+        <i class="fab fa-whatsapp"></i> Abrir WhatsApp
+      </button>
+    </div>
+  </div>
+</div>
+
 <!-- ══ TOAST ════════════════════════════════════════════════ -->
 <div id="toast-container"></div>
 
@@ -1936,6 +1968,30 @@ document.getElementById('modal-senha')?.addEventListener('click', e => {
   if (e.target === e.currentTarget) fecharModalSenha();
 });
 
+// ── Mensagem WhatsApp ao paciente ──────────────────────────
+function _abrirModalMsgPaciente(nome, telefone, motivoNegacao) {
+  document.getElementById('msg-pac-nome').textContent = nome || '—';
+  document.getElementById('msg-pac-tel').textContent  = telefone || '—';
+
+  const hosp = 'Hospital Santo Expedito';
+  let msg = `Olá, ${nome}!\n\nPassamos para informar que o seu pedido de exame/procedimento no *${hosp}* foi analisado e infelizmente *não pôde ser autorizado* pelo convênio neste momento.`;
+  if (motivoNegacao) msg += `\n\n*Motivo:* ${motivoNegacao}`;
+  msg += `\n\nCaso tenha dúvidas ou precise de mais informações, entre em contato conosco.\n\nAtenciosamente,\n${hosp}`;
+
+  document.getElementById('msg-pac-texto').value = msg;
+  document.getElementById('modal-msg-paciente').style.display = 'flex';
+}
+
+function _abrirWhatsApp() {
+  const tel  = document.getElementById('msg-pac-tel').textContent.replace(/\D/g, '');
+  const msg  = document.getElementById('msg-pac-texto').value.trim();
+  if (!tel) { toast('Telefone do paciente não informado.', 'erro'); return; }
+  // Adiciona DDI 55 (Brasil) se não começar com 55
+  const numero = tel.startsWith('55') ? tel : '55' + tel;
+  const url = 'https://wa.me/' + numero + '?text=' + encodeURIComponent(msg);
+  window.open(url, '_blank', 'noopener');
+}
+
 // Show/hide campos de justificativa conforme status selecionado
 document.getElementById('aut-status')?.addEventListener('change', function() {
   const wrapNeg     = document.getElementById('aut-wrap-negacao');
@@ -2416,6 +2472,16 @@ async function salvarAutorizacao() {
     if (resp.status === 401) { window.location.href = 'login.php'; return; }
     if (!resp.ok) throw new Error(json.erro || 'Erro ao salvar.');
     toast(_autorizacaoEditId ? 'Autorização atualizada.' : 'Autorização criada.', 'suc');
+    // Se negado e o paciente aceita WhatsApp, oferece envio de mensagem
+    if (status === 'negado') {
+      const telContato = document.getElementById('aut-telefone-contato')?.value || 'ambos';
+      if (telContato === 'whatsapp' || telContato === 'ambos') {
+        _abrirModalMsgPaciente(
+          nome, tel,
+          document.getElementById('aut-motivo-negacao')?.value.trim() || ''
+        );
+      }
+    }
     cancelarEdicaoAutorizacao();
     await carregarAutorizacoes();
   } catch(e) { toast(e.message, 'erro'); }
