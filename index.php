@@ -147,17 +147,31 @@ function temPerm(string $m): bool {
   ══════════════════════════════════════════════════════════ -->
   <section id="tab-dashboard" class="tab-section" <?php if(!temPerm('dashboard')) echo 'style="display:none"'; ?>>
 
-    <!-- Toggle Semana / Mês -->
+    <!-- Toggle Mês / Ano -->
     <div style="display:flex;gap:.5rem;margin-bottom:1.1rem;align-items:center;flex-wrap:wrap;">
-      <button id="btn-view-semana" class="btn-app prim" onclick="setViewMode('semana')">
-        <i class="fas fa-calendar-week"></i> Semana
-      </button>
-      <button id="btn-view-mes" class="btn-app" style="background:transparent;border:1px solid rgba(0,255,255,.2);color:var(--text-muted);" onclick="setViewMode('mes')">
+      <button id="btn-view-mes" class="btn-app prim" onclick="setViewMode('mes')">
         <i class="fas fa-calendar-alt"></i> Mês
       </button>
-      <div id="mes-selector" style="display:none;gap:.5rem;align-items:center;flex-wrap:wrap;">
+      <button id="btn-view-ano" class="btn-app" style="background:transparent;border:1px solid rgba(0,255,255,.2);color:var(--text-muted);" onclick="setViewMode('ano')">
+        <i class="fas fa-calendar"></i> Ano
+      </button>
+      <div id="mes-selector" style="display:flex;gap:.5rem;align-items:center;flex-wrap:wrap;">
         <select id="sel-ano" style="padding:.4rem .65rem;border:1px solid rgba(0,255,255,.25);border-radius:6px;font-size:.9rem;background:var(--bg2);color:var(--text);"></select>
+        <select id="sel-mes" style="padding:.4rem .65rem;border:1px solid rgba(0,255,255,.25);border-radius:6px;font-size:.9rem;background:var(--bg2);color:var(--text);">
+          <option value="1">Janeiro</option><option value="2">Fevereiro</option>
+          <option value="3">Março</option><option value="4">Abril</option>
+          <option value="5">Maio</option><option value="6">Junho</option>
+          <option value="7">Julho</option><option value="8">Agosto</option>
+          <option value="9">Setembro</option><option value="10">Outubro</option>
+          <option value="11">Novembro</option><option value="12">Dezembro</option>
+        </select>
         <button class="btn-app prim" onclick="carregarDashboardMes()">
+          <i class="fas fa-search"></i> Buscar
+        </button>
+      </div>
+      <div id="ano-selector" style="display:none;gap:.5rem;align-items:center;flex-wrap:wrap;">
+        <select id="sel-ano-anual" style="padding:.4rem .65rem;border:1px solid rgba(0,255,255,.25);border-radius:6px;font-size:.9rem;background:var(--bg2);color:var(--text);"></select>
+        <button class="btn-app prim" onclick="carregarDashboardAno()">
           <i class="fas fa-search"></i> Buscar
         </button>
       </div>
@@ -202,35 +216,58 @@ function temPerm(string $m): bool {
       </div>
     </div><!-- /#view-semana -->
 
-    <!-- Vista Mensal (por mês do ano) -->
-    <div id="view-mes" style="display:none;">
-
-      <div id="mes-totais" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:.75rem;margin-bottom:1rem;"></div>
-
+    <!-- Vista Mensal (semanas dentro de um mês) -->
+    <div id="view-mes">
       <div class="charts-grid">
         <div class="painel">
-          <div class="painel-titulo"><i class="fas fa-chart-bar"></i> Atendimentos por Mês</div>
+          <div class="painel-titulo"><i class="fas fa-chart-bar"></i> Atendimentos por Semana</div>
           <div class="chart-wrap"><canvas id="chart-mes-semanas"></canvas></div>
         </div>
         <div class="painel">
-          <div class="painel-titulo"><i class="fas fa-clock"></i> Top 5 Horários de Pico (ano)</div>
+          <div class="painel-titulo"><i class="fas fa-clock"></i> Top 5 Horários de Pico (mês)</div>
           <div class="chart-wrap"><canvas id="chart-mes-picos"></canvas></div>
         </div>
       </div>
-
       <div class="charts-grid">
         <div class="painel">
-          <div class="painel-titulo"><i class="fas fa-door-closed"></i> Motivos de Fechamento (ano)</div>
-          <div id="resumo-fechamentos-mes" style="font-size:.9rem;color:var(--text);">Busque um ano para visualizar.</div>
+          <div class="painel-titulo"><i class="fas fa-door-closed"></i> Motivos de Fechamento (mês)</div>
+          <div id="resumo-fechamentos-mes" style="font-size:.9rem;color:var(--text);">Busque um mês para visualizar.</div>
         </div>
         <div class="painel">
-          <div class="painel-titulo"><i class="fas fa-star"></i> Pesquisa de Satisfação (ano)</div>
+          <div class="painel-titulo"><i class="fas fa-star"></i> Pesquisa de Satisfação (mês)</div>
           <div id="pesquisa-mes-wrap">
-            <p style="color:var(--text-muted);font-size:.88rem;">Busque um ano para visualizar.</p>
+            <p style="color:var(--text-muted);font-size:.88rem;">Busque um mês para visualizar.</p>
           </div>
         </div>
       </div>
     </div><!-- /#view-mes -->
+
+    <!-- Vista Anual (meses dentro de um ano) -->
+    <div id="view-ano" style="display:none;">
+      <div id="ano-totais" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:.75rem;margin-bottom:1rem;"></div>
+      <div class="charts-grid">
+        <div class="painel">
+          <div class="painel-titulo"><i class="fas fa-chart-bar"></i> Atendimentos por Mês</div>
+          <div class="chart-wrap"><canvas id="chart-ano-meses"></canvas></div>
+        </div>
+        <div class="painel">
+          <div class="painel-titulo"><i class="fas fa-clock"></i> Top 5 Horários de Pico (ano)</div>
+          <div class="chart-wrap"><canvas id="chart-ano-picos"></canvas></div>
+        </div>
+      </div>
+      <div class="charts-grid">
+        <div class="painel">
+          <div class="painel-titulo"><i class="fas fa-door-closed"></i> Motivos de Fechamento (ano)</div>
+          <div id="resumo-fechamentos-ano" style="font-size:.9rem;color:var(--text);">Busque um ano para visualizar.</div>
+        </div>
+        <div class="painel">
+          <div class="painel-titulo"><i class="fas fa-star"></i> Pesquisa de Satisfação (ano)</div>
+          <div id="pesquisa-ano-wrap">
+            <p style="color:var(--text-muted);font-size:.88rem;">Busque um ano para visualizar.</p>
+          </div>
+        </div>
+      </div>
+    </div><!-- /#view-ano -->
 
   </section>
 
@@ -976,15 +1013,17 @@ let chartEvolucao = null, chartPizza = null, chartPicos = null;
 let chartMesSemanas = null, chartMesPicos = null;
 let chartAnoMeses = null, chartAnoPicos = null;
 let chartPesquisa = null, chartPesquisaMes = null, chartPesquisaAno = null;
-let viewMode = 'semana';
+let viewMode = 'mes';
 
 function setViewMode(mode) {
   viewMode = mode;
-  document.getElementById('view-semana').style.display  = mode === 'semana' ? '' : 'none';
-  document.getElementById('view-mes').style.display     = mode === 'mes'    ? '' : 'none';
-  document.getElementById('mes-selector').style.display = mode === 'mes'    ? 'flex' : 'none';
+  document.getElementById('view-semana').style.display  = 'none';
+  document.getElementById('view-mes').style.display     = mode === 'mes' ? '' : 'none';
+  document.getElementById('view-ano').style.display     = mode === 'ano' ? '' : 'none';
+  document.getElementById('mes-selector').style.display = mode === 'mes' ? 'flex' : 'none';
+  document.getElementById('ano-selector').style.display = mode === 'ano' ? 'flex' : 'none';
 
-  ['semana','mes'].forEach(m => {
+  ['mes','ano'].forEach(m => {
     const btn = document.getElementById('btn-view-' + m);
     if (!btn) return;
     const active = m === mode;
@@ -994,69 +1033,56 @@ function setViewMode(mode) {
   });
 }
 
-// Popula select de anos (ano atual -2 até +1)
+// Popula selects de ano
 (function() {
-  const sel = document.getElementById('sel-ano');
   const ano = new Date().getFullYear();
-  for (let y = ano - 2; y <= ano + 1; y++) {
-    const o = document.createElement('option');
-    o.value = y; o.textContent = y;
-    if (y === ano) o.selected = true;
-    sel.appendChild(o);
-  }
+  [['sel-ano', ano - 2, ano + 1], ['sel-ano-anual', ano - 4, ano + 1]].forEach(([id, min, max]) => {
+    const sel = document.getElementById(id);
+    if (!sel) return;
+    for (let y = min; y <= max; y++) {
+      const o = document.createElement('option');
+      o.value = y; o.textContent = y;
+      if (y === ano) o.selected = true;
+      sel.appendChild(o);
+    }
+  });
+  document.getElementById('sel-mes').value = new Date().getMonth() + 1;
 })();
 
 async function carregarDashboardMes() {
   const ano = parseInt(document.getElementById('sel-ano').value);
+  const mes = parseInt(document.getElementById('sel-mes').value);
   try {
-    const d = await api(`api/estatisticas_ano.php?ano=${ano}`);
+    const d = await api(`api/estatisticas_mes.php?ano=${ano}&mes=${mes}`);
 
-    // Cards totalizadores
-    const totais = d.totais || {};
-    const cards = [
-      { label: 'Agendados',  value: totais.total_agendados  || 0, cor: '#00ffff' },
-      { label: 'Atendidos',  value: totais.total_atendidos  || 0, cor: '#00ff88' },
-      { label: 'Cancelados', value: totais.total_cancelados || 0, cor: '#ff2d78' },
-      { label: 'Faltas',     value: totais.total_faltas     || 0, cor: '#ffe600' },
-    ];
-    document.getElementById('mes-totais').innerHTML = cards.map(c => `
-      <div style="background:var(--bg2);border:1px solid ${c.cor}33;border-radius:10px;padding:.85rem 1rem;text-align:center;">
-        <div style="font-size:1.6rem;font-weight:700;color:${c.cor};">${(+c.value).toLocaleString('pt-BR')}</div>
-        <div style="font-size:.78rem;color:var(--text-muted);margin-top:.2rem;">${c.label}</div>
-      </div>`).join('');
-
-    // Gráfico por mês (multi-série)
-    const meses = (d.por_mes || []).map(m => m.mes_nome);
+    // Gráfico por semana
+    const semLabels = (d.por_semana || []).map(s =>
+      s.descricao || `${fmtData(s.data_inicio)} a ${fmtData(s.data_fim)}`
+    );
     if (chartMesSemanas) chartMesSemanas.destroy();
     chartMesSemanas = new Chart(document.getElementById('chart-mes-semanas'), {
       type: 'bar',
       plugins: [ChartDataLabels],
       data: {
-        labels: meses,
-        datasets: [
-          { label: 'Agendados',  data: (d.por_mes||[]).map(m=>+m.total_agendados),  backgroundColor: 'rgba(0,255,255,.6)'  },
-          { label: 'Atendidos',  data: (d.por_mes||[]).map(m=>+m.total_atendidos),  backgroundColor: 'rgba(0,255,136,.6)'  },
-          { label: 'Cancelados', data: (d.por_mes||[]).map(m=>+m.total_cancelados), backgroundColor: 'rgba(255,45,120,.6)' },
-          { label: 'Faltas',     data: (d.por_mes||[]).map(m=>+m.total_faltas),     backgroundColor: 'rgba(255,230,0,.6)'  },
-        ],
+        labels: semLabels,
+        datasets: [{
+          label: 'Atendidos',
+          data: (d.por_semana || []).map(s => +s.total_atendidos),
+          backgroundColor: 'rgba(0,255,255,.6)',
+        }],
       },
       options: {
         responsive: true,
         plugins: {
-          legend: { labels: { color: 'var(--text)', font: { size: 11 } } },
-          datalabels: {
-            display: ctx => ctx.dataset.data[ctx.dataIndex] > 0,
-            anchor: 'end', align: 'end',
-            color: '#fff', font: { size: 9 },
-            formatter: v => v,
-          },
+          legend: { display: false },
+          datalabels: { anchor: 'end', align: 'end', color: '#00ffff', font: { weight: 'bold', size: 11 }, formatter: v => v > 0 ? v : '' },
         },
         layout: { padding: { top: 20 } },
       },
     });
 
     // Gráfico picos
-    const picosOrd = [...(d.picos || [])].sort((a, b) => (a.hora||'').localeCompare(b.hora||''));
+    const picosOrd = [...(d.picos || [])].sort((a, b) => (a.hora || '').localeCompare(b.hora || ''));
     if (chartMesPicos) chartMesPicos.destroy();
     chartMesPicos = new Chart(document.getElementById('chart-mes-picos'), {
       type: 'bar',
@@ -1079,7 +1105,7 @@ async function carregarDashboardMes() {
     // Fechamentos
     const rf = document.getElementById('resumo-fechamentos-mes');
     if (!(d.fechamentos || []).length) {
-      rf.innerHTML = '<span style="color:var(--text-muted);">Nenhum fechamento registrado neste ano.</span>';
+      rf.innerHTML = '<span style="color:var(--text-muted);">Nenhum fechamento registrado neste mês.</span>';
     } else {
       const totalGeral = d.fechamentos.reduce((s, f) => s + +f.total, 0);
       rf.innerHTML =
@@ -1098,6 +1124,98 @@ async function carregarDashboardMes() {
 
     // Pesquisa de satisfação
     renderPesquisaChart('pesquisa-mes-wrap', 'chart-pesquisa-mes', d.pesquisa, chartPesquisaMes, c => chartPesquisaMes = c);
+  } catch (e) { toast(e.message, 'erro'); }
+}
+
+async function carregarDashboardAno() {
+  const ano = parseInt(document.getElementById('sel-ano-anual').value);
+  try {
+    const d = await api(`api/estatisticas_ano.php?ano=${ano}`);
+
+    // Cards totalizadores
+    const totais = d.totais || {};
+    const cards = [
+      { label: 'Agendados',  value: totais.total_agendados  || 0, cor: '#00ffff' },
+      { label: 'Atendidos',  value: totais.total_atendidos  || 0, cor: '#00ff88' },
+      { label: 'Cancelados', value: totais.total_cancelados || 0, cor: '#ff2d78' },
+      { label: 'Faltas',     value: totais.total_faltas     || 0, cor: '#ffe600' },
+    ];
+    document.getElementById('ano-totais').innerHTML = cards.map(c => `
+      <div style="background:var(--bg2);border:1px solid ${c.cor}33;border-radius:10px;padding:.85rem 1rem;text-align:center;">
+        <div style="font-size:1.6rem;font-weight:700;color:${c.cor};">${(+c.value).toLocaleString('pt-BR')}</div>
+        <div style="font-size:.78rem;color:var(--text-muted);margin-top:.2rem;">${c.label}</div>
+      </div>`).join('');
+
+    // Gráfico por mês (multi-série)
+    const meses = (d.por_mes || []).map(m => m.mes_nome);
+    if (chartAnoMeses) chartAnoMeses.destroy();
+    chartAnoMeses = new Chart(document.getElementById('chart-ano-meses'), {
+      type: 'bar',
+      plugins: [ChartDataLabels],
+      data: {
+        labels: meses,
+        datasets: [
+          { label: 'Agendados',  data: (d.por_mes||[]).map(m=>+m.total_agendados),  backgroundColor: 'rgba(0,255,255,.6)'  },
+          { label: 'Atendidos',  data: (d.por_mes||[]).map(m=>+m.total_atendidos),  backgroundColor: 'rgba(0,255,136,.6)'  },
+          { label: 'Cancelados', data: (d.por_mes||[]).map(m=>+m.total_cancelados), backgroundColor: 'rgba(255,45,120,.6)' },
+          { label: 'Faltas',     data: (d.por_mes||[]).map(m=>+m.total_faltas),     backgroundColor: 'rgba(255,230,0,.6)'  },
+        ],
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { labels: { color: 'var(--text)', font: { size: 11 } } },
+          datalabels: {
+            display: ctx => ctx.dataset.data[ctx.dataIndex] > 0,
+            anchor: 'end', align: 'end', color: '#fff', font: { size: 9 }, formatter: v => v,
+          },
+        },
+        layout: { padding: { top: 20 } },
+      },
+    });
+
+    // Gráfico picos ano
+    const picosAnOrd = [...(d.picos || [])].sort((a, b) => (a.hora||'').localeCompare(b.hora||''));
+    if (chartAnoPicos) chartAnoPicos.destroy();
+    chartAnoPicos = new Chart(document.getElementById('chart-ano-picos'), {
+      type: 'bar',
+      plugins: [ChartDataLabels],
+      data: {
+        labels: picosAnOrd.map(p => p.hora || '—'),
+        datasets: [{ label: 'Atendimentos', data: picosAnOrd.map(p => +p.total), backgroundColor: 'rgba(0,255,136,.6)' }],
+      },
+      options: {
+        indexAxis: 'y', responsive: true,
+        plugins: {
+          legend: { display: false },
+          datalabels: { anchor: 'end', align: 'end', color: '#00ff88', font: { weight: 'bold', size: 11 }, formatter: v => v > 0 ? v : '' },
+        },
+        layout: { padding: { right: 30 } },
+      },
+    });
+
+    // Fechamentos ano
+    const rfa = document.getElementById('resumo-fechamentos-ano');
+    if (!(d.fechamentos || []).length) {
+      rfa.innerHTML = '<span style="color:var(--text-muted);">Nenhum fechamento registrado neste ano.</span>';
+    } else {
+      const totalGeral = d.fechamentos.reduce((s, f) => s + +f.total, 0);
+      rfa.innerHTML =
+        '<table style="width:100%;max-width:500px;border-collapse:collapse;font-size:.88rem;">' +
+          d.fechamentos.map(f => `
+            <tr style="border-bottom:1px solid rgba(255,255,255,.05);">
+              <td style="padding:.35rem .4rem;">${f.descricao}</td>
+              <td style="padding:.35rem .4rem;text-align:right;font-weight:700;color:var(--neon-cyan);">${f.total}</td>
+            </tr>`).join('') +
+          `<tr style="border-top:1px solid var(--neon-cyan);background:rgba(0,255,255,.05);">
+            <td style="padding:.4rem .4rem;font-weight:700;">Total</td>
+            <td style="padding:.4rem .4rem;text-align:right;font-weight:700;color:var(--neon-cyan);font-size:1rem;">${totalGeral}</td>
+          </tr>` +
+        '</table>';
+    }
+
+    // Pesquisa de satisfação ano
+    renderPesquisaChart('pesquisa-ano-wrap', 'chart-pesquisa-ano', d.pesquisa, chartPesquisaAno, c => chartPesquisaAno = c);
   } catch (e) { toast(e.message, 'erro'); }
 }
 
