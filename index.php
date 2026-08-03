@@ -1703,13 +1703,6 @@ function calcFim() {
   const v = document.getElementById('semana-inicio').value;
   if (!v) return;
   const d = new Date(v + 'T12:00:00');
-  // Valida que é segunda-feira
-  if (d.getDay() !== 1) {
-    toast('Selecione uma segunda-feira.', 'erro');
-    document.getElementById('semana-inicio').value = '';
-    document.getElementById('semana-fim').value    = '';
-    return;
-  }
   const fim = new Date(d);
   fim.setDate(d.getDate() + 4);
   document.getElementById('semana-fim').value = fim.toISOString().slice(0, 10);
