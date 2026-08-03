@@ -97,8 +97,8 @@ function temPerm(string $m): bool {
     </button>
     <?php endif; ?>
     <?php if (temPerm('semanas')): ?>
-    <button class="tab-btn" onclick="showTab('semanas',this)" title="Semanas">
-      <i class="fas fa-calendar-week"></i> <span>Semanas</span>
+    <button class="tab-btn" onclick="showTab('semanas',this)" title="Meses">
+      <i class="fas fa-calendar-alt"></i> <span>Meses</span>
     </button>
     <?php endif; ?>
     <?php if (temPerm('pesquisa')): ?>
@@ -412,7 +412,7 @@ function temPerm(string $m): bool {
       <div class="table-responsive">
         <table class="tabela-app">
           <thead>
-            <tr><th>Início</th><th>Fim</th><th>Descrição</th><th></th></tr>
+            <tr><th>Mês</th><th>Ano</th><th>Descrição</th><th></th></tr>
           </thead>
           <tbody id="tbody-semanas">
             <tr><td colspan="4" style="color:var(--text-muted);">Carregando…</td></tr>
@@ -1822,50 +1822,49 @@ function editSemana(id) {
   const s = (window._semanasCache || []).find(x => x.id == id);
   if (!s) return;
   _semanaEditId = id;
-  document.getElementById('semana-inicio').value = s.data_inicio;
-  document.getElementById('semana-fim').value    = s.data_fim;
-  document.getElementById('semana-desc').value   = s.descricao || '';
+  const d = new Date(s.data_inicio + 'T12:00:00');
+  document.getElementById('semana-mes').value  = d.getMonth() + 1;
+  document.getElementById('semana-ano').value  = d.getFullYear();
+  document.getElementById('semana-desc').value = s.descricao || '';
   document.getElementById('btn-semana-salvar').innerHTML = '<i class="fas fa-save"></i> Salvar';
   document.getElementById('btn-semana-cancelar').style.display = '';
-  document.getElementById('semana-inicio').scrollIntoView({ behavior: 'smooth', block: 'center' });
+  document.getElementById('semana-mes').scrollIntoView({ behavior: 'smooth', block: 'center' });
 }
 
 function cancelarEdicaoSemana() {
   _semanaEditId = null;
-  document.getElementById('semana-inicio').value = '';
-  document.getElementById('semana-fim').value    = '';
-  document.getElementById('semana-desc').value   = '';
+  document.getElementById('semana-mes').value  = new Date().getMonth() + 1;
+  document.getElementById('semana-ano').value  = new Date().getFullYear();
+  document.getElementById('semana-desc').value = '';
   document.getElementById('btn-semana-salvar').innerHTML = '<i class="fas fa-plus"></i> Cadastrar';
   document.getElementById('btn-semana-cancelar').style.display = 'none';
 }
 
-function calcFim() {
-  const v = document.getElementById('semana-inicio').value;
-  if (!v) return;
-  const d = new Date(v + 'T12:00:00');
-  const fim = new Date(d);
-  fim.setDate(d.getDate() + 4);
-  document.getElementById('semana-fim').value = fim.toISOString().slice(0, 10);
-}
+function calcFim() { /* mantido por compatibilidade */ }
 
 async function salvarSemana() {
-  const di   = document.getElementById('semana-inicio').value;
-  const df   = document.getElementById('semana-fim').value;
+  const mes  = parseInt(document.getElementById('semana-mes').value);
+  const ano  = parseInt(document.getElementById('semana-ano').value);
   const desc = document.getElementById('semana-desc').value.trim();
-  if (!di || !df) { toast('Selecione as datas da semana.', 'erro'); return; }
+  const NOMES = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+  if (!mes || !ano) { toast('Selecione o mês e o ano.', 'erro'); return; }
+  const mm    = String(mes).padStart(2, '0');
+  const di    = `${ano}-${mm}-01`;
+  const df    = new Date(ano, mes, 0).toISOString().slice(0, 10);
+  const descFinal = desc || `${NOMES[mes - 1]} ${ano}`;
   try {
     if (_semanaEditId) {
       await api('api/semanas.php?id=' + _semanaEditId, {
         method: 'PUT',
-        body: JSON.stringify({ data_inicio: di, data_fim: df, descricao: desc }),
+        body: JSON.stringify({ data_inicio: di, data_fim: df, descricao: descFinal }),
       });
-      toast('Semana atualizada!', 'suc');
+      toast('Mês atualizado!', 'suc');
     } else {
       await api('api/semanas.php', {
         method: 'POST',
-        body: JSON.stringify({ data_inicio: di, data_fim: df, descricao: desc }),
+        body: JSON.stringify({ data_inicio: di, data_fim: df, descricao: descFinal }),
       });
-      toast('Semana cadastrada!', 'suc');
+      toast('Mês cadastrado!', 'suc');
     }
     cancelarEdicaoSemana();
     await carregarSemanas();
@@ -1873,28 +1872,34 @@ async function salvarSemana() {
 }
 
 function renderTabelaSemanas(semanas) {
+  const NOMES = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
   const tb = document.getElementById('tbody-semanas');
   if (!semanas.length) {
-    tb.innerHTML = '<tr><td colspan="4" style="color:var(--text-muted);">Nenhuma semana cadastrada.</td></tr>';
+    tb.innerHTML = '<tr><td colspan="4" style="color:var(--text-muted);">Nenhum mês cadastrado.</td></tr>';
     return;
   }
-  tb.innerHTML = semanas.map(s => `
+  tb.innerHTML = semanas.map(s => {
+    const d    = new Date(s.data_inicio + 'T12:00:00');
+    const nome = NOMES[d.getMonth()];
+    const ano  = d.getFullYear();
+    return `
     <tr>
-      <td>${fmtData(s.data_inicio)}</td>
-      <td>${fmtData(s.data_fim)}</td>
+      <td>${nome}</td>
+      <td>${ano}</td>
       <td>${s.descricao || '—'}</td>
       <td style="white-space:nowrap">
         <button class="btn-app" style="padding:.25rem .6rem;font-size:.8rem;margin-right:.25rem;" onclick="editSemana(${s.id})"><i class="fas fa-edit"></i></button>
         <button class="btn-del" onclick="delSemana(${s.id})"><i class="fas fa-trash"></i></button>
       </td>
-    </tr>`).join('');
+    </tr>`;
+  }).join('');
 }
 
 async function delSemana(id) {
-  if (!confirm('Remover semana e todos os dados vinculados?')) return;
+  if (!confirm('Remover mês e todos os dados vinculados?')) return;
   try {
     await api('api/semanas.php?id=' + id, { method: 'DELETE' });
-    toast('Semana removida.', 'suc');
+    toast('Mês removido.', 'suc');
     await carregarSemanas();
   } catch (e) { toast(e.message, 'erro'); }
 }
