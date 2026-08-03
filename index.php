@@ -155,6 +155,15 @@ function temPerm(string $m): bool {
       <button id="btn-view-mes" class="btn-app" style="background:transparent;border:1px solid rgba(0,255,255,.2);color:var(--text-muted);" onclick="setViewMode('mes')">
         <i class="fas fa-calendar-alt"></i> Mês
       </button>
+      <button id="btn-view-ano" class="btn-app" style="background:transparent;border:1px solid rgba(0,255,255,.2);color:var(--text-muted);" onclick="setViewMode('ano')">
+        <i class="fas fa-calendar"></i> Ano
+      </button>
+      <div id="ano-selector" style="display:none;gap:.5rem;align-items:center;flex-wrap:wrap;">
+        <select id="sel-ano-anual" style="padding:.4rem .65rem;border:1px solid rgba(0,255,255,.25);border-radius:6px;font-size:.9rem;background:var(--bg2);color:var(--text);"></select>
+        <button class="btn-app prim" onclick="carregarDashboardAno()">
+          <i class="fas fa-search"></i> Buscar
+        </button>
+      </div>
       <div id="mes-selector" style="display:none;gap:.5rem;align-items:center;flex-wrap:wrap;">
         <select id="sel-ano" style="padding:.4rem .65rem;border:1px solid rgba(0,255,255,.25);border-radius:6px;font-size:.9rem;background:var(--bg2);color:var(--text);"></select>
         <select id="sel-mes" style="padding:.4rem .65rem;border:1px solid rgba(0,255,255,.25);border-radius:6px;font-size:.9rem;background:var(--bg2);color:var(--text);">
@@ -236,6 +245,37 @@ function temPerm(string $m): bool {
         </div>
       </div>
     </div><!-- /#view-mes -->
+
+    <!-- Vista Anual -->
+    <div id="view-ano" style="display:none;">
+
+      <!-- Cards totalizadores -->
+      <div id="ano-totais" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:.75rem;margin-bottom:1rem;"></div>
+
+      <div class="charts-grid">
+        <div class="painel">
+          <div class="painel-titulo"><i class="fas fa-chart-bar"></i> Atendimentos por Mês</div>
+          <div class="chart-wrap"><canvas id="chart-ano-meses"></canvas></div>
+        </div>
+        <div class="painel">
+          <div class="painel-titulo"><i class="fas fa-clock"></i> Top 5 Horários de Pico (ano)</div>
+          <div class="chart-wrap"><canvas id="chart-ano-picos"></canvas></div>
+        </div>
+      </div>
+
+      <div class="charts-grid">
+        <div class="painel">
+          <div class="painel-titulo"><i class="fas fa-door-closed"></i> Motivos de Fechamento (ano)</div>
+          <div id="resumo-fechamentos-ano" style="font-size:.9rem;color:var(--text);">Busque um ano para visualizar.</div>
+        </div>
+        <div class="painel">
+          <div class="painel-titulo"><i class="fas fa-star"></i> Pesquisa de Satisfação (ano)</div>
+          <div id="pesquisa-ano-wrap">
+            <p style="color:var(--text-muted);font-size:.88rem;">Busque um ano para visualizar.</p>
+          </div>
+        </div>
+      </div>
+    </div><!-- /#view-ano -->
 
   </section>
 
@@ -979,20 +1019,26 @@ function onSemanaChange() {
 ════════════════════════════════════════════════════════ */
 let chartEvolucao = null, chartPizza = null, chartPicos = null;
 let chartMesSemanas = null, chartMesPicos = null;
-let chartPesquisa = null, chartPesquisaMes = null;
+let chartAnoMeses = null, chartAnoPicos = null;
+let chartPesquisa = null, chartPesquisaMes = null, chartPesquisaAno = null;
 let viewMode = 'semana';
 
 function setViewMode(mode) {
   viewMode = mode;
   document.getElementById('view-semana').style.display  = mode === 'semana' ? '' : 'none';
   document.getElementById('view-mes').style.display     = mode === 'mes'    ? '' : 'none';
+  document.getElementById('view-ano').style.display     = mode === 'ano'    ? '' : 'none';
   document.getElementById('mes-selector').style.display = mode === 'mes'    ? 'flex' : 'none';
-  document.getElementById('btn-view-semana').style.background = mode === 'semana' ? 'rgba(0,255,255,.15)' : 'transparent';
-  document.getElementById('btn-view-semana').style.color      = mode === 'semana' ? '#00ffff' : '';
-  document.getElementById('btn-view-semana').style.boxShadow  = mode === 'semana' ? '0 0 10px rgba(0,255,255,.3)' : '';
-  document.getElementById('btn-view-mes').style.background    = mode === 'mes'    ? 'rgba(0,255,255,.15)' : 'transparent';
-  document.getElementById('btn-view-mes').style.color         = mode === 'mes'    ? '#00ffff' : '';
-  document.getElementById('btn-view-mes').style.boxShadow     = mode === 'mes'    ? '0 0 10px rgba(0,255,255,.3)' : '';
+  document.getElementById('ano-selector').style.display = mode === 'ano'    ? 'flex' : 'none';
+
+  ['semana','mes','ano'].forEach(m => {
+    const btn = document.getElementById('btn-view-' + m);
+    if (!btn) return;
+    const active = m === mode;
+    btn.style.background = active ? 'rgba(0,255,255,.15)' : 'transparent';
+    btn.style.color      = active ? '#00ffff' : '';
+    btn.style.boxShadow  = active ? '0 0 10px rgba(0,255,255,.3)' : '';
+  });
 }
 
 // Popula select de anos (ano atual -2 até +1)
@@ -1008,6 +1054,114 @@ function setViewMode(mode) {
   // Seleciona mês atual
   document.getElementById('sel-mes').value = new Date().getMonth() + 1;
 })();
+
+// Popula select do modo anual
+(function() {
+  const sel = document.getElementById('sel-ano-anual');
+  const ano = new Date().getFullYear();
+  for (let y = ano - 4; y <= ano + 1; y++) {
+    const o = document.createElement('option');
+    o.value = y; o.textContent = y;
+    if (y === ano) o.selected = true;
+    sel.appendChild(o);
+  }
+})();
+
+async function carregarDashboardAno() {
+  const ano = parseInt(document.getElementById('sel-ano-anual').value);
+  try {
+    const d = await api(`api/estatisticas_ano.php?ano=${ano}`);
+
+    // Cards totalizadores
+    const totais = d.totais || {};
+    const cards = [
+      { label: 'Agendados',  value: totais.total_agendados  || 0, cor: '#00ffff' },
+      { label: 'Atendidos',  value: totais.total_atendidos  || 0, cor: '#00ff88' },
+      { label: 'Cancelados', value: totais.total_cancelados || 0, cor: '#ff2d78' },
+      { label: 'Faltas',     value: totais.total_faltas     || 0, cor: '#ffe600' },
+    ];
+    document.getElementById('ano-totais').innerHTML = cards.map(c => `
+      <div style="background:var(--bg2);border:1px solid ${c.cor}33;border-radius:10px;padding:.85rem 1rem;text-align:center;">
+        <div style="font-size:1.6rem;font-weight:700;color:${c.cor};">${(+c.value).toLocaleString('pt-BR')}</div>
+        <div style="font-size:.78rem;color:var(--text-muted);margin-top:.2rem;">${c.label}</div>
+      </div>`).join('');
+
+    // Gráfico por mês (multi-série)
+    const meses = (d.por_mes || []).map(m => m.mes_nome);
+    if (chartAnoMeses) chartAnoMeses.destroy();
+    chartAnoMeses = new Chart(document.getElementById('chart-ano-meses'), {
+      type: 'bar',
+      plugins: [ChartDataLabels],
+      data: {
+        labels: meses,
+        datasets: [
+          { label: 'Agendados',  data: (d.por_mes||[]).map(m=>+m.total_agendados),  backgroundColor: 'rgba(0,255,255,.6)'  },
+          { label: 'Atendidos',  data: (d.por_mes||[]).map(m=>+m.total_atendidos),  backgroundColor: 'rgba(0,255,136,.6)'  },
+          { label: 'Cancelados', data: (d.por_mes||[]).map(m=>+m.total_cancelados), backgroundColor: 'rgba(255,45,120,.6)' },
+          { label: 'Faltas',     data: (d.por_mes||[]).map(m=>+m.total_faltas),     backgroundColor: 'rgba(255,230,0,.6)'  },
+        ],
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { labels: { color: 'var(--text)', font: { size: 11 } } },
+          datalabels: {
+            display: ctx => ctx.dataset.data[ctx.dataIndex] > 0,
+            anchor: 'end', align: 'end',
+            color: '#fff', font: { size: 9 },
+            formatter: v => v,
+          },
+        },
+        layout: { padding: { top: 20 } },
+      },
+    });
+
+    // Gráfico picos ano
+    const picosOrd = [...(d.picos || [])].sort((a, b) => (a.hora||'').localeCompare(b.hora||''));
+    if (chartAnoPicos) chartAnoPicos.destroy();
+    chartAnoPicos = new Chart(document.getElementById('chart-ano-picos'), {
+      type: 'bar',
+      plugins: [ChartDataLabels],
+      data: {
+        labels: picosOrd.map(p => p.hora || '—'),
+        datasets: [{ label: 'Atendimentos', data: picosOrd.map(p => +p.total), backgroundColor: 'rgba(0,255,136,.6)' }],
+      },
+      options: {
+        indexAxis: 'y',
+        responsive: true,
+        plugins: {
+          legend: { display: false },
+          datalabels: { anchor: 'end', align: 'end', color: '#00ff88', font: { weight: 'bold', size: 11 }, formatter: v => v > 0 ? v : '' },
+        },
+        layout: { padding: { right: 30 } },
+      },
+    });
+
+    // Fechamentos do ano
+    const rf = document.getElementById('resumo-fechamentos-ano');
+    if (!(d.fechamentos || []).length) {
+      rf.innerHTML = '<span style="color:var(--text-muted);">Nenhum fechamento registrado neste ano.</span>';
+    } else {
+      const totalGeral = d.fechamentos.reduce((s, f) => s + +f.total, 0);
+      rf.innerHTML =
+        '<table style="width:100%;max-width:500px;border-collapse:collapse;font-size:.88rem;">' +
+          d.fechamentos.map(f => `
+            <tr style="border-bottom:1px solid rgba(255,255,255,.05);">
+              <td style="padding:.35rem .4rem;">${f.descricao}</td>
+              <td style="padding:.35rem .4rem;text-align:right;font-weight:700;color:var(--neon-cyan);">${f.total}</td>
+            </tr>`).join('') +
+          `<tr style="border-top:1px solid var(--neon-cyan);background:rgba(0,255,255,.05);">
+            <td style="padding:.4rem .4rem;font-weight:700;">Total</td>
+            <td style="padding:.4rem .4rem;text-align:right;font-weight:700;color:var(--neon-cyan);font-size:1rem;">${totalGeral}</td>
+          </tr>` +
+        '</table>';
+    }
+
+    // Pesquisa de satisfação do ano
+    renderPesquisaChart('pesquisa-ano-wrap', 'chart-pesquisa-ano', d.pesquisa, chartPesquisaAno, c => chartPesquisaAno = c);
+
+  } catch (e) { toast(e.message, 'erro'); }
+}
 
 async function carregarDashboardMes() {
   const ano = parseInt(document.getElementById('sel-ano').value);
