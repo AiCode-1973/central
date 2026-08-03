@@ -198,19 +198,19 @@ function temPerm(string $m): bool {
 
       <div class="charts-grid" style="grid-template-columns:1fr 1fr 1fr;">
         <div class="painel">
-          <div class="painel-titulo"><i class="fas fa-clock"></i> Top 5 Horários de Pico — <span id="pico-semana-label" style="font-weight:400;color:var(--text-muted);font-size:.78rem;">selecione uma semana</span></div>
+          <div class="painel-titulo"><i class="fas fa-clock"></i> Top 5 Horários de Pico — <span id="pico-semana-label" style="font-weight:400;color:var(--text-muted);font-size:.78rem;">selecione um mês</span></div>
           <div class="chart-wrap"><canvas id="chart-picos"></canvas></div>
         </div>
         <div class="painel">
           <div class="painel-titulo"><i class="fas fa-door-closed"></i> Motivos de Fechamento</div>
           <div id="resumo-fechamentos" style="font-size:.88rem;color:var(--text);">
-            Selecione uma semana para visualizar.
+            Selecione um mês para visualizar.
           </div>
         </div>
         <div class="painel">
           <div class="painel-titulo"><i class="fas fa-star"></i> Pesquisa de Satisfação</div>
           <div id="pesquisa-semana-wrap">
-            <p style="color:var(--text-muted);font-size:.88rem;">Selecione uma semana para visualizar.</p>
+            <p style="color:var(--text-muted);font-size:.88rem;">Selecione um mês para visualizar.</p>
           </div>
         </div>
       </div>
