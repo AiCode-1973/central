@@ -276,9 +276,9 @@ function temPerm(string $m): bool {
   ══════════════════════════════════════════════════════════ -->
   <section id="tab-atendimentos" class="tab-section" <?php if(!temPerm('atendimentos')) echo 'style="display:none"'; ?>>  
     <div class="painel">
-      <div class="painel-titulo"><i class="fas fa-calendar-check"></i> Atendimentos da Semana</div>
+      <div class="painel-titulo"><i class="fas fa-calendar-check"></i> Atendimentos do Mês</div>
       <div id="form-atendimentos">
-        <p style="color:var(--text-muted);font-size:.9rem;">Selecione uma semana primeiro.</p>
+        <p style="color:var(--text-muted);font-size:.9rem;">Selecione um mês e clique em Carregar.</p>
       </div>
       <div style="margin-top:1rem;">
         <button class="btn-app suc" onclick="salvarAtendimentos()">
@@ -293,12 +293,12 @@ function temPerm(string $m): bool {
   ══════════════════════════════════════════════════════════ -->
   <section id="tab-picos" class="tab-section" <?php if(!temPerm('picos')) echo 'style="display:none"'; ?>>  
     <div class="painel">
-      <div class="painel-titulo"><i class="fas fa-clock"></i> Horários de Pico da Semana</div>
+      <div class="painel-titulo"><i class="fas fa-clock"></i> Horários de Pico do Mês</div>
       <p style="font-size:.85rem;color:var(--text-muted);margin-bottom:1.1rem;">
-        Selecione a semana no topo da página e preencha o total de atendimentos para cada horário.
+        Selecione o mês no topo da página e preencha o total de atendimentos para cada horário.
       </p>
       <div id="picos-grade-wrap">
-        <p style="color:var(--text-muted);font-size:.9rem;">Selecione uma semana para carregar os horários.</p>
+        <p style="color:var(--text-muted);font-size:.9rem;">Selecione um mês para carregar os horários.</p>
       </div>
       <button class="btn-app suc" style="margin-top:1rem;" onclick="salvarPicos()">
         <i class="fas fa-save"></i> Salvar Horários de Pico
@@ -311,9 +311,9 @@ function temPerm(string $m): bool {
   ══════════════════════════════════════════════════════════ -->
   <section id="tab-fechamentos" class="tab-section" <?php if(!temPerm('fechamentos')) echo 'style="display:none"'; ?>>  
     <div class="painel">
-      <div class="painel-titulo"><i class="fas fa-door-closed"></i> Motivos de Fechamento da Semana</div>
+      <div class="painel-titulo"><i class="fas fa-door-closed"></i> Motivos de Fechamento do Mês</div>
       <p style="font-size:.85rem;color:var(--text-muted);margin-bottom:1rem;">
-        Informe o motivo e a quantidade total de dias fechados por esse motivo na semana.
+        Informe o motivo e a quantidade total de dias fechados por esse motivo no mês.
       </p>
 
       <!-- Linha para adicionar novo motivo -->
@@ -346,7 +346,7 @@ function temPerm(string $m): bool {
             <tr><th>Motivo</th><th style="width:120px;text-align:center;">Total de dias</th><th>Observação</th><th></th></tr>
           </thead>
           <tbody id="tbody-fechamentos">
-            <tr><td colspan="4" style="color:var(--text-muted);">Selecione uma semana.</td></tr>
+            <tr><td colspan="4" style="color:var(--text-muted);">Selecione um mês.</td></tr>
           </tbody>
         </table>
       </div>
@@ -427,13 +427,13 @@ function temPerm(string $m): bool {
   ══════════════════════════════════════════════════════════ -->
   <section id="tab-pesquisa" class="tab-section" <?php if(!temPerm('pesquisa')) echo 'style="display:none"'; ?>>  
     <div class="painel">
-      <div class="painel-titulo"><i class="fas fa-star"></i> Pesquisa de Satisfação da Semana</div>
+      <div class="painel-titulo"><i class="fas fa-star"></i> Pesquisa de Satisfação do Mês</div>
       <p style="font-size:.85rem;color:var(--text-muted);margin-bottom:1.25rem;">
-        Informe a quantidade de respostas recebidas para cada nível de satisfação na semana selecionada.
+        Informe a quantidade de respostas recebidas para cada nível de satisfação no mês selecionado.
       </p>
 
       <div id="pesquisa-form-wrap">
-        <p style="color:var(--text-muted);font-size:.9rem;">Selecione uma semana para registrar a pesquisa.</p>
+        <p style="color:var(--text-muted);font-size:.9rem;">Selecione um mês para registrar a pesquisa.</p>
       </div>
 
       <div style="margin-top:1.25rem;">
@@ -958,8 +958,12 @@ function fmtData(d) {
 }
 
 function semanaAtual() {
-  return parseInt(document.getElementById('sel-semana').value) || 0;
+  return _mesGlobalSid;
 }
+
+let _mesGlobalSid = null;
+let _mesGlobalAno = new Date().getFullYear();
+let _mesGlobalMes = new Date().getMonth() + 1;
 
 /* ── Tabs ────────────────────────────────────────────────── */
 function showTab(name, btn) {
@@ -983,26 +987,43 @@ function showTab(name, btn) {
 /* ── Seletor de Semana ───────────────────────────────────── */
 async function carregarSemanas() {
   const semanas = await api('api/semanas.php');
-  const sel     = document.getElementById('sel-semana');
-  sel.innerHTML  = '<option value="">— Selecione uma semana —</option>';
   window._semanasCache = semanas;
-  semanas.forEach(s => {
-    const o = document.createElement('option');
-    o.value       = s.id;
-    o.textContent = s.descricao || `${fmtData(s.data_inicio)} a ${fmtData(s.data_fim)}`;
-    sel.appendChild(o);
-  });
   renderTabelaSemanas(semanas);
 }
 
-function onSemanaChange() {
-  const id = semanaAtual();
-  if (!id) return;
-  carregarDashboard(id);
-  carregarAtendimentos(id);
-  carregarPicosList(id);
-  carregarFechamentos(id);
-  carregarPesquisa(id);
+async function obterOuCriarSemanaDoMes(ano, mes) {
+  const mm      = String(mes).padStart(2, '0');
+  const inicio  = `${ano}-${mm}-01`;
+  const fim     = new Date(ano, mes, 0).toISOString().slice(0, 10);
+  const NOMES   = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+  const descricao = `${NOMES[mes - 1]} ${ano}`;
+
+  let semanas = window._semanasCache || await api('api/semanas.php');
+  window._semanasCache = semanas;
+  let sem = semanas.find(s => s.data_inicio === inicio);
+  if (!sem) {
+    await api('api/semanas.php', {
+      method: 'POST',
+      body: JSON.stringify({ data_inicio: inicio, data_fim: fim, descricao }),
+    });
+    semanas = await api('api/semanas.php');
+    window._semanasCache = semanas;
+    renderTabelaSemanas(semanas);
+    sem = semanas.find(s => s.data_inicio === inicio);
+  }
+  return sem?.id || null;
+}
+
+async function onMesChange() {
+  _mesGlobalAno = parseInt(document.getElementById('sel-ano-global').value);
+  _mesGlobalMes = parseInt(document.getElementById('sel-mes-global').value);
+  const sid = await obterOuCriarSemanaDoMes(_mesGlobalAno, _mesGlobalMes);
+  if (!sid) { toast('Erro ao carregar o mês.', 'erro'); return; }
+  _mesGlobalSid = sid;
+  carregarAtendimentos(sid);
+  carregarPicosList(sid);
+  carregarFechamentos(sid);
+  carregarPesquisa(sid);
 }
 
 
@@ -1460,13 +1481,13 @@ async function carregarPesquisa(sid) {
         </div>`).join('')}
       </div>`;
   } catch (e) {
-    wrap.innerHTML = '<p style="color:var(--text-muted);">Selecione uma semana para registrar a pesquisa.</p>';
+    wrap.innerHTML = '<p style="color:var(--text-muted);">Selecione um mês para registrar a pesquisa.</p>';
   }
 }
 
 async function salvarPesquisa() {
   const sid = semanaAtual();
-  if (!sid) { toast('Selecione uma semana primeiro.', 'erro'); return; }
+  if (!sid) { toast('Selecione um mês primeiro.', 'erro'); return; }
   const body = { semana_id: sid };
   SATISFACAO_KEYS.forEach(k => {
     body[k] = parseInt(document.getElementById('pesq-' + k)?.value || 0);
@@ -1481,15 +1502,17 @@ async function salvarPesquisa() {
 /* ════════════════════════════════════════════════════════
    ATENDIMENTOS
 ════════════════════════════════════════════════════════ */
-const DIAS_SEMANA = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta'];
+const DIAS_SEMANA = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
 
-function gerarDiasUteis(inicio) {
+function gerarDiasMes(ano, mes) {
   const dias = [];
-  const d = new Date(inicio + 'T12:00:00');
-  for (let i = 0; i < 5; i++) {
-    const dd = new Date(d);
-    dd.setDate(d.getDate() + i);
-    dias.push(dd.toISOString().slice(0, 10));
+  const ultimo = new Date(ano, mes, 0).getDate();
+  for (let d = 1; d <= ultimo; d++) {
+    const dt  = new Date(ano, mes - 1, d);
+    const dow = dt.getDay();
+    if (dow >= 1 && dow <= 5) {
+      dias.push({ data: dt.toISOString().slice(0, 10), nome: DIAS_SEMANA[dow] });
+    }
   }
   return dias;
 }
@@ -1497,21 +1520,18 @@ function gerarDiasUteis(inicio) {
 let atendimentosEditaveis = [];
 
 async function carregarAtendimentos(sid) {
-  const semanas = window._semanasCache || await api('api/semanas.php');
-  const sem     = semanas.find(s => s.id == sid);
-  if (!sem) return;
-
-  const dias  = gerarDiasUteis(sem.data_inicio);
-  const saved = await api('api/atendimentos.php?semana_id=' + sid);
-  const map   = {};
+  if (!sid) return;
+  const diasMes = gerarDiasMes(_mesGlobalAno, _mesGlobalMes);
+  const saved   = await api('api/atendimentos.php?semana_id=' + sid);
+  const map     = {};
   saved.forEach(r => { map[r.data] = r; });
 
-  atendimentosEditaveis = dias.map((dt, i) => ({
-    id:              map[dt]?.id             || null,
+  atendimentosEditaveis = diasMes.map(({ data, nome }) => ({
+    id:              map[data]?.id             || null,
     semana_id:       sid,
-    data:            dt,
-    total_atendidos: map[dt]?.total_atendidos || 0,
-    diaNome:         DIAS_SEMANA[i],
+    data,
+    total_atendidos: map[data]?.total_atendidos || 0,
+    diaNome:         nome,
   }));
 
   renderFormAtendimentos();
@@ -1520,7 +1540,7 @@ async function carregarAtendimentos(sid) {
 function renderFormAtendimentos() {
   const c = document.getElementById('form-atendimentos');
   if (!atendimentosEditaveis.length) {
-    c.innerHTML = '<p style="color:var(--text-muted);">Selecione uma semana primeiro.</p>';
+    c.innerHTML = '<p style="color:var(--text-muted);">Selecione um mês e clique em Carregar.</p>';
     return;
   }
   c.innerHTML = `
@@ -1551,7 +1571,7 @@ function renderFormAtendimentos() {
 
 async function salvarAtendimentos() {
   const sid = semanaAtual();
-  if (!sid) { toast('Selecione uma semana.', 'erro'); return; }
+  if (!sid) { toast('Selecione um mês primeiro.', 'erro'); return; }
 
   const items = atendimentosEditaveis.map((r, i) => ({
     semana_id:       sid,
@@ -1605,7 +1625,7 @@ async function carregarPicosList(sid) {
 
 async function salvarPicos() {
   const sid = semanaAtual();
-  if (!sid) { toast('Selecione uma semana.', 'erro'); return; }
+  if (!sid) { toast('Selecione um mês primeiro.', 'erro'); return; }
 
   const sem   = (window._semanasCache || []).find(s => s.id == sid);
   const data  = sem ? sem.data_inicio : new Date().toISOString().slice(0,10);
@@ -1641,7 +1661,7 @@ async function carregarFechamentos(sid) {
   const dados = await api('api/fechamentos.php?semana_id=' + sid);
   const tb    = document.getElementById('tbody-fechamentos');
   if (!dados.length) {
-    tb.innerHTML = '<tr><td colspan="4" style="color:var(--text-muted);">Nenhum fechamento registrado nesta semana.</td></tr>';
+    tb.innerHTML = '<tr><td colspan="4" style="color:var(--text-muted);">Nenhum fechamento registrado neste mês.</td></tr>';
     return;
   }
   tb.innerHTML = dados.map(f => `
@@ -1663,7 +1683,7 @@ async function salvarFechamento() {
   const motivoTxt = document.getElementById('fech-motivo-txt').value.trim();
   const total     = parseInt(document.getElementById('fech-total').value) || 1;
   const obs       = document.getElementById('fech-obs').value.trim();
-  if (!sid)       { toast('Selecione uma semana.', 'erro'); return; }
+  if (!sid)       { toast('Selecione um mês primeiro.', 'erro'); return; }
   if (!motivoTxt) { toast('Informe o motivo.', 'erro'); return; }
 
   try {
@@ -2294,6 +2314,17 @@ document.getElementById('aut-status')?.addEventListener('change', function() {
   if (_primeiraAba) showTab(_primeiraAba, null);
 
   await carregarSemanas();
+  // Popula seletor de ano global e carrega o mês atual
+  const _selAnoGlobal = document.getElementById('sel-ano-global');
+  const _anoAtual = new Date().getFullYear();
+  for (let y = _anoAtual - 3; y <= _anoAtual + 1; y++) {
+    const o = document.createElement('option');
+    o.value = y; o.textContent = y;
+    if (y === _anoAtual) o.selected = true;
+    _selAnoGlobal.appendChild(o);
+  }
+  document.getElementById('sel-mes-global').value = new Date().getMonth() + 1;
+  await onMesChange();
   await carregarMotivos();
   if (USUARIO_LOGADO.perfil === 'admin') {
     await carregarPerfis();
