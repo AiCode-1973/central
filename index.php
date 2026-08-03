@@ -363,7 +363,7 @@ function temPerm(string $m): bool {
         </div>
         <div class="form-group">
           <label>Sexta-feira (fim)</label>
-          <input type="date" id="semana-fim" readonly style="background:rgba(0,255,255,.05);color:var(--text-muted);">
+          <input type="date" id="semana-fim">
         </div>
         <div class="form-group" style="flex:1;">
           <label>Descrição (opcional)</label>
