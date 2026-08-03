@@ -131,14 +131,20 @@ function temPerm(string $m): bool {
 
 <div class="main-wrap">
 
-  <!-- ══ SELETOR DE SEMANA (global) ══════════════════════════ -->
+  <!-- ══ SELETOR DE MÊS (global) ══════════════════════════ -->
   <div class="semana-selector">
-    <label><i class="fas fa-calendar-week me-1"></i> Semana:</label>
-    <select id="sel-semana" onchange="onSemanaChange()">
-      <option value="">— Selecione uma semana —</option>
+    <label><i class="fas fa-calendar-alt me-1"></i> Mês:</label>
+    <select id="sel-mes-global" style="padding:.4rem .65rem;border:1px solid rgba(0,255,255,.25);border-radius:6px;font-size:.9rem;background:var(--bg2);color:var(--text);">
+      <option value="1">Janeiro</option><option value="2">Fevereiro</option>
+      <option value="3">Março</option><option value="4">Abril</option>
+      <option value="5">Maio</option><option value="6">Junho</option>
+      <option value="7">Julho</option><option value="8">Agosto</option>
+      <option value="9">Setembro</option><option value="10">Outubro</option>
+      <option value="11">Novembro</option><option value="12">Dezembro</option>
     </select>
-    <button class="btn-app prim btn-nova-semana" onclick="showTab('semanas',null)">
-      <i class="fas fa-plus"></i> Nova Semana
+    <select id="sel-ano-global" style="padding:.4rem .65rem;border:1px solid rgba(0,255,255,.25);border-radius:6px;font-size:.9rem;background:var(--bg2);color:var(--text);"></select>
+    <button class="btn-app prim" onclick="onMesChange()" style="padding:.4rem .9rem;">
+      <i class="fas fa-search"></i> Carregar
     </button>
   </div>
 
