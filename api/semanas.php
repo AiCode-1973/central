@@ -36,6 +36,25 @@ try {
             echo json_encode(['id' => $conn->insert_id, 'mensagem' => 'Semana cadastrada.']);
             break;
 
+        case 'PUT':
+            $id   = intval($_GET['id'] ?? 0);
+            $body = json_decode(file_get_contents('php://input'), true);
+            $di   = trim($body['data_inicio'] ?? '');
+            $df   = trim($body['data_fim']    ?? '');
+            $desc = trim($body['descricao']   ?? '');
+            if (!$id || !$di || !$df) {
+                http_response_code(422);
+                echo json_encode(['erro' => 'id, data_inicio e data_fim são obrigatórios.']);
+                break;
+            }
+            $stmt = $conn->prepare(
+                "UPDATE semanas SET data_inicio = ?, data_fim = ?, descricao = ? WHERE id = ?"
+            );
+            $stmt->bind_param('sssi', $di, $df, $desc, $id);
+            $stmt->execute();
+            echo json_encode(['mensagem' => 'Semana atualizada.']);
+            break;
+
         case 'DELETE':
             $id = intval($_GET['id'] ?? 0);
             if (!$id) { http_response_code(422); echo json_encode(['erro' => 'id inválido.']); break; }

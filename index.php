@@ -369,8 +369,11 @@ function temPerm(string $m): bool {
           <label>Descrição (opcional)</label>
           <input type="text" id="semana-desc" placeholder="Ex: Semana 26 — jun/2026">
         </div>
-        <button class="btn-app prim" style="align-self:flex-end;" onclick="salvarSemana()">
+        <button class="btn-app prim" style="align-self:flex-end;" id="btn-semana-salvar" onclick="salvarSemana()">
           <i class="fas fa-plus"></i> Cadastrar
+        </button>
+        <button class="btn-app" style="align-self:flex-end;display:none;" id="btn-semana-cancelar" onclick="cancelarEdicaoSemana()">
+          <i class="fas fa-times"></i> Cancelar
         </button>
       </div>
 
@@ -1673,6 +1676,29 @@ async function delMotivo(id) {
 /* ════════════════════════════════════════════════════════
    SEMANAS
 ════════════════════════════════════════════════════════ */
+let _semanaEditId = null;
+
+function editSemana(id) {
+  const s = (window._semanasCache || []).find(x => x.id == id);
+  if (!s) return;
+  _semanaEditId = id;
+  document.getElementById('semana-inicio').value = s.data_inicio;
+  document.getElementById('semana-fim').value    = s.data_fim;
+  document.getElementById('semana-desc').value   = s.descricao || '';
+  document.getElementById('btn-semana-salvar').innerHTML = '<i class="fas fa-save"></i> Salvar';
+  document.getElementById('btn-semana-cancelar').style.display = '';
+  document.getElementById('semana-inicio').scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+function cancelarEdicaoSemana() {
+  _semanaEditId = null;
+  document.getElementById('semana-inicio').value = '';
+  document.getElementById('semana-fim').value    = '';
+  document.getElementById('semana-desc').value   = '';
+  document.getElementById('btn-semana-salvar').innerHTML = '<i class="fas fa-plus"></i> Cadastrar';
+  document.getElementById('btn-semana-cancelar').style.display = 'none';
+}
+
 function calcFim() {
   const v = document.getElementById('semana-inicio').value;
   if (!v) return;
@@ -1693,16 +1719,22 @@ async function salvarSemana() {
   const di   = document.getElementById('semana-inicio').value;
   const df   = document.getElementById('semana-fim').value;
   const desc = document.getElementById('semana-desc').value.trim();
-  if (!di || !df) { toast('Selecione a data de início (segunda).', 'erro'); return; }
+  if (!di || !df) { toast('Selecione as datas da semana.', 'erro'); return; }
   try {
-    await api('api/semanas.php', {
-      method: 'POST',
-      body: JSON.stringify({ data_inicio: di, data_fim: df, descricao: desc }),
-    });
-    toast('Semana cadastrada!', 'suc');
-    document.getElementById('semana-inicio').value = '';
-    document.getElementById('semana-fim').value    = '';
-    document.getElementById('semana-desc').value   = '';
+    if (_semanaEditId) {
+      await api('api/semanas.php?id=' + _semanaEditId, {
+        method: 'PUT',
+        body: JSON.stringify({ data_inicio: di, data_fim: df, descricao: desc }),
+      });
+      toast('Semana atualizada!', 'suc');
+    } else {
+      await api('api/semanas.php', {
+        method: 'POST',
+        body: JSON.stringify({ data_inicio: di, data_fim: df, descricao: desc }),
+      });
+      toast('Semana cadastrada!', 'suc');
+    }
+    cancelarEdicaoSemana();
     await carregarSemanas();
   } catch (e) { toast(e.message, 'erro'); }
 }
@@ -1718,7 +1750,10 @@ function renderTabelaSemanas(semanas) {
       <td>${fmtData(s.data_inicio)}</td>
       <td>${fmtData(s.data_fim)}</td>
       <td>${s.descricao || '—'}</td>
-      <td><button class="btn-del" onclick="delSemana(${s.id})"><i class="fas fa-trash"></i></button></td>
+      <td style="white-space:nowrap">
+        <button class="btn-app" style="padding:.25rem .6rem;font-size:.8rem;margin-right:.25rem;" onclick="editSemana(${s.id})"><i class="fas fa-edit"></i></button>
+        <button class="btn-del" onclick="delSemana(${s.id})"><i class="fas fa-trash"></i></button>
+      </td>
     </tr>`).join('');
 }
 
