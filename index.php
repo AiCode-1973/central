@@ -383,23 +383,30 @@ function temPerm(string $m): bool {
   </section>
 
   <!-- ══════════════════════════════════════════════════════
-       ABA: SEMANAS
+       ABA: MESES
   ══════════════════════════════════════════════════════════ -->
   <section id="tab-semanas" class="tab-section" <?php if(!temPerm('semanas')) echo 'style="display:none"'; ?>>  
     <div class="painel">
-      <div class="painel-titulo"><i class="fas fa-calendar-week"></i> Cadastro de Semanas (Seg–Sex)</div>
+      <div class="painel-titulo"><i class="fas fa-calendar-alt"></i> Cadastro de Meses</div>
       <div class="form-inline-row" style="margin-bottom:1rem;">
         <div class="form-group">
-          <label>Segunda-feira (início)</label>
-          <input type="date" id="semana-inicio" oninput="calcFim()">
+          <label>Mês</label>
+          <select id="semana-mes" style="padding:.4rem .65rem;border:1px solid rgba(0,255,255,.25);border-radius:6px;font-size:.9rem;background:var(--bg2);color:var(--text);">
+            <option value="1">Janeiro</option><option value="2">Fevereiro</option>
+            <option value="3">Março</option><option value="4">Abril</option>
+            <option value="5">Maio</option><option value="6">Junho</option>
+            <option value="7">Julho</option><option value="8">Agosto</option>
+            <option value="9">Setembro</option><option value="10">Outubro</option>
+            <option value="11">Novembro</option><option value="12">Dezembro</option>
+          </select>
         </div>
         <div class="form-group">
-          <label>Sexta-feira (fim)</label>
-          <input type="date" id="semana-fim">
+          <label>Ano</label>
+          <input type="number" id="semana-ano" min="2020" max="2099" value="<?= date('Y') ?>" style="width:100px;padding:.4rem .65rem;border:1px solid rgba(0,255,255,.25);border-radius:6px;font-size:.9rem;background:var(--bg2);color:var(--text);">
         </div>
         <div class="form-group" style="flex:1;">
           <label>Descrição (opcional)</label>
-          <input type="text" id="semana-desc" placeholder="Ex: Semana 26 — jun/2026">
+          <input type="text" id="semana-desc" placeholder="Ex: Janeiro 2026">
         </div>
         <button class="btn-app prim" style="align-self:flex-end;" id="btn-semana-salvar" onclick="salvarSemana()">
           <i class="fas fa-plus"></i> Cadastrar
