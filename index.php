@@ -1690,9 +1690,9 @@ async function carregarFechamentos(sid) {
     <tr>
       <td>${f.motivo}</td>
       <td style="text-align:center;">
-        <input type="number" min="1" max="5" value="${f.total}"
+        <input type="number" min="1" max="31" value="${f.total}"
                style="width:70px;padding:.25rem .4rem;border:1px solid rgba(0,255,255,.25);border-radius:5px;text-align:center;background:var(--bg2);color:var(--text);"
-               onchange="atualizarTotalFechamento(${f.id}, this.value, '${(f.observacao||'').replace(/'/g,"\\'")}')"
+               onblur="atualizarTotalFechamento(${f.id}, this.value, '${(f.observacao||'').replace(/'/g,"\\'")}')"
         >
       </td>
       <td>${f.observacao || '—'}</td>
@@ -1743,7 +1743,7 @@ async function salvarFechamento() {
 
 async function atualizarTotalFechamento(id, total, obs) {
   const sid = semanaAtual();
-  // Busca o motivo_id do registro atual para re-salvar
+  if (!sid) return;
   try {
     const dados = await api('api/fechamentos.php?semana_id=' + sid);
     const reg   = dados.find(f => f.id == id);

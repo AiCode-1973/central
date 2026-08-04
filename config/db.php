@@ -65,6 +65,14 @@ function _criarTabelas(mysqli $conn): void {
         $conn->query("ALTER TABLE fechamentos ADD CONSTRAINT fk_fech_motivo FOREIGN KEY (motivo_id) REFERENCES motivos_fechamento(id) ON DELETE RESTRICT");
     }
 
+    // Garante que a UNIQUE KEY existe (casos onde tabela foi criada sem ela)
+    $idxChk = $conn->query("SELECT COUNT(*) AS cnt FROM information_schema.statistics WHERE table_schema=DATABASE() AND table_name='fechamentos' AND index_name='uk_fech_semana_motivo'");
+    if ($idxChk && (int)$idxChk->fetch_assoc()['cnt'] === 0) {
+        // Remove duplicatas mantendo o registro mais recente por grupo
+        $conn->query("DELETE f1 FROM fechamentos f1 INNER JOIN fechamentos f2 ON f1.semana_id = f2.semana_id AND f1.motivo_id = f2.motivo_id WHERE f1.id < f2.id");
+        $conn->query("ALTER TABLE fechamentos ADD UNIQUE KEY uk_fech_semana_motivo (semana_id, motivo_id)");
+    }
+
     $conn->query("CREATE TABLE IF NOT EXISTS atendimentos (
         id               INT AUTO_INCREMENT PRIMARY KEY,
         semana_id        INT          NOT NULL,
