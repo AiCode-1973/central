@@ -169,6 +169,9 @@ function temPerm(string $m): bool {
         <button class="btn-app prim" onclick="carregarDashboardMes()">
           <i class="fas fa-search"></i> Buscar
         </button>
+        <button class="btn-app" onclick="imprimirRelatorioMes()" style="background:transparent;border:1px solid rgba(0,255,255,.2);color:var(--text-muted);" title="Imprimir relatório mensal">
+          <i class="fas fa-print"></i> Imprimir
+        </button>
       </div>
       <div id="ano-selector" style="display:none;gap:.5rem;align-items:center;flex-wrap:wrap;">
         <select id="sel-ano-anual" style="padding:.4rem .65rem;border:1px solid rgba(0,255,255,.25);border-radius:6px;font-size:.9rem;background:var(--bg2);color:var(--text);"></select>
@@ -1219,66 +1222,56 @@ async function carregarDashboardAno() {
   } catch (e) { toast(e.message, 'erro'); }
 }
 
-function imprimirRelatorioAno() {
-  const ano    = parseInt(document.getElementById('sel-ano-anual')?.value) || new Date().getFullYear();
-  const fechEl = document.getElementById('resumo-fechamentos-ano');
-  const fechHtml = fechEl ? fechEl.innerHTML : '<em>Sem dados</em>';
-
-  // Gera imagem de um gráfico com cores para impressão (fundo branco, cores escuras)
-  function snapChart(srcChart, cor, indexAxis) {
-    if (!srcChart) return '';
-    const c = document.createElement('canvas');
-    c.width = 600; c.height = 260;
-    document.body.appendChild(c);
-    const ctx2d = c.getContext('2d');
-    ctx2d.fillStyle = '#ffffff';
-    ctx2d.fillRect(0, 0, 600, 260);
-    const tmp = new Chart(c, {
-      type: 'bar',
-      data: {
-        labels: srcChart.data.labels,
-        datasets: [{ data: srcChart.data.datasets[0].data, backgroundColor: cor, borderColor: cor, borderWidth: 1 }],
-      },
-      options: {
-        indexAxis: indexAxis || 'x',
-        animation: false,
-        responsive: false,
-        plugins: {
-          legend: { display: false },
-          datalabels: {
-            anchor: 'end', align: indexAxis === 'y' ? 'end' : 'top',
-            color: '#111', font: { size: 10, weight: 'bold' },
-            formatter: v => v > 0 ? v : '',
-          },
+// Gera imagem de um gráfico com cores para impressão
+function snapChart(srcChart, cor, indexAxis) {
+  if (!srcChart) return '';
+  const c = document.createElement('canvas');
+  c.width = 600; c.height = 260;
+  document.body.appendChild(c);
+  const ctx2d = c.getContext('2d');
+  ctx2d.fillStyle = '#ffffff';
+  ctx2d.fillRect(0, 0, 600, 260);
+  const tmp = new Chart(c, {
+    type: 'bar',
+    data: {
+      labels: srcChart.data.labels,
+      datasets: [{ data: srcChart.data.datasets[0].data, backgroundColor: cor, borderColor: cor, borderWidth: 1 }],
+    },
+    options: {
+      indexAxis: indexAxis || 'x',
+      animation: false,
+      responsive: false,
+      plugins: {
+        legend: { display: false },
+        datalabels: {
+          anchor: 'end', align: indexAxis === 'y' ? 'end' : 'top',
+          color: '#111', font: { size: 10, weight: 'bold' },
+          formatter: v => v > 0 ? v : '',
         },
-        scales: {
-          x: { ticks: { color: '#333', font: { size: 9 } }, grid: { color: '#ddd' } },
-          y: { ticks: { color: '#333', font: { size: 9 } }, grid: { color: '#ddd' }, beginAtZero: true },
-        },
-        layout: { padding: { top: 20, right: 20 } },
       },
-      plugins: [ChartDataLabels],
-    });
-    const img = tmp.toBase64Image('image/png', 1);
-    tmp.destroy();
-    document.body.removeChild(c);
-    return img;
-  }
+      scales: {
+        x: { ticks: { color: '#333', font: { size: 9 } }, grid: { color: '#ddd' } },
+        y: { ticks: { color: '#333', font: { size: 9 } }, grid: { color: '#ddd' }, beginAtZero: true },
+      },
+      layout: { padding: { top: 20, right: 20 } },
+    },
+    plugins: [ChartDataLabels],
+  });
+  const img = tmp.toBase64Image('image/png', 1);
+  tmp.destroy();
+  document.body.removeChild(c);
+  return img;
+}
 
-  const imgFech  = snapChart(chartAnoMeses,  '#2563eb', 'x');
-  const imgPicos = snapChart(chartAnoPicos, '#16a34a', 'y');
-
-  const win = window.open('', '_blank', 'width=1200,height=800');
-  win.document.write(`<!DOCTYPE html>
+function _htmlRelatorio(titulo, ano, mesNome, corpo) {
+  return `<!DOCTYPE html>
 <html lang="pt-BR"><head>
 <meta charset="UTF-8">
-<title>Relatório Anual ${ano} — Hospital Santo Expedito</title>
+<title>${titulo}</title>
 <style>
   @page { size: A4 landscape; margin: 10mm 12mm; }
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: 'Segoe UI', Arial, sans-serif; font-size: 10px; color: #1a1a1a;
-         background: #fff; width: 257mm; }
-
+  body { font-family: 'Segoe UI', Arial, sans-serif; font-size: 10px; color: #1a1a1a; background: #fff; width: 257mm; }
   .cab { display: flex; align-items: center; justify-content: space-between;
          border-bottom: 3px solid #1e3a5f; padding-bottom: 6px; margin-bottom: 10px; }
   .cab-esq { display: flex; align-items: center; gap: 10px; }
@@ -1286,34 +1279,23 @@ function imprimirRelatorioAno() {
               display: flex; align-items: center; justify-content: center; }
   .cab-logo svg { width: 22px; height: 22px; fill: #fff; }
   .cab-nome { font-size: 15px; font-weight: 800; color: #1e3a5f; }
-  .cab-sub  { font-size: 9px; color: #4a6fa5; font-weight: 600;
-              text-transform: uppercase; letter-spacing: .05em; }
-  .cab-ano  { font-size: 26px; font-weight: 900; color: #1e3a5f; letter-spacing: -.01em; }
-
-  .corpo { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
-  .corpo-full { margin-bottom: 8px; }
-
+  .cab-sub  { font-size: 9px; color: #4a6fa5; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; }
+  .cab-per  { font-size: 22px; font-weight: 900; color: #1e3a5f; letter-spacing: -.01em; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+  .full  { margin-bottom: 8px; }
   .card { border: 1px solid #c8d8e8; border-radius: 6px; overflow: hidden; }
   .card-titulo { font-size: 9px; font-weight: 700; text-transform: uppercase;
-                 letter-spacing: .06em; color: #fff; background: #1e3a5f;
-                 padding: 4px 8px; }
+                 letter-spacing: .06em; color: #fff; background: #1e3a5f; padding: 4px 8px; }
   .card-corpo { padding: 6px 8px; }
   .card img { width: 100%; display: block; }
-
   table { width: 100%; border-collapse: collapse; font-size: 9.5px; }
-  th { background: #2563eb; color: #fff; padding: 4px 8px;
-       font-weight: 700; text-align: left; }
+  th { background: #2563eb; color: #fff; padding: 4px 8px; font-weight: 700; text-align: left; }
   td { padding: 3px 8px; border-bottom: 1px solid #e0e8f0; }
   tr:nth-child(even) td { background: #f0f5fb; }
-  tr:last-child td { background: #dce8f5; font-weight: 700;
-                     border-top: 2px solid #1e3a5f; }
-
+  tr:last-child td { background: #dce8f5; font-weight: 700; border-top: 2px solid #1e3a5f; }
   .rodape { margin-top: 8px; border-top: 1px solid #bcd; padding-top: 4px;
-            display: flex; justify-content: space-between;
-            color: #666; font-size: 8px; }
-</style>
-</head><body>
-
+            display: flex; justify-content: space-between; color: #666; font-size: 8px; }
+</style></head><body>
 <div class="cab">
   <div class="cab-esq">
     <div class="cab-logo">
@@ -1321,34 +1303,70 @@ function imprimirRelatorioAno() {
     </div>
     <div>
       <div class="cab-nome">Hospital Santo Expedito</div>
-      <div class="cab-sub">Central de Agendamento &mdash; Relatório Anual</div>
+      <div class="cab-sub">Central de Agendamento &mdash; ${titulo}</div>
     </div>
   </div>
-  <div class="cab-ano">${ano}</div>
+  <div class="cab-per">${mesNome ? mesNome + ' ' + ano : ano}</div>
 </div>
-
-<div class="corpo">
-  <div class="card">
-    <div class="card-titulo">Fechamentos por Mês</div>
-    <div class="card-corpo">${imgFech ? `<img src="${imgFech}">` : '<em style="color:#999">Sem dados</em>'}</div>
-  </div>
-  <div class="card">
-    <div class="card-titulo">Top 5 Horários de Pico</div>
-    <div class="card-corpo">${imgPicos ? `<img src="${imgPicos}">` : '<em style="color:#999">Sem dados</em>'}</div>
-  </div>
-</div>
-
-<div class="corpo-full card">
-  <div class="card-titulo">Motivos de Fechamento</div>
-  <div class="card-corpo">${fechHtml}</div>
-</div>
-
+${corpo}
 <div class="rodape">
   <span>Hospital Santo Expedito &mdash; Central de Agendamento</span>
   <span>Emitido em ${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}</span>
 </div>
+</body></html>`;
+}
 
-</body></html>`);
+function imprimirRelatorioMes() {
+  const ano    = parseInt(document.getElementById('sel-ano')?.value) || new Date().getFullYear();
+  const mesEl  = document.getElementById('sel-mes');
+  const mesNome = mesEl ? mesEl.options[mesEl.selectedIndex].text : '';
+  const imgPicos = snapChart(chartMesPicos, '#16a34a', 'y');
+  const fechEl   = document.getElementById('resumo-fechamentos-mes');
+  const fechHtml = fechEl ? fechEl.innerHTML : '<em>Sem dados</em>';
+
+  const corpo = `
+    <div class="grid2">
+      <div class="card">
+        <div class="card-titulo">Top 5 Horários de Pico</div>
+        <div class="card-corpo">${imgPicos ? `<img src="${imgPicos}">` : '<em style="color:#999">Sem dados</em>'}</div>
+      </div>
+      <div class="card">
+        <div class="card-titulo">Motivos de Fechamento</div>
+        <div class="card-corpo">${fechHtml}</div>
+      </div>
+    </div>`;
+
+  const win = window.open('', '_blank', 'width=1200,height=800');
+  win.document.write(_htmlRelatorio('Relatório Mensal', ano, mesNome, corpo));
+  win.document.close();
+  setTimeout(() => { win.focus(); win.print(); }, 350);
+}
+
+function imprimirRelatorioAno() {
+  const ano      = parseInt(document.getElementById('sel-ano-anual')?.value) || new Date().getFullYear();
+  const fechEl   = document.getElementById('resumo-fechamentos-ano');
+  const fechHtml = fechEl ? fechEl.innerHTML : '<em>Sem dados</em>';
+  const imgFech  = snapChart(chartAnoMeses,  '#2563eb', 'x');
+  const imgPicos = snapChart(chartAnoPicos, '#16a34a', 'y');
+
+  const corpo = `
+    <div class="grid2">
+      <div class="card">
+        <div class="card-titulo">Fechamentos por Mês</div>
+        <div class="card-corpo">${imgFech  ? `<img src="${imgFech}">` : '<em style="color:#999">Sem dados</em>'}</div>
+      </div>
+      <div class="card">
+        <div class="card-titulo">Top 5 Horários de Pico</div>
+        <div class="card-corpo">${imgPicos ? `<img src="${imgPicos}">` : '<em style="color:#999">Sem dados</em>'}</div>
+      </div>
+    </div>
+    <div class="full card">
+      <div class="card-titulo">Motivos de Fechamento</div>
+      <div class="card-corpo">${fechHtml}</div>
+    </div>`;
+
+  const win = window.open('', '_blank', 'width=1200,height=800');
+  win.document.write(_htmlRelatorio('Relatório Anual', ano, '', corpo));
   win.document.close();
   setTimeout(() => { win.focus(); win.print(); }, 350);
 }
