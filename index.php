@@ -1220,11 +1220,53 @@ async function carregarDashboardAno() {
 }
 
 function imprimirRelatorioAno() {
-  const ano = parseInt(document.getElementById('sel-ano-anual')?.value) || new Date().getFullYear();
-  const imgFech  = chartAnoMeses  ? chartAnoMeses.toBase64Image('image/png', 1)  : '';
-  const imgPicos = chartAnoPicos  ? chartAnoPicos.toBase64Image('image/png', 1)  : '';
-  const fechEl   = document.getElementById('resumo-fechamentos-ano');
+  const ano    = parseInt(document.getElementById('sel-ano-anual')?.value) || new Date().getFullYear();
+  const fechEl = document.getElementById('resumo-fechamentos-ano');
   const fechHtml = fechEl ? fechEl.innerHTML : '<em>Sem dados</em>';
+
+  // Gera imagem de um gráfico com cores para impressão (fundo branco, cores escuras)
+  function snapChart(srcChart, cor, indexAxis) {
+    if (!srcChart) return '';
+    const c = document.createElement('canvas');
+    c.width = 600; c.height = 260;
+    document.body.appendChild(c);
+    const ctx2d = c.getContext('2d');
+    ctx2d.fillStyle = '#ffffff';
+    ctx2d.fillRect(0, 0, 600, 260);
+    const tmp = new Chart(c, {
+      type: 'bar',
+      data: {
+        labels: srcChart.data.labels,
+        datasets: [{ data: srcChart.data.datasets[0].data, backgroundColor: cor, borderColor: cor, borderWidth: 1 }],
+      },
+      options: {
+        indexAxis: indexAxis || 'x',
+        animation: false,
+        responsive: false,
+        plugins: {
+          legend: { display: false },
+          datalabels: {
+            anchor: 'end', align: indexAxis === 'y' ? 'end' : 'top',
+            color: '#111', font: { size: 10, weight: 'bold' },
+            formatter: v => v > 0 ? v : '',
+          },
+        },
+        scales: {
+          x: { ticks: { color: '#333', font: { size: 9 } }, grid: { color: '#ddd' } },
+          y: { ticks: { color: '#333', font: { size: 9 } }, grid: { color: '#ddd' }, beginAtZero: true },
+        },
+        layout: { padding: { top: 20, right: 20 } },
+      },
+      plugins: [ChartDataLabels],
+    });
+    const img = tmp.toBase64Image('image/png', 1);
+    tmp.destroy();
+    document.body.removeChild(c);
+    return img;
+  }
+
+  const imgFech  = snapChart(chartAnoMeses,  '#2563eb', 'x');
+  const imgPicos = snapChart(chartAnoPicos, '#16a34a', 'y');
 
   const win = window.open('', '_blank', 'width=1200,height=800');
   win.document.write(`<!DOCTYPE html>
@@ -1232,75 +1274,81 @@ function imprimirRelatorioAno() {
 <meta charset="UTF-8">
 <title>Relatório Anual ${ano} — Hospital Santo Expedito</title>
 <style>
-  @page { size: A4 landscape; margin: 8mm 10mm; }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  html, body { width: 277mm; height: 190mm; overflow: hidden; }
-  body { font-family: 'Segoe UI', Arial, sans-serif; font-size: 10px; color: #111; background: #fff; }
+  @page { size: A4 landscape; margin: 10mm 12mm; }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', Arial, sans-serif; font-size: 10px; color: #1a1a1a;
+         background: #fff; width: 257mm; }
 
-  /* Cabeçalho */
   .cab { display: flex; align-items: center; justify-content: space-between;
-         border-bottom: 2px solid #1e3a5f; padding-bottom: 5px; margin-bottom: 8px; }
-  .cab-left { display: flex; align-items: center; gap: 9px; }
-  .cab-logo { width: 36px; height: 36px; background: #1e3a5f; border-radius: 50%;
-              display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-  .cab-logo svg { width: 21px; height: 21px; fill: #fff; }
-  .cab-nome { font-size: 14px; font-weight: 800; color: #1e3a5f; line-height: 1.2; }
-  .cab-sub  { font-size: 9px; color: #4a6fa5; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; }
-  .cab-ano  { font-size: 18px; font-weight: 800; color: #1e3a5f; }
+         border-bottom: 3px solid #1e3a5f; padding-bottom: 6px; margin-bottom: 10px; }
+  .cab-esq { display: flex; align-items: center; gap: 10px; }
+  .cab-logo { width: 40px; height: 40px; background: #1e3a5f; border-radius: 50%;
+              display: flex; align-items: center; justify-content: center; }
+  .cab-logo svg { width: 22px; height: 22px; fill: #fff; }
+  .cab-nome { font-size: 15px; font-weight: 800; color: #1e3a5f; }
+  .cab-sub  { font-size: 9px; color: #4a6fa5; font-weight: 600;
+              text-transform: uppercase; letter-spacing: .05em; }
+  .cab-ano  { font-size: 26px; font-weight: 900; color: #1e3a5f; letter-spacing: -.01em; }
 
-  /* Layout principal: gráficos lado a lado, fechamentos abaixo */
-  .corpo { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 7px; }
-  .card { border: 1px solid #d1dce8; border-radius: 5px; padding: 7px 9px; }
-  .card-title { font-size: 9px; font-weight: 700; text-transform: uppercase;
-                letter-spacing: .05em; color: #4a6fa5; margin-bottom: 5px;
-                padding-bottom: 4px; border-bottom: 1px solid #e2eaf3; }
-  .card img { width: 100%; height: 120px; object-fit: contain; display: block; }
+  .corpo { display: grid; grid-template-columns: 5fr 4fr 3fr; gap: 10px; align-items: start; }
 
-  /* Tabela de fechamentos */
+  .card { border: 1px solid #c8d8e8; border-radius: 6px; overflow: hidden; }
+  .card-titulo { font-size: 9px; font-weight: 700; text-transform: uppercase;
+                 letter-spacing: .06em; color: #fff; background: #1e3a5f;
+                 padding: 4px 8px; }
+  .card-corpo { padding: 6px 8px; }
+  .card img { width: 100%; display: block; }
+
   table { width: 100%; border-collapse: collapse; font-size: 9.5px; }
-  thead tr { background: #1e3a5f; }
-  thead td, thead th { color: #fff; padding: 3px 7px; font-weight: 700; }
-  tbody tr:nth-child(even) { background: #f0f5fb; }
-  tbody td { padding: 3px 7px; border-bottom: 1px solid #e2eaf3; }
-  tfoot tr { background: #e2eaf3; font-weight: 700; }
-  tfoot td { padding: 3px 7px; border-top: 2px solid #1e3a5f; }
+  th { background: #2563eb; color: #fff; padding: 4px 8px;
+       font-weight: 700; text-align: left; }
+  td { padding: 3px 8px; border-bottom: 1px solid #e0e8f0; }
+  tr:nth-child(even) td { background: #f0f5fb; }
+  tr:last-child td { background: #dce8f5; font-weight: 700;
+                     border-top: 2px solid #1e3a5f; }
 
-  /* Rodapé */
-  .rodape { border-top: 1px solid #ccc; padding-top: 4px;
-            display: flex; justify-content: space-between; color: #888; font-size: 8px; }
+  .rodape { margin-top: 8px; border-top: 1px solid #bcd; padding-top: 4px;
+            display: flex; justify-content: space-between;
+            color: #666; font-size: 8px; }
 </style>
 </head><body>
 
 <div class="cab">
-  <div class="cab-left">
+  <div class="cab-esq">
     <div class="cab-logo">
       <svg viewBox="0 0 24 24"><path d="M19 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2zm-7 3a1 1 0 0 1 2 0v3h3a1 1 0 0 1 0 2h-3v3a1 1 0 0 1-2 0v-3H9a1 1 0 0 1 0-2h3V6z"/></svg>
     </div>
     <div>
       <div class="cab-nome">Hospital Santo Expedito</div>
-      <div class="cab-sub">Central de Agendamento — Relatório Anual</div>
+      <div class="cab-sub">Central de Agendamento &mdash; Relatório Anual</div>
     </div>
   </div>
-  <div class="cab-ano">Ano ${ano}</div>
+  <div class="cab-ano">${ano}</div>
 </div>
 
 <div class="corpo">
-  ${imgFech  ? `<div class="card"><div class="card-title">Fechamentos por Mês</div><img src="${imgFech}"></div>`  : ''}
-  ${imgPicos ? `<div class="card"><div class="card-title">Top 5 Horários de Pico</div><img src="${imgPicos}"></div>` : ''}
   <div class="card">
-    <div class="card-title">Motivos de Fechamento — Detalhamento</div>
-    ${fechHtml}
+    <div class="card-titulo">Fechamentos por Mês</div>
+    <div class="card-corpo">${imgFech ? `<img src="${imgFech}">` : '<em style="color:#999">Sem dados</em>'}</div>
+  </div>
+  <div class="card">
+    <div class="card-titulo">Top 5 Horários de Pico</div>
+    <div class="card-corpo">${imgPicos ? `<img src="${imgPicos}">` : '<em style="color:#999">Sem dados</em>'}</div>
+  </div>
+  <div class="card">
+    <div class="card-titulo">Motivos de Fechamento</div>
+    <div class="card-corpo">${fechHtml}</div>
   </div>
 </div>
 
 <div class="rodape">
-  <span>Hospital Santo Expedito — Central de Agendamento</span>
-  <span>Emitido em: ${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit'})}</span>
+  <span>Hospital Santo Expedito &mdash; Central de Agendamento</span>
+  <span>Emitido em ${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}</span>
 </div>
 
 </body></html>`);
   win.document.close();
-  setTimeout(() => { win.focus(); win.print(); }, 400);
+  setTimeout(() => { win.focus(); win.print(); }, 350);
 }
 
 async function carregarDashboard(sid) {
