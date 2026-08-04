@@ -175,6 +175,9 @@ function temPerm(string $m): bool {
         <button class="btn-app prim" onclick="carregarDashboardAno()">
           <i class="fas fa-search"></i> Buscar
         </button>
+        <button class="btn-app" onclick="imprimirRelatorioAno()" style="background:transparent;border:1px solid rgba(0,255,255,.2);color:var(--text-muted);" title="Imprimir relatório anual">
+          <i class="fas fa-print"></i> Imprimir
+        </button>
       </div>
     </div>
 
@@ -1214,6 +1217,93 @@ async function carregarDashboardAno() {
 
     // Pesquisa de satisfação ano removida da view Ano
   } catch (e) { toast(e.message, 'erro'); }
+}
+
+function imprimirRelatorioAno() {
+  const ano = parseInt(document.getElementById('sel-ano-anual')?.value) || new Date().getFullYear();
+  const imgFech  = chartAnoMeses  ? chartAnoMeses.toBase64Image('image/png', 1)  : '';
+  const imgPicos = chartAnoPicos  ? chartAnoPicos.toBase64Image('image/png', 1)  : '';
+  const fechEl   = document.getElementById('resumo-fechamentos-ano');
+  const fechHtml = fechEl ? fechEl.innerHTML : '<em>Sem dados</em>';
+
+  const win = window.open('', '_blank', 'width=1200,height=800');
+  win.document.write(`<!DOCTYPE html>
+<html lang="pt-BR"><head>
+<meta charset="UTF-8">
+<title>Relatório Anual ${ano} — Hospital Santo Expedito</title>
+<style>
+  @page { size: A4 landscape; margin: 12mm 14mm; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', Arial, sans-serif; font-size: 11px; color: #111; background: #fff; }
+
+  /* Cabeçalho */
+  .cab { display: flex; align-items: center; justify-content: space-between;
+         border-bottom: 3px solid #1e3a5f; padding-bottom: 8px; margin-bottom: 14px; }
+  .cab-left { display: flex; align-items: center; gap: 12px; }
+  .cab-logo { width: 48px; height: 48px; background: #1e3a5f; border-radius: 50%;
+              display: flex; align-items: center; justify-content: center; }
+  .cab-logo svg { width: 28px; height: 28px; fill: #fff; }
+  .cab-nome { font-size: 17px; font-weight: 800; color: #1e3a5f; line-height: 1.2; }
+  .cab-sub  { font-size: 10px; color: #4a6fa5; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; }
+  .cab-ano  { font-size: 22px; font-weight: 800; color: #1e3a5f; }
+
+  /* Grid de conteúdo */
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; }
+  .grid1 { margin-bottom: 14px; }
+  .card { border: 1px solid #d1dce8; border-radius: 6px; padding: 10px 12px; }
+  .card-title { font-size: 10px; font-weight: 700; text-transform: uppercase;
+                letter-spacing: .06em; color: #4a6fa5; margin-bottom: 8px;
+                padding-bottom: 5px; border-bottom: 1px solid #e2eaf3; }
+  .card img { width: 100%; height: auto; display: block; }
+
+  /* Tabela de fechamentos */
+  table { width: 100%; border-collapse: collapse; font-size: 10.5px; }
+  thead tr { background: #1e3a5f; }
+  thead td, thead th { color: #fff; padding: 5px 8px; font-weight: 700; }
+  tbody tr:nth-child(even) { background: #f0f5fb; }
+  tbody td { padding: 4px 8px; border-bottom: 1px solid #e2eaf3; }
+  tfoot tr { background: #e2eaf3; font-weight: 700; }
+  tfoot td { padding: 5px 8px; border-top: 2px solid #1e3a5f; }
+
+  /* Rodapé */
+  .rodape { margin-top: 10px; border-top: 1px solid #ccc; padding-top: 6px;
+            display: flex; justify-content: space-between; color: #777; font-size: 9px; }
+</style>
+</head><body>
+
+<div class="cab">
+  <div class="cab-left">
+    <div class="cab-logo">
+      <svg viewBox="0 0 24 24"><path d="M19 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2zm-7 3a1 1 0 0 1 2 0v3h3a1 1 0 0 1 0 2h-3v3a1 1 0 0 1-2 0v-3H9a1 1 0 0 1 0-2h3V6z"/></svg>
+    </div>
+    <div>
+      <div class="cab-nome">Hospital Santo Expedito</div>
+      <div class="cab-sub">Central de Agendamento — Relatório Anual</div>
+    </div>
+  </div>
+  <div class="cab-ano">Ano ${ano}</div>
+</div>
+
+<div class="grid2">
+  ${imgFech  ? `<div class="card"><div class="card-title">Fechamentos por Mês</div><img src="${imgFech}"></div>`  : ''}
+  ${imgPicos ? `<div class="card"><div class="card-title">Top 5 Horários de Pico</div><img src="${imgPicos}"></div>` : ''}
+</div>
+
+<div class="grid1">
+  <div class="card">
+    <div class="card-title">Motivos de Fechamento — Detalhamento</div>
+    ${fechHtml}
+  </div>
+</div>
+
+<div class="rodape">
+  <span>Hospital Santo Expedito — Central de Agendamento</span>
+  <span>Emitido em: ${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit'})}</span>
+</div>
+
+</body></html>`);
+  win.document.close();
+  setTimeout(() => { win.focus(); win.print(); }, 400);
 }
 
 async function carregarDashboard(sid) {
