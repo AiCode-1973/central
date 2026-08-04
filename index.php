@@ -1290,7 +1290,8 @@ function imprimirRelatorioAno() {
               text-transform: uppercase; letter-spacing: .05em; }
   .cab-ano  { font-size: 26px; font-weight: 900; color: #1e3a5f; letter-spacing: -.01em; }
 
-  .corpo { display: grid; grid-template-columns: 5fr 4fr 3fr; gap: 10px; align-items: start; }
+  .corpo { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+  .corpo-full { margin-bottom: 8px; }
 
   .card { border: 1px solid #c8d8e8; border-radius: 6px; overflow: hidden; }
   .card-titulo { font-size: 9px; font-weight: 700; text-transform: uppercase;
@@ -1335,10 +1336,11 @@ function imprimirRelatorioAno() {
     <div class="card-titulo">Top 5 Horários de Pico</div>
     <div class="card-corpo">${imgPicos ? `<img src="${imgPicos}">` : '<em style="color:#999">Sem dados</em>'}</div>
   </div>
-  <div class="card">
-    <div class="card-titulo">Motivos de Fechamento</div>
-    <div class="card-corpo">${fechHtml}</div>
-  </div>
+</div>
+
+<div class="corpo-full card">
+  <div class="card-titulo">Motivos de Fechamento</div>
+  <div class="card-corpo">${fechHtml}</div>
 </div>
 
 <div class="rodape">
