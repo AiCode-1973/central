@@ -24,6 +24,45 @@ function temPerm(string $m): bool {
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;600;700&display=swap">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
   <link rel="stylesheet" href="assets/css/dashboard.css">
+  <style>
+    /* Dashboard com fundo off-white e cards com sombra suave */
+    #tab-dashboard {
+      background: #F7F5F2;
+      border-radius: 12px;
+      padding: 1.25rem;
+      margin: -.5rem 0;
+    }
+    #tab-dashboard .painel {
+      background: #ffffff;
+      border: 1px solid #e8e3dc;
+      border-radius: 12px;
+      box-shadow: 0 2px 12px rgba(0,0,0,.07), 0 1px 3px rgba(0,0,0,.05);
+      padding: 1rem 1.1rem;
+    }
+    #tab-dashboard .painel::before { display: none; }
+    #tab-dashboard .painel .painel-titulo {
+      color: #2d3748;
+      font-size: .75rem;
+    }
+    #tab-dashboard .painel .painel-titulo i {
+      color: #4a6fa5;
+      opacity: 1;
+    }
+    /* Selector do modo Mês/Ano dentro do dashboard */
+    #tab-dashboard > div:first-child {
+      background: #ffffff;
+      border: 1px solid #e8e3dc;
+      border-radius: 10px;
+      padding: .6rem .9rem;
+      box-shadow: 0 1px 6px rgba(0,0,0,.05);
+      margin-bottom: 1rem;
+    }
+    /* Textos de "Busque um mês/ano" */
+    #resumo-fechamentos-mes,
+    #resumo-fechamentos-ano {
+      color: #4a5568;
+    }
+  </style>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
   <script>
