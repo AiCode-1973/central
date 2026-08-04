@@ -112,11 +112,12 @@ $pesquisa = $stmtPesq->get_result()->fetch_assoc();
 if (array_sum($pesquisa) == 0) $pesquisa = null;
 
 echo json_encode([
-    'totais'      => $totais,
-    'por_mes'     => $por_mes,
-    'picos'       => $picos,
-    'fechamentos' => $fechamentos,
-    'pesquisa'    => $pesquisa,
+    'totais'              => $totais,
+    'por_mes'             => $por_mes,
+    'fechamentos_por_mes' => $fechamentos_por_mes,
+    'picos'               => $picos,
+    'fechamentos'         => $fechamentos,
+    'pesquisa'            => $pesquisa,
 ]);
 
 $conn->close();

@@ -241,7 +241,7 @@ function temPerm(string $m): bool {
       <div id="ano-totais" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:.75rem;margin-bottom:1rem;"></div>
       <div class="charts-grid">
         <div class="painel">
-          <div class="painel-titulo"><i class="fas fa-chart-bar"></i> Atendimentos por Mês</div>
+          <div class="painel-titulo"><i class="fas fa-door-closed"></i> Fechamentos por Mês</div>
           <div class="chart-wrap"><canvas id="chart-ano-meses" style="height:220px;"></canvas></div>
         </div>
         <div class="painel">
@@ -1173,7 +1173,7 @@ async function carregarDashboardAno() {
 
     // Gráfico por mês (multi-série)
     const meses = (d.por_mes || []).map(m => m.mes_nome);
-    const totais_mes = (d.por_mes || []).map(m => +m.total_atendidos);
+    const totais_mes = (d.fechamentos_por_mes || []).map(m => +m.total_fechado);
     if (chartAnoMeses) chartAnoMeses.destroy();
     chartAnoMeses = new Chart(document.getElementById('chart-ano-meses'), {
       type: 'bar',
@@ -1181,10 +1181,10 @@ async function carregarDashboardAno() {
       data: {
         labels: meses,
         datasets: [{
-          label: 'Atendidos',
+          label: 'Dias Fechados',
           data: totais_mes,
-          backgroundColor: '#00cc77',
-          borderColor: '#00ff88',
+          backgroundColor: '#cc4400',
+          borderColor: '#ff6622',
           borderWidth: 2,
         }],
       },
