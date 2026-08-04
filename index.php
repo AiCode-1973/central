@@ -1183,9 +1183,9 @@ async function carregarDashboardAno() {
         datasets: [{
           label: 'Atendidos',
           data: totais_mes,
-          backgroundColor: 'rgba(0,255,136,.7)',
-          borderColor: 'rgba(0,255,136,1)',
-          borderWidth: 1,
+          backgroundColor: '#00cc77',
+          borderColor: '#00ff88',
+          borderWidth: 2,
         }],
       },
       options: {
