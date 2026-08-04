@@ -1232,42 +1232,42 @@ function imprimirRelatorioAno() {
 <meta charset="UTF-8">
 <title>Relatório Anual ${ano} — Hospital Santo Expedito</title>
 <style>
-  @page { size: A4 landscape; margin: 12mm 14mm; }
+  @page { size: A4 landscape; margin: 8mm 10mm; }
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: 'Segoe UI', Arial, sans-serif; font-size: 11px; color: #111; background: #fff; }
+  html, body { width: 277mm; height: 190mm; overflow: hidden; }
+  body { font-family: 'Segoe UI', Arial, sans-serif; font-size: 10px; color: #111; background: #fff; }
 
   /* Cabeçalho */
   .cab { display: flex; align-items: center; justify-content: space-between;
-         border-bottom: 3px solid #1e3a5f; padding-bottom: 8px; margin-bottom: 14px; }
-  .cab-left { display: flex; align-items: center; gap: 12px; }
-  .cab-logo { width: 48px; height: 48px; background: #1e3a5f; border-radius: 50%;
-              display: flex; align-items: center; justify-content: center; }
-  .cab-logo svg { width: 28px; height: 28px; fill: #fff; }
-  .cab-nome { font-size: 17px; font-weight: 800; color: #1e3a5f; line-height: 1.2; }
-  .cab-sub  { font-size: 10px; color: #4a6fa5; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; }
-  .cab-ano  { font-size: 22px; font-weight: 800; color: #1e3a5f; }
+         border-bottom: 2px solid #1e3a5f; padding-bottom: 5px; margin-bottom: 8px; }
+  .cab-left { display: flex; align-items: center; gap: 9px; }
+  .cab-logo { width: 36px; height: 36px; background: #1e3a5f; border-radius: 50%;
+              display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .cab-logo svg { width: 21px; height: 21px; fill: #fff; }
+  .cab-nome { font-size: 14px; font-weight: 800; color: #1e3a5f; line-height: 1.2; }
+  .cab-sub  { font-size: 9px; color: #4a6fa5; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; }
+  .cab-ano  { font-size: 18px; font-weight: 800; color: #1e3a5f; }
 
-  /* Grid de conteúdo */
-  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; }
-  .grid1 { margin-bottom: 14px; }
-  .card { border: 1px solid #d1dce8; border-radius: 6px; padding: 10px 12px; }
-  .card-title { font-size: 10px; font-weight: 700; text-transform: uppercase;
-                letter-spacing: .06em; color: #4a6fa5; margin-bottom: 8px;
-                padding-bottom: 5px; border-bottom: 1px solid #e2eaf3; }
-  .card img { width: 100%; height: auto; display: block; }
+  /* Layout principal: gráficos lado a lado, fechamentos abaixo */
+  .corpo { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 7px; }
+  .card { border: 1px solid #d1dce8; border-radius: 5px; padding: 7px 9px; }
+  .card-title { font-size: 9px; font-weight: 700; text-transform: uppercase;
+                letter-spacing: .05em; color: #4a6fa5; margin-bottom: 5px;
+                padding-bottom: 4px; border-bottom: 1px solid #e2eaf3; }
+  .card img { width: 100%; height: 120px; object-fit: contain; display: block; }
 
   /* Tabela de fechamentos */
-  table { width: 100%; border-collapse: collapse; font-size: 10.5px; }
+  table { width: 100%; border-collapse: collapse; font-size: 9.5px; }
   thead tr { background: #1e3a5f; }
-  thead td, thead th { color: #fff; padding: 5px 8px; font-weight: 700; }
+  thead td, thead th { color: #fff; padding: 3px 7px; font-weight: 700; }
   tbody tr:nth-child(even) { background: #f0f5fb; }
-  tbody td { padding: 4px 8px; border-bottom: 1px solid #e2eaf3; }
+  tbody td { padding: 3px 7px; border-bottom: 1px solid #e2eaf3; }
   tfoot tr { background: #e2eaf3; font-weight: 700; }
-  tfoot td { padding: 5px 8px; border-top: 2px solid #1e3a5f; }
+  tfoot td { padding: 3px 7px; border-top: 2px solid #1e3a5f; }
 
   /* Rodapé */
-  .rodape { margin-top: 10px; border-top: 1px solid #ccc; padding-top: 6px;
-            display: flex; justify-content: space-between; color: #777; font-size: 9px; }
+  .rodape { border-top: 1px solid #ccc; padding-top: 4px;
+            display: flex; justify-content: space-between; color: #888; font-size: 8px; }
 </style>
 </head><body>
 
@@ -1284,12 +1284,9 @@ function imprimirRelatorioAno() {
   <div class="cab-ano">Ano ${ano}</div>
 </div>
 
-<div class="grid2">
+<div class="corpo">
   ${imgFech  ? `<div class="card"><div class="card-title">Fechamentos por Mês</div><img src="${imgFech}"></div>`  : ''}
   ${imgPicos ? `<div class="card"><div class="card-title">Top 5 Horários de Pico</div><img src="${imgPicos}"></div>` : ''}
-</div>
-
-<div class="grid1">
   <div class="card">
     <div class="card-title">Motivos de Fechamento — Detalhamento</div>
     ${fechHtml}
