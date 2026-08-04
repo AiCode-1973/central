@@ -1179,25 +1179,24 @@ async function carregarDashboardAno() {
       plugins: [ChartDataLabels],
       data: {
         labels: meses,
-        datasets: [
-          { label: 'Agendados',  data: (d.por_mes||[]).map(m=>+m.total_agendados),  backgroundColor: 'rgba(0,255,255,.6)'  },
-          { label: 'Atendidos',  data: (d.por_mes||[]).map(m=>+m.total_atendidos),  backgroundColor: 'rgba(0,255,136,.6)'  },
-          { label: 'Cancelados', data: (d.por_mes||[]).map(m=>+m.total_cancelados), backgroundColor: 'rgba(255,45,120,.6)' },
-          { label: 'Faltas',     data: (d.por_mes||[]).map(m=>+m.total_faltas),     backgroundColor: 'rgba(255,230,0,.6)'  },
-        ],
+        datasets: [{
+          label: 'Total Atendidos',
+          data: (d.por_mes||[]).map(m => +m.total_atendidos),
+          backgroundColor: 'rgba(0,255,136,.7)',
+        }],
       },
       options: {
         responsive: true,
         plugins: {
-          legend: { labels: { color: 'var(--text)', font: { size: 11 } } },
+          legend: { display: false },
           datalabels: {
-            anchor: 'center', align: 'center',
-            color: ctx => ['#003333','#003322','#330011','#333300'][ctx.datasetIndex],
-            font: { size: 9, weight: 'bold' },
+            anchor: 'end', align: 'end',
+            color: '#00ff88',
+            font: { size: 11, weight: 'bold' },
             formatter: v => v > 0 ? v : '',
           },
         },
-        layout: { padding: { top: 8 } },
+        layout: { padding: { top: 28 } },
       },
     });
 
