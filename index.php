@@ -1007,18 +1007,25 @@ async function carregarSemanas() {
 async function obterOuCriarSemanaDoMes(ano, mes) {
   const mm      = String(mes).padStart(2, '0');
   const inicio  = `${ano}-${mm}-01`;
-  const fim     = new Date(ano, mes, 0).toISOString().slice(0, 10);
-  const NOMES   = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+  // Calcula último dia sem problema de fuso horário
+  const ultimoDia = new Date(ano, mes, 0).getDate();
+  const fim       = `${ano}-${mm}-${String(ultimoDia).padStart(2, '0')}`;
+  const NOMES     = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
   const descricao = `${NOMES[mes - 1]} ${ano}`;
 
-  let semanas = window._semanasCache || await api('api/semanas.php');
+  // Sempre busca dados frescos para não usar cache desatualizado
+  let semanas = await api('api/semanas.php');
   window._semanasCache = semanas;
   let sem = semanas.find(s => s.data_inicio === inicio);
   if (!sem) {
-    await api('api/semanas.php', {
-      method: 'POST',
-      body: JSON.stringify({ data_inicio: inicio, data_fim: fim, descricao }),
-    });
+    try {
+      await api('api/semanas.php', {
+        method: 'POST',
+        body: JSON.stringify({ data_inicio: inicio, data_fim: fim, descricao }),
+      });
+    } catch (_) {
+      // Ignora duplicate key — registro criado em outra sessão; busca abaixo
+    }
     semanas = await api('api/semanas.php');
     window._semanasCache = semanas;
     renderTabelaSemanas(semanas);
@@ -1030,13 +1037,15 @@ async function obterOuCriarSemanaDoMes(ano, mes) {
 async function onMesChange() {
   _mesGlobalAno = parseInt(document.getElementById('sel-ano-global').value);
   _mesGlobalMes = parseInt(document.getElementById('sel-mes-global').value);
-  const sid = await obterOuCriarSemanaDoMes(_mesGlobalAno, _mesGlobalMes);
-  if (!sid) { toast('Erro ao carregar o mês.', 'erro'); return; }
-  _mesGlobalSid = sid;
-  carregarAtendimentos(sid);
-  carregarPicosList(sid);
-  carregarFechamentos(sid);
-  carregarPesquisa(sid);
+  try {
+    const sid = await obterOuCriarSemanaDoMes(_mesGlobalAno, _mesGlobalMes);
+    if (!sid) { toast('Erro ao localizar o mês.', 'erro'); return; }
+    _mesGlobalSid = sid;
+    carregarAtendimentos(sid);
+    carregarPicosList(sid);
+    carregarFechamentos(sid);
+    carregarPesquisa(sid);
+  } catch (e) { toast('Erro ao carregar o mês: ' + e.message, 'erro'); }
 }
 
 
