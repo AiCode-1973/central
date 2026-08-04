@@ -1020,7 +1020,7 @@ let chartEvolucao = null, chartPizza = null, chartPicos = null;
 let chartMesSemanas = null, chartMesPicos = null;
 let chartAnoMeses = null, chartAnoPicos = null;
 let chartPesquisa = null, chartPesquisaMes = null, chartPesquisaAno = null;
-let viewMode = 'mes';
+let viewMode = 'ano';
 
 function setViewMode(mode) {
   viewMode = mode;
@@ -2372,7 +2372,9 @@ document.getElementById('aut-status')?.addEventListener('change', function() {
     _selAnoGlobal.appendChild(o);
   }
   document.getElementById('sel-mes-global').value = new Date().getMonth() + 1;
-  await onMesChange();
+  onMesChange(); // carrega dados das abas em background (sem await)
+  setViewMode('ano');
+  await carregarDashboardAno();
   await carregarMotivos();
   if (USUARIO_LOGADO.perfil === 'admin') {
     await carregarPerfis();
