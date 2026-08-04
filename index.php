@@ -1191,14 +1191,13 @@ async function carregarDashboardAno() {
         plugins: {
           legend: { labels: { color: 'var(--text)', font: { size: 11 } } },
           datalabels: {
-            display: ctx => ctx.dataset.data[ctx.dataIndex] > 0,
-            anchor: 'end', align: 'end',
-            color: ctx => ['#00ffff','#00ff88','#ff2d78','#ffe600'][ctx.datasetIndex],
-            font: { size: 10, weight: 'bold' },
-            formatter: v => v,
+            anchor: 'center', align: 'center',
+            color: ctx => ['#003333','#003322','#330011','#333300'][ctx.datasetIndex],
+            font: { size: 9, weight: 'bold' },
+            formatter: v => v > 0 ? v : '',
           },
         },
-        layout: { padding: { top: 24 } },
+        layout: { padding: { top: 8 } },
       },
     });
 
