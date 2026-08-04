@@ -233,7 +233,6 @@ function temPerm(string $m): bool {
 
     <!-- Vista Anual (meses dentro de um ano) -->
     <div id="view-ano" style="display:none;">
-      <div id="ano-totais" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:.75rem;margin-bottom:1rem;"></div>
       <div class="charts-grid">
         <div class="painel">
           <div class="painel-titulo"><i class="fas fa-door-closed"></i> Fechamentos por Mês</div>
@@ -1134,19 +1133,7 @@ async function carregarDashboardAno() {
   try {
     const d = await api(`api/estatisticas_ano.php?ano=${ano}`);
 
-    // Cards totalizadores
-    const totais = d.totais || {};
-    const cards = [
-      { label: 'Agendados',  value: totais.total_agendados  || 0, cor: '#00ffff' },
-      { label: 'Atendidos',  value: totais.total_atendidos  || 0, cor: '#00ff88' },
-      { label: 'Cancelados', value: totais.total_cancelados || 0, cor: '#ff2d78' },
-      { label: 'Faltas',     value: totais.total_faltas     || 0, cor: '#ffe600' },
-    ];
-    document.getElementById('ano-totais').innerHTML = cards.map(c => `
-      <div style="background:var(--bg2);border:1px solid ${c.cor}33;border-radius:10px;padding:.85rem 1rem;text-align:center;">
-        <div style="font-size:1.6rem;font-weight:700;color:${c.cor};">${(+c.value).toLocaleString('pt-BR')}</div>
-        <div style="font-size:.78rem;color:var(--text-muted);margin-top:.2rem;">${c.label}</div>
-      </div>`).join('');
+    // Cards totalizadores removidos
 
     // Gráfico por mês (multi-série)
     const meses = (d.por_mes || []).map(m => m.mes_nome);
