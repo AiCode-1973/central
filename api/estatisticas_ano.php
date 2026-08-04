@@ -111,6 +111,28 @@ $stmtPesq->execute();
 $pesquisa = $stmtPesq->get_result()->fetch_assoc();
 if (array_sum($pesquisa) == 0) $pesquisa = null;
 
+// Fechamentos totais por mês
+$stmtFechMes = $conn->prepare(
+    "SELECT MONTH(s.data_inicio) AS mes, COALESCE(SUM(f.total),0) AS total_fechado
+     FROM fechamentos f
+     JOIN semanas s ON s.id = f.semana_id
+     WHERE f.semana_id IN ($placeholders)
+     GROUP BY MONTH(s.data_inicio) ORDER BY MONTH(s.data_inicio)"
+);
+$stmtFechMes->bind_param($types, ...$ids);
+$stmtFechMes->execute();
+$fech_mes_raw = $stmtFechMes->get_result()->fetch_all(MYSQLI_ASSOC);
+
+$fechamentos_por_mes = [];
+for ($m = 1; $m <= 12; $m++) {
+    $found = array_values(array_filter($fech_mes_raw, fn($r) => (int)$r['mes'] === $m));
+    $fechamentos_por_mes[] = [
+        'mes'           => $m,
+        'mes_nome'      => $meses_nomes[$m - 1],
+        'total_fechado' => $found ? (int)$found[0]['total_fechado'] : 0,
+    ];
+}
+
 echo json_encode([
     'totais'              => $totais,
     'por_mes'             => $por_mes,

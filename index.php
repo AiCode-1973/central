@@ -76,11 +76,6 @@ function temPerm(string $m): bool {
       <i class="fas fa-chart-line"></i> <span>Dashboard</span>
     </button>
     <?php endif; ?>
-    <?php if (temPerm('atendimentos')): ?>
-    <button class="tab-btn" onclick="showTab('atendimentos',this)" title="Atendimentos">
-      <i class="fas fa-calendar-check"></i> <span>Atendimentos</span>
-    </button>
-    <?php endif; ?>
     <?php if (temPerm('picos')): ?>
     <button class="tab-btn" onclick="showTab('picos',this)" title="Horários de Pico">
       <i class="fas fa-clock"></i> <span>Horários de Pico</span>
@@ -257,23 +252,6 @@ function temPerm(string $m): bool {
       </div>
     </div><!-- /#view-ano -->
 
-  </section>
-
-  <!-- ══════════════════════════════════════════════════════
-       ABA: ATENDIMENTOS
-  ══════════════════════════════════════════════════════════ -->
-  <section id="tab-atendimentos" class="tab-section" <?php if(!temPerm('atendimentos')) echo 'style="display:none"'; ?>>  
-    <div class="painel">
-      <div class="painel-titulo"><i class="fas fa-calendar-check"></i> Atendimentos do Mês</div>
-      <div id="form-atendimentos">
-        <p style="color:var(--text-muted);font-size:.9rem;">Selecione um mês e clique em Carregar.</p>
-      </div>
-      <div style="margin-top:1rem;">
-        <button class="btn-app suc" onclick="salvarAtendimentos()">
-          <i class="fas fa-save"></i> Salvar Atendimentos
-        </button>
-      </div>
-    </div>
   </section>
 
   <!-- ══════════════════════════════════════════════════════
@@ -1023,7 +1001,6 @@ async function onMesChange() {
     const sid = await obterOuCriarSemanaDoMes(_mesGlobalAno, _mesGlobalMes);
     if (!sid) { toast('Erro ao localizar o mês.', 'erro'); return; }
     _mesGlobalSid = sid;
-    carregarAtendimentos(sid);
     carregarPicosList(sid);
     carregarFechamentos(sid);
     carregarPesquisa(sid);
@@ -1507,94 +1484,6 @@ async function salvarPesquisa() {
   try {
     await api('api/pesquisa.php', { method: 'POST', body: JSON.stringify(body) });
     toast('Pesquisa salva!', 'suc');
-    carregarDashboard(sid);
-  } catch (e) { toast(e.message, 'erro'); }
-}
-
-/* ════════════════════════════════════════════════════════
-   ATENDIMENTOS
-════════════════════════════════════════════════════════ */
-const DIAS_SEMANA = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
-
-function gerarDiasMes(ano, mes) {
-  const dias = [];
-  const ultimo = new Date(ano, mes, 0).getDate();
-  for (let d = 1; d <= ultimo; d++) {
-    const dt  = new Date(ano, mes - 1, d);
-    const dow = dt.getDay();
-    if (dow >= 1 && dow <= 5) {
-      dias.push({ data: dt.toISOString().slice(0, 10), nome: DIAS_SEMANA[dow] });
-    }
-  }
-  return dias;
-}
-
-let atendimentosEditaveis = [];
-
-async function carregarAtendimentos(sid) {
-  if (!sid) return;
-  const diasMes = gerarDiasMes(_mesGlobalAno, _mesGlobalMes);
-  const saved   = await api('api/atendimentos.php?semana_id=' + sid);
-  const map     = {};
-  saved.forEach(r => { map[r.data] = r; });
-
-  atendimentosEditaveis = diasMes.map(({ data, nome }) => ({
-    id:              map[data]?.id             || null,
-    semana_id:       sid,
-    data,
-    total_atendidos: map[data]?.total_atendidos || 0,
-    diaNome:         nome,
-  }));
-
-  renderFormAtendimentos();
-}
-
-function renderFormAtendimentos() {
-  const c = document.getElementById('form-atendimentos');
-  if (!atendimentosEditaveis.length) {
-    c.innerHTML = '<p style="color:var(--text-muted);">Selecione um mês e clique em Carregar.</p>';
-    return;
-  }
-  c.innerHTML = `
-    <div class="table-responsive" style="max-width:360px;">
-      <table class="tabela-app">
-        <thead>
-          <tr>
-            <th>Dia</th>
-            <th>Data</th>
-            <th>Total Atendimentos</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${atendimentosEditaveis.map((r, i) => `
-            <tr>
-              <td><strong>${r.diaNome}</strong></td>
-              <td>${fmtData(r.data)}</td>
-              <td>
-                <input type="number" min="0" class="at-at" data-i="${i}"
-                       value="${r.total_atendidos}"
-                       style="width:100px;padding:.3rem .5rem;border:1px solid rgba(0,255,255,.25);border-radius:5px;text-align:center;background:var(--bg2);color:var(--text);">
-              </td>
-            </tr>`).join('')}
-        </tbody>
-      </table>
-    </div>`;
-}
-
-async function salvarAtendimentos() {
-  const sid = semanaAtual();
-  if (!sid) { toast('Selecione um mês primeiro.', 'erro'); return; }
-
-  const items = atendimentosEditaveis.map((r, i) => ({
-    semana_id:       sid,
-    data:            r.data,
-    total_atendidos: parseInt(document.querySelector(`.at-at[data-i="${i}"]`)?.value) || 0,
-  }));
-
-  try {
-    await api('api/atendimentos.php', { method: 'POST', body: JSON.stringify({ items }) });
-    toast('Atendimentos salvos!', 'suc');
-    carregarAtendimentos(sid);
     carregarDashboard(sid);
   } catch (e) { toast(e.message, 'erro'); }
 }
@@ -2326,7 +2215,7 @@ document.getElementById('aut-status')?.addEventListener('change', function() {
 /* ── Init ────────────────────────────────────────────────── */
 (async () => {
   // Ativa a primeira aba que o usuário tem permissão
-  const _ordemAbas = ['dashboard','atendimentos','picos','fechamentos','motivos','semanas','pesquisa','usuarios','autorizacoes','convenios','procedimentos'];
+  const _ordemAbas = ['dashboard','picos','fechamentos','motivos','semanas','pesquisa','usuarios','autorizacoes','convenios','procedimentos'];
   const _primeiraAba = _ordemAbas.find(t => PERMISSOES.includes(t));
   if (_primeiraAba) showTab(_primeiraAba, null);
 
