@@ -242,7 +242,7 @@ function temPerm(string $m): bool {
       <div class="charts-grid">
         <div class="painel">
           <div class="painel-titulo"><i class="fas fa-chart-bar"></i> Atendimentos por Mês</div>
-          <div class="chart-wrap"><canvas id="chart-ano-meses"></canvas></div>
+          <div class="chart-wrap"><canvas id="chart-ano-meses" style="height:220px;"></canvas></div>
         </div>
         <div class="painel">
           <div class="painel-titulo"><i class="fas fa-clock"></i> Top 5 Horários de Pico (ano)</div>
@@ -1173,6 +1173,7 @@ async function carregarDashboardAno() {
 
     // Gráfico por mês (multi-série)
     const meses = (d.por_mes || []).map(m => m.mes_nome);
+    const totais_mes = (d.por_mes || []).map(m => +m.total_atendidos);
     if (chartAnoMeses) chartAnoMeses.destroy();
     chartAnoMeses = new Chart(document.getElementById('chart-ano-meses'), {
       type: 'bar',
@@ -1180,23 +1181,30 @@ async function carregarDashboardAno() {
       data: {
         labels: meses,
         datasets: [{
-          label: 'Total Atendidos',
-          data: (d.por_mes||[]).map(m => +m.total_atendidos),
+          label: 'Atendidos',
+          data: totais_mes,
           backgroundColor: 'rgba(0,255,136,.7)',
+          borderColor: 'rgba(0,255,136,1)',
+          borderWidth: 1,
         }],
       },
       options: {
         responsive: true,
+        maintainAspectRatio: false,
         plugins: {
           legend: { display: false },
           datalabels: {
-            anchor: 'end', align: 'end',
+            anchor: 'end', align: 'top',
             color: '#00ff88',
             font: { size: 11, weight: 'bold' },
             formatter: v => v > 0 ? v : '',
           },
         },
-        layout: { padding: { top: 28 } },
+        scales: {
+          y: { beginAtZero: true, ticks: { color: 'var(--text-muted)' }, grid: { color: 'rgba(255,255,255,.05)' } },
+          x: { ticks: { color: 'var(--text-muted)' }, grid: { display: false } },
+        },
+        layout: { padding: { top: 24 } },
       },
     });
 
