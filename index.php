@@ -254,12 +254,6 @@ function temPerm(string $m): bool {
           <div class="painel-titulo"><i class="fas fa-door-closed"></i> Motivos de Fechamento (ano)</div>
           <div id="resumo-fechamentos-ano" style="font-size:.9rem;color:var(--text);">Busque um ano para visualizar.</div>
         </div>
-        <div class="painel">
-          <div class="painel-titulo"><i class="fas fa-star"></i> Pesquisa de Satisfação (ano)</div>
-          <div id="pesquisa-ano-wrap">
-            <p style="color:var(--text-muted);font-size:.88rem;">Busque um ano para visualizar.</p>
-          </div>
-        </div>
       </div>
     </div><!-- /#view-ano -->
 
@@ -1198,10 +1192,13 @@ async function carregarDashboardAno() {
           legend: { labels: { color: 'var(--text)', font: { size: 11 } } },
           datalabels: {
             display: ctx => ctx.dataset.data[ctx.dataIndex] > 0,
-            anchor: 'end', align: 'end', color: '#fff', font: { size: 9 }, formatter: v => v,
+            anchor: 'end', align: 'end',
+            color: ctx => ['#00ffff','#00ff88','#ff2d78','#ffe600'][ctx.datasetIndex],
+            font: { size: 10, weight: 'bold' },
+            formatter: v => v,
           },
         },
-        layout: { padding: { top: 20 } },
+        layout: { padding: { top: 24 } },
       },
     });
 
@@ -1245,8 +1242,7 @@ async function carregarDashboardAno() {
         '</table>';
     }
 
-    // Pesquisa de satisfação ano
-    renderPesquisaChart('pesquisa-ano-wrap', 'chart-pesquisa-ano', d.pesquisa, chartPesquisaAno, c => chartPesquisaAno = c);
+    // Pesquisa de satisfação ano removida da view Ano
   } catch (e) { toast(e.message, 'erro'); }
 }
 
