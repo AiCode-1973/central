@@ -951,7 +951,7 @@ function showTab(name, btn) {
   // Fecha sidebar no mobile ao navegar
   if (window.innerWidth <= 768) document.documentElement.setAttribute('data-sb', '');
   // Oculta seletor de semana nas abas que não precisam dele
-  const _tabsSemSemana = ['usuarios','autorizacoes','convenios','procedimentos'];
+  const _tabsSemSemana = ['dashboard','usuarios','autorizacoes','convenios','procedimentos'];
   const sel = document.querySelector('.semana-selector');
   if (sel) sel.style.display = _tabsSemSemana.includes(name) ? 'none' : '';
 }
