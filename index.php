@@ -25,42 +25,101 @@ function temPerm(string $m): bool {
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
   <link rel="stylesheet" href="assets/css/dashboard.css">
   <style>
-    /* Dashboard com fundo off-white e cards com sombra suave */
+    /* ── Dashboard: fundo off-white + cards limpos ─────── */
     #tab-dashboard {
       background: #F7F5F2;
-      border-radius: 12px;
-      padding: 1.25rem;
-      margin: -.5rem 0;
+      border-radius: 14px;
+      padding: 1.1rem 1.25rem 1.5rem;
+      margin: -.25rem 0;
+    }
+    /* Barra de modos (Mês/Ano + seletores) */
+    #tab-dashboard > div:first-child {
+      background: #ffffff;
+      border: 1px solid #E2E0DC;
+      border-radius: 10px;
+      padding: .55rem .85rem;
+      box-shadow: 0 1px 4px rgba(0,0,0,.06);
+      margin-bottom: 1rem;
+      display: flex;
+      flex-wrap: wrap;
+      gap: .5rem;
+      align-items: center;
     }
     #tab-dashboard .painel {
       background: #ffffff;
-      border: 1px solid #e8e3dc;
+      border: 1px solid #E8E4DE;
       border-radius: 12px;
-      box-shadow: 0 2px 12px rgba(0,0,0,.07), 0 1px 3px rgba(0,0,0,.05);
-      padding: 1rem 1.1rem;
+      box-shadow: 0 2px 8px rgba(0,0,0,.06), 0 1px 2px rgba(0,0,0,.04);
+      padding: 1rem 1.1rem 1.15rem;
+      transition: box-shadow .2s;
+    }
+    #tab-dashboard .painel:hover {
+      box-shadow: 0 4px 18px rgba(0,0,0,.1), 0 1px 3px rgba(0,0,0,.05);
     }
     #tab-dashboard .painel::before { display: none; }
     #tab-dashboard .painel .painel-titulo {
-      color: #2d3748;
-      font-size: .75rem;
+      color: #374151;
+      font-size: .72rem;
+      font-weight: 800;
+      letter-spacing: .07em;
+      margin-bottom: .85rem;
+      padding-bottom: .55rem;
+      border-bottom: 1px solid #F0EDE8;
+      display: flex;
+      align-items: center;
+      gap: .45rem;
     }
     #tab-dashboard .painel .painel-titulo i {
-      color: #4a6fa5;
+      color: #2563EB;
       opacity: 1;
+      font-size: .85rem;
     }
-    /* Selector do modo Mês/Ano dentro do dashboard */
-    #tab-dashboard > div:first-child {
-      background: #ffffff;
-      border: 1px solid #e8e3dc;
-      border-radius: 10px;
-      padding: .6rem .9rem;
-      box-shadow: 0 1px 6px rgba(0,0,0,.05);
-      margin-bottom: 1rem;
+    #tab-dashboard .chart-wrap {
+      min-height: 190px;
+      max-height: 260px;
     }
-    /* Textos de "Busque um mês/ano" */
-    #resumo-fechamentos-mes,
-    #resumo-fechamentos-ano {
-      color: #4a5568;
+    /* Tabela de fechamentos no dashboard */
+    #tab-dashboard .dash-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: .84rem;
+    }
+    #tab-dashboard .dash-table thead th {
+      padding: .4rem .7rem;
+      text-align: left;
+      font-size: .68rem;
+      font-weight: 800;
+      color: #6B7280;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      border-bottom: 2px solid #E5E7EB;
+      background: transparent;
+    }
+    #tab-dashboard .dash-table thead th:last-child { text-align: right; }
+    #tab-dashboard .dash-table tbody td {
+      padding: .45rem .7rem;
+      color: #374151;
+      border-bottom: 1px solid #F3F4F6;
+    }
+    #tab-dashboard .dash-table tbody td:last-child {
+      text-align: right;
+      font-weight: 700;
+      color: #1D4ED8;
+    }
+    #tab-dashboard .dash-table tfoot td {
+      padding: .5rem .7rem;
+      font-weight: 800;
+      border-top: 2px solid #E5E7EB;
+      background: #EFF6FF;
+      color: #1E40AF;
+      font-size: .9rem;
+    }
+    #tab-dashboard .dash-table tfoot td:last-child { text-align: right; }
+    #tab-dashboard .dash-vazio {
+      font-size: .85rem;
+      color: #9CA3AF;
+      font-style: italic;
+      padding: .5rem 0;
     }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
@@ -1101,33 +1160,7 @@ async function carregarDashboardMes() {
   try {
     const d = await api(`api/estatisticas_mes.php?ano=${ano}&mes=${mes}`);
 
-    // Gráfico por semana
-    const semLabels = (d.por_semana || []).map(s =>
-      s.descricao || `${fmtData(s.data_inicio)} a ${fmtData(s.data_fim)}`
-    );
-    if (chartMesSemanas) chartMesSemanas.destroy();
-    chartMesSemanas = new Chart(document.getElementById('chart-mes-semanas'), {
-      type: 'bar',
-      plugins: [ChartDataLabels],
-      data: {
-        labels: semLabels,
-        datasets: [{
-          label: 'Atendidos',
-          data: (d.por_semana || []).map(s => +s.total_atendidos),
-          backgroundColor: 'rgba(0,255,255,.6)',
-        }],
-      },
-      options: {
-        responsive: true,
-        plugins: {
-          legend: { display: false },
-          datalabels: { anchor: 'end', align: 'end', color: '#00ffff', font: { weight: 'bold', size: 11 }, formatter: v => v > 0 ? v : '' },
-        },
-        layout: { padding: { top: 20 } },
-      },
-    });
-
-    // Gráfico picos
+    // Gráfico picos do mês
     const picosOrd = [...(d.picos || [])].sort((a, b) => (a.hora || '').localeCompare(b.hora || ''));
     if (chartMesPicos) chartMesPicos.destroy();
     chartMesPicos = new Chart(document.getElementById('chart-mes-picos'), {
@@ -1135,41 +1168,41 @@ async function carregarDashboardMes() {
       plugins: [ChartDataLabels],
       data: {
         labels: picosOrd.map(p => p.hora || '—'),
-        datasets: [{ label: 'Atendimentos', data: picosOrd.map(p => +p.total), backgroundColor: 'rgba(0,255,136,.6)' }],
+        datasets: [{
+          data: picosOrd.map(p => +p.total),
+          backgroundColor: 'rgba(59,130,246,.75)',
+          borderColor: '#2563EB',
+          borderWidth: 1,
+          borderRadius: 4,
+          borderSkipped: false,
+        }],
       },
       options: {
-        indexAxis: 'y',
-        responsive: true,
+        indexAxis: 'y', responsive: true,
         plugins: {
           legend: { display: false },
-          datalabels: { anchor: 'end', align: 'end', color: '#00ff88', font: { weight: 'bold', size: 11 }, formatter: v => v > 0 ? v : '' },
+          datalabels: { anchor: 'end', align: 'end', color: '#1D4ED8', font: { size: 10, weight: '700' }, formatter: v => v > 0 ? v : '' },
         },
-        layout: { padding: { right: 30 } },
+        scales: {
+          x: { grid: { color: '#F3F4F6' }, ticks: { color: '#6B7280', font: { size: 10 } }, border: { display: false } },
+          y: { grid: { display: false }, ticks: { color: '#374151', font: { size: 10 } }, border: { display: false } },
+        },
+        layout: { padding: { right: 28, top: 2, bottom: 2 } },
       },
     });
 
-    // Fechamentos
+    // Tabela fechamentos do mês
     const rf = document.getElementById('resumo-fechamentos-mes');
     if (!(d.fechamentos || []).length) {
-      rf.innerHTML = '<span style="color:var(--text-muted);">Nenhum fechamento registrado neste mês.</span>';
+      rf.innerHTML = '<p class="dash-vazio">Nenhum fechamento registrado neste mês.</p>';
     } else {
       const totalGeral = d.fechamentos.reduce((s, f) => s + +f.total, 0);
       rf.innerHTML =
-        '<table style="width:100%;max-width:500px;border-collapse:collapse;font-size:.88rem;">' +
-          d.fechamentos.map(f => `
-            <tr style="border-bottom:1px solid rgba(255,255,255,.05);">
-              <td style="padding:.35rem .4rem;">${f.descricao}</td>
-              <td style="padding:.35rem .4rem;text-align:right;font-weight:700;color:var(--neon-cyan);">${f.total}</td>
-            </tr>`).join('') +
-          `<tr style="border-top:1px solid var(--neon-cyan);background:rgba(0,255,255,.05);">
-            <td style="padding:.4rem .4rem;font-weight:700;">Total</td>
-            <td style="padding:.4rem .4rem;text-align:right;font-weight:700;color:var(--neon-cyan);font-size:1rem;">${totalGeral}</td>
-          </tr>` +
-        '</table>';
+        '<table class="dash-table">' +
+        '<thead><tr><th>Motivo</th><th>Dias</th></tr></thead><tbody>' +
+          d.fechamentos.map(f => `<tr><td>${f.descricao}</td><td>${f.total}</td></tr>`).join('') +
+        `</tbody><tfoot><tr><td>Total</td><td>${totalGeral}</td></tr></tfoot></table>`;
     }
-
-    // Pesquisa de satisfação
-    renderPesquisaChart('pesquisa-mes-wrap', 'chart-pesquisa-mes', d.pesquisa, chartPesquisaMes, c => chartPesquisaMes = c);
   } catch (e) { toast(e.message, 'erro'); }
 }
 
@@ -1178,9 +1211,7 @@ async function carregarDashboardAno() {
   try {
     const d = await api(`api/estatisticas_ano.php?ano=${ano}`);
 
-    // Cards totalizadores removidos
-
-    // Gráfico por mês (multi-série)
+    // Gráfico fechamentos por mês
     const meses = (d.por_mes || []).map(m => m.mes_nome);
     const totais_mes = (d.fechamentos_por_mes || []).map(m => +m.total_fechado);
     if (chartAnoMeses) chartAnoMeses.destroy();
@@ -1192,9 +1223,11 @@ async function carregarDashboardAno() {
         datasets: [{
           label: 'Dias Fechados',
           data: totais_mes,
-          backgroundColor: '#cc4400',
-          borderColor: '#ff6622',
-          borderWidth: 2,
+          backgroundColor: meses.map((_, i) => totais_mes[i] > 0 ? 'rgba(220,38,38,.8)' : 'rgba(209,213,219,.5)'),
+          borderColor: meses.map((_, i) => totais_mes[i] > 0 ? '#B91C1C' : '#D1D5DB'),
+          borderWidth: 1,
+          borderRadius: 5,
+          borderSkipped: false,
         }],
       },
       options: {
@@ -1204,16 +1237,15 @@ async function carregarDashboardAno() {
           legend: { display: false },
           datalabels: {
             anchor: 'end', align: 'top',
-            color: '#00ff88',
-            font: { size: 11, weight: 'bold' },
+            color: '#991B1B', font: { size: 10, weight: '700' },
             formatter: v => v > 0 ? v : '',
           },
         },
         scales: {
-          y: { beginAtZero: true, ticks: { color: 'var(--text-muted)' }, grid: { color: 'rgba(255,255,255,.05)' } },
-          x: { ticks: { color: 'var(--text-muted)' }, grid: { display: false } },
+          y: { beginAtZero: true, grid: { color: '#F3F4F6' }, ticks: { color: '#6B7280', font: { size: 10 } }, border: { display: false } },
+          x: { grid: { display: false }, ticks: { color: '#374151', font: { size: 10 } }, border: { color: '#E5E7EB' } },
         },
-        layout: { padding: { top: 24 } },
+        layout: { padding: { top: 22 } },
       },
     });
 
@@ -1225,36 +1257,40 @@ async function carregarDashboardAno() {
       plugins: [ChartDataLabels],
       data: {
         labels: picosAnOrd.map(p => p.hora || '—'),
-        datasets: [{ label: 'Atendimentos', data: picosAnOrd.map(p => +p.total), backgroundColor: 'rgba(0,255,136,.6)' }],
+        datasets: [{
+          data: picosAnOrd.map(p => +p.total),
+          backgroundColor: 'rgba(59,130,246,.75)',
+          borderColor: '#2563EB',
+          borderWidth: 1,
+          borderRadius: 4,
+          borderSkipped: false,
+        }],
       },
       options: {
         indexAxis: 'y', responsive: true,
         plugins: {
           legend: { display: false },
-          datalabels: { anchor: 'end', align: 'end', color: '#00ff88', font: { weight: 'bold', size: 11 }, formatter: v => v > 0 ? v : '' },
+          datalabels: { anchor: 'end', align: 'end', color: '#1D4ED8', font: { size: 10, weight: '700' }, formatter: v => v > 0 ? v : '' },
         },
-        layout: { padding: { right: 30 } },
+        scales: {
+          x: { grid: { color: '#F3F4F6' }, ticks: { color: '#6B7280', font: { size: 10 } }, border: { display: false } },
+          y: { grid: { display: false }, ticks: { color: '#374151', font: { size: 10 } }, border: { display: false } },
+        },
+        layout: { padding: { right: 28, top: 2, bottom: 2 } },
       },
     });
 
-    // Fechamentos ano
+    // Tabela fechamentos ano
     const rfa = document.getElementById('resumo-fechamentos-ano');
     if (!(d.fechamentos || []).length) {
-      rfa.innerHTML = '<span style="color:var(--text-muted);">Nenhum fechamento registrado neste ano.</span>';
+      rfa.innerHTML = '<p class="dash-vazio">Nenhum fechamento registrado neste ano.</p>';
     } else {
       const totalGeral = d.fechamentos.reduce((s, f) => s + +f.total, 0);
       rfa.innerHTML =
-        '<table style="width:100%;max-width:500px;border-collapse:collapse;font-size:.88rem;">' +
-          d.fechamentos.map(f => `
-            <tr style="border-bottom:1px solid rgba(255,255,255,.05);">
-              <td style="padding:.35rem .4rem;">${f.descricao}</td>
-              <td style="padding:.35rem .4rem;text-align:right;font-weight:700;color:var(--neon-cyan);">${f.total}</td>
-            </tr>`).join('') +
-          `<tr style="border-top:1px solid var(--neon-cyan);background:rgba(0,255,255,.05);">
-            <td style="padding:.4rem .4rem;font-weight:700;">Total</td>
-            <td style="padding:.4rem .4rem;text-align:right;font-weight:700;color:var(--neon-cyan);font-size:1rem;">${totalGeral}</td>
-          </tr>` +
-        '</table>';
+        '<table class="dash-table">' +
+        '<thead><tr><th>Motivo</th><th>Dias</th></tr></thead><tbody>' +
+          d.fechamentos.map(f => `<tr><td>${f.descricao}</td><td>${f.total}</td></tr>`).join('') +
+        `</tbody><tfoot><tr><td>Total</td><td>${totalGeral}</td></tr></tfoot></table>`;
     }
 
     // Pesquisa de satisfação ano removida da view Ano
