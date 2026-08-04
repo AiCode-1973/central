@@ -226,24 +226,12 @@ function temPerm(string $m): bool {
     <div id="view-mes">
       <div class="charts-grid">
         <div class="painel">
-          <div class="painel-titulo"><i class="fas fa-chart-bar"></i> Atendimentos por Semana</div>
-          <div class="chart-wrap"><canvas id="chart-mes-semanas"></canvas></div>
-        </div>
-        <div class="painel">
           <div class="painel-titulo"><i class="fas fa-clock"></i> Top 5 Horários de Pico (mês)</div>
           <div class="chart-wrap"><canvas id="chart-mes-picos"></canvas></div>
         </div>
-      </div>
-      <div class="charts-grid">
         <div class="painel">
           <div class="painel-titulo"><i class="fas fa-door-closed"></i> Motivos de Fechamento (mês)</div>
           <div id="resumo-fechamentos-mes" style="font-size:.9rem;color:var(--text);">Busque um mês para visualizar.</div>
-        </div>
-        <div class="painel">
-          <div class="painel-titulo"><i class="fas fa-star"></i> Pesquisa de Satisfação (mês)</div>
-          <div id="pesquisa-mes-wrap">
-            <p style="color:var(--text-muted);font-size:.88rem;">Busque um mês para visualizar.</p>
-          </div>
         </div>
       </div>
     </div><!-- /#view-mes -->
