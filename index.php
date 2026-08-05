@@ -121,6 +121,71 @@ function temPerm(string $m): bool {
       font-style: italic;
       padding: .5rem 0;
     }
+
+    /* ── Botões do dashboard ────────────────────────────── */
+    #tab-dashboard .btn-app {
+      font-size: .8rem;
+      font-weight: 700;
+      letter-spacing: .04em;
+      padding: .42rem 1rem;
+      border-radius: 8px;
+      border: 1.5px solid #D1D5DB;
+      background: #ffffff;
+      color: #374151;
+      box-shadow: 0 1px 3px rgba(0,0,0,.07);
+      transition: all .18s ease;
+      text-transform: none;
+    }
+    #tab-dashboard .btn-app:hover {
+      border-color: #2563EB;
+      color: #2563EB;
+      background: #EFF6FF;
+      box-shadow: 0 2px 8px rgba(37,99,235,.15);
+      transform: translateY(-1px);
+    }
+    #tab-dashboard .btn-app:active { transform: translateY(0); }
+
+    /* Botão modo ativo (Mês / Ano selecionado) */
+    #tab-dashboard #btn-view-mes[data-active="1"],
+    #tab-dashboard #btn-view-ano[data-active="1"] {
+      background: #2563EB !important;
+      color: #ffffff !important;
+      border-color: #2563EB !important;
+      box-shadow: 0 2px 10px rgba(37,99,235,.35) !important;
+    }
+
+    /* Botão Buscar — destaque primário */
+    #tab-dashboard .btn-app.prim {
+      background: #2563EB;
+      color: #ffffff;
+      border-color: #2563EB;
+      box-shadow: 0 2px 8px rgba(37,99,235,.25);
+    }
+    #tab-dashboard .btn-app.prim:hover {
+      background: #1D4ED8;
+      border-color: #1D4ED8;
+      color: #ffffff;
+      box-shadow: 0 4px 14px rgba(37,99,235,.4);
+    }
+
+    /* Selects dentro do dashboard */
+    #tab-dashboard select {
+      background: #ffffff;
+      color: #374151;
+      border: 1.5px solid #D1D5DB;
+      border-radius: 8px;
+      padding: .4rem .65rem;
+      font-size: .85rem;
+      font-weight: 500;
+      box-shadow: 0 1px 3px rgba(0,0,0,.06);
+      transition: border-color .18s;
+      cursor: pointer;
+    }
+    #tab-dashboard select:focus {
+      outline: none;
+      border-color: #2563EB;
+      box-shadow: 0 0 0 3px rgba(37,99,235,.12);
+    }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
@@ -1132,9 +1197,12 @@ function setViewMode(mode) {
     const btn = document.getElementById('btn-view-' + m);
     if (!btn) return;
     const active = m === mode;
-    btn.style.background = active ? 'rgba(0,255,255,.15)' : 'transparent';
-    btn.style.color      = active ? '#00ffff' : '';
-    btn.style.boxShadow  = active ? '0 0 10px rgba(0,255,255,.3)' : '';
+    // Estilos inline para compatibilidade com tema escuro; CSS dashboard sobrescreve para fundo claro
+    btn.style.background  = active ? 'rgba(0,255,255,.15)' : 'transparent';
+    btn.style.color       = active ? '#00ffff' : '';
+    btn.style.boxShadow   = active ? '0 0 10px rgba(0,255,255,.3)' : '';
+    btn.style.borderColor = active ? 'rgba(0,255,255,.5)' : '';
+    btn.dataset.active    = active ? '1' : '0';
   });
 }
 
