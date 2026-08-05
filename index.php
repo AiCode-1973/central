@@ -313,10 +313,10 @@ function temPerm(string $m): bool {
 
     <!-- Toggle Mês / Ano -->
     <div style="display:flex;gap:.5rem;margin-bottom:1.1rem;align-items:center;flex-wrap:wrap;">
-      <button id="btn-view-mes" class="btn-app prim" onclick="setViewMode('mes')">
+      <button id="btn-view-mes" class="btn-app" onclick="setViewMode('mes')">
         <i class="fas fa-calendar-alt"></i> Mês
       </button>
-      <button id="btn-view-ano" class="btn-app" style="background:transparent;border:1px solid rgba(0,255,255,.2);color:var(--text-muted);" onclick="setViewMode('ano')">
+      <button id="btn-view-ano" class="btn-app" onclick="setViewMode('ano')">
         <i class="fas fa-calendar"></i> Ano
       </button>
       <div id="mes-selector" style="display:flex;gap:.5rem;align-items:center;flex-wrap:wrap;">
@@ -1197,11 +1197,10 @@ function setViewMode(mode) {
     const btn = document.getElementById('btn-view-' + m);
     if (!btn) return;
     const active = m === mode;
-    // Estilos inline para compatibilidade com tema escuro; CSS dashboard sobrescreve para fundo claro
-    btn.style.background  = active ? 'rgba(0,255,255,.15)' : 'transparent';
-    btn.style.color       = active ? '#00ffff' : '';
-    btn.style.boxShadow   = active ? '0 0 10px rgba(0,255,255,.3)' : '';
-    btn.style.borderColor = active ? 'rgba(0,255,255,.5)' : '';
+    btn.style.background  = '';
+    btn.style.color       = '';
+    btn.style.boxShadow   = '';
+    btn.style.borderColor = '';
     btn.dataset.active    = active ? '1' : '0';
   });
 }
